@@ -3,24 +3,15 @@ rules_version = '2';
 // ============================================================================
 // TALLER PAN SINAÍ — REGLAS DE FIRESTORE
 // ----------------------------------------------------------------------------
-// ESTE SISTEMA NO USA FIREBASE AUTHENTICATION. La sesión vive en
-// localStorage (pan_sinai_auth_user), así que request.auth es SIEMPRE null
-// y aquí NO se puede validar identidad: se valida FORMA y ALCANCE.
-//
-//   1. Solo existen las 9 colecciones del sistema. Todo lo demás se niega
-//      (una escritura mal dirigida ya no crea colecciones basura).
-//   2. Cada documento cumple el esquema que la aplicación realmente escribe:
-//      campos obligatorios, tipos y valores permitidos.
-//   3. Donde la placa es la llave, el id del documento coincide con el campo
-//      "placa" y cumple el formato salvadoreño (letra + dígitos, sin guiones).
-//   4. Tope de tamaño en las fotos para no reventar el documento de 1 MB.
-//   5. La bitácora es de solo-agregar: no se puede reescribir.
+// Valida FORMA y ALCANCE: sólo existen las 9 colecciones del sistema (todo lo
+// demás se niega) y cada documento cumple el esquema que la aplicación escribe.
 //
 // SI AGREGAS UN ESTADO / ROL / TIPO NUEVO EN EL CÓDIGO, agrégalo también
-// aquí: la lista de valores permitidos está espejada en los servicios.
+// aquí: la lista de valores permitidos está espejada en los servicios de src.
 //
-// Para cerrar el sistema de verdad hay que migrar a Firebase Authentication
-// y sustituir los `if true` por `request.auth != null` + roles en el token.
+// Las contraseñas se guardan como hash bcrypt ($2b$…) y así se exigen abajo.
+// La validación de identidad con request.auth queda para cuando se active
+// Firebase Authentication en la aplicación.
 // ============================================================================
 
 service cloud.firestore {
@@ -81,9 +72,7 @@ service cloud.firestore {
           ])
           && request.resource.data.id == uid
           && textoNoVacio(request.resource.data.nombre, 200)
-          && request.resource.data.password is string
-          && request.resource.data.password.size() >= 4
-          && request.resource.data.password.size() <= 100
+          && request.resource.data.password.matches('^\\$2[aby]\\$\\d{2}\\$[./A-Za-z0-9]{53}$')
           && request.resource.data.rol in ['admin', 'encargado', 'mecanico', 'superadmin']
           && request.resource.data.activo is bool
           && texto(request.resource.data.departamento, 80)
@@ -239,7 +228,19 @@ service cloud.firestore {
       allow create, update: if request.resource.data.keys().hasOnly([
         'lecturas', 'escrituras', 'bytesLeidos', 'bytesEscritos',
         'sesiones', 'actualizadoMs'
-      ]);
+      ])
+          && (!request.resource.data.keys().hasAny(['lecturas'])
+              || numeroNoNegativo(request.resource.data.lecturas))
+          && (!request.resource.data.keys().hasAny(['escrituras'])
+              || numeroNoNegativo(request.resource.data.escrituras))
+          && (!request.resource.data.keys().hasAny(['bytesLeidos'])
+              || numeroNoNegativo(request.resource.data.bytesLeidos))
+          && (!request.resource.data.keys().hasAny(['bytesEscritos'])
+              || numeroNoNegativo(request.resource.data.bytesEscritos))
+          && (!request.resource.data.keys().hasAny(['sesiones'])
+              || numeroNoNegativo(request.resource.data.sesiones))
+          && (!request.resource.data.keys().hasAny(['actualizadoMs'])
+              || numeroNoNegativo(request.resource.data.actualizadoMs));
 
       allow delete: if false;
     }

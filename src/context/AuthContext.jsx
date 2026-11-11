@@ -6,6 +6,7 @@ import {
   cambiarPassword,
 } from '../services/usuariosService';
 import { hidratarVehiculos, esperarHidratacionVehiculos } from '../services/vehiculosService';
+import { verificarPasswordAlmacenada } from '../utils/passwords';
 import { cargarCatalogos } from '../services/catalogosService';
 import { registrarBitacora, TIPOS_BITACORA } from '../services/bitacoraService';
 import { contarSesion } from '../services/metricasService';
@@ -94,7 +95,7 @@ export function AuthProvider({ children }) {
       const user = usuarios.find(u => {
         const coincideNombre = u.nombre && u.nombre.toLowerCase() === valor;
         const coincideCorreo = u.email && u.email.toLowerCase() === valor;
-        return (coincideNombre || coincideCorreo) && u.password === password;
+        return (coincideNombre || coincideCorreo) && verificarPasswordAlmacenada(password, u.password);
       });
 
       if (!user) {

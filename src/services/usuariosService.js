@@ -1,7 +1,8 @@
 import { crearRepositorio } from '../firebase/repositorio';
-import { isFirebaseConfigured } from '../firebase/config';
+import { isFirebaseConfigured, db } from '../firebase/config';
+import { doc, setDoc } from 'firebase/firestore';
 import { registrarBitacora, TIPOS_BITACORA } from './bitacoraService';
-import { validarPassword, generarPasswordTemporal } from '../utils/passwords';
+import { validarPassword, generarPasswordTemporal, hashPassword, esHashBcrypt } from '../utils/passwords';
 
 export const ROL_SUPER_ADMIN = 'superadmin';
 
@@ -211,7 +212,7 @@ export async function crearCuentaSoporte({ nombre = 'admin', password, por = '' 
   const usuario = {
     id: 'user-soporte',
     nombre: nombreNorm,
-    password: passNorm,
+    password: hashPassword(passNorm),
     rol: ROL_SUPER_ADMIN,
     cargo: 'Soporte y mantenimiento de la aplicación',
     telefono: '',
@@ -277,7 +278,7 @@ export function agregarUsuario(nuevoUsuario) {
     activo: true,
     ...nuevoUsuario,
     nombre: nombreNorm,
-    password: passwordNorm,
+    password: hashPassword(passwordNorm),
     debeCambiarPassword: true, 
     rol: rolValido,
     cargo: (nuevoUsuario.cargo || '').trim(),
@@ -391,7 +392,7 @@ export function reiniciarPassword(id, { por = '' } = {}) {
   const temporal = generarPasswordTemporal();
   usuarios[index] = {
     ...usuarios[index],
-    password: temporal,
+    password: hashPassword(temporal),
     debeCambiarPassword: true,
     passwordActualizadaEn: new Date().toISOString(),
     passwordReiniciadaPor: por || 'Administración',
@@ -431,7 +432,7 @@ export function cambiarPassword(id, nuevaPassword) {
 
   usuarios[index] = {
     ...usuarios[index],
-    password: passwordNorm,
+    password: hashPassword(passwordNorm),
     debeCambiarPassword: false,
     passwordActualizadaEn: new Date().toISOString(),
   };
@@ -447,4 +448,40 @@ export function cambiarPassword(id, nuevaPassword) {
   });
 
   return usuarios[index];
+}
+
+export async function migrarPasswordsAHash() {
+  const usuarios = obtenerUsuarios();
+  const pendientes = usuarios.filter((u) => u && u.password && !esHashBcrypt(u.password));
+  if (pendientes.length === 0) {
+    return { migrados: 0, total: usuarios.length, fallos: 0 };
+  }
+
+  const resultados = await Promise.allSettled(
+    pendientes.map((u) => {
+      const hash = hashPassword(u.password);
+      if (!isFirebaseConfigured || !db) return Promise.resolve({ id: u.id, hash });
+      return setDoc(doc(db, 'usuarios', String(u.id)), { password: hash }, { merge: true }).then(
+        () => ({ id: u.id, hash })
+      );
+    })
+  );
+
+  const exitos = new Map();
+  resultados.forEach((resultado, i) => {
+    if (resultado.status === 'fulfilled') exitos.set(pendientes[i].id, resultado.value.hash);
+  });
+
+  if (exitos.size > 0) {
+    const lista = usuarios.map((u) => (exitos.has(u.id) ? { ...u, password: exitos.get(u.id) } : u));
+    guardarUsuarios(lista);
+    registrarBitacora({
+      tipo: TIPOS_BITACORA.USUARIO,
+      accion: 'migrar-passwords',
+      detalle: `Migró ${exitos.size} contraseña(s) al formato seguro (hash)`,
+      datos: { migrados: exitos.size, pendientes: pendientes.length - exitos.size },
+    });
+  }
+
+  return { migrados: exitos.size, total: usuarios.length, fallos: pendientes.length - exitos.size };
 }

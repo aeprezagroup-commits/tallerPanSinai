@@ -14,8 +14,9 @@ import {
 } from '../services/bitacoraService';
 import { leerMetricas } from '../services/metricasService';
 import {
-  obtenerPersonalVisible, obtenerUsuarios, crearCuentaSoporte, esSuperAdmin,
+  obtenerPersonalVisible, obtenerUsuarios, crearCuentaSoporte, esSuperAdmin, migrarPasswordsAHash,
 } from '../services/usuariosService';
+import { esHashBcrypt } from '../utils/passwords';
 import { obtenerFlotaVehiculos } from '../services/vehiculosService';
 import { db, isFirebaseConfigured } from '../firebase/config';
 import { getCountFromServer, collection } from 'firebase/firestore';
@@ -105,6 +106,8 @@ export default function SuperAdmin() {
   const [conteos, setConteos] = useState({});
   const [pendientes, setPendientes] = useState(0);
   const [aviso, setAviso] = useState('');
+  const [migrandoPass, setMigrandoPass] = useState(false);
+  const [, setTickPass] = useState(0);
 
   const [filtro, setFiltro] = useState('todo');
   const [busqueda, setBusqueda] = useState('');
@@ -155,6 +158,7 @@ export default function SuperAdmin() {
   const [errorSoporte, setErrorSoporte] = useState('');
   const haySoporte = obtenerUsuarios().some(esSuperAdmin);
   const modoInstalacion = !isSuperAdmin && !haySoporte;
+  const passPendientes = obtenerUsuarios().filter((u) => u && u.password && !esHashBcrypt(u.password)).length;
 
   const crearSoporte = async (e) => {
     e.preventDefault();
@@ -179,6 +183,35 @@ export default function SuperAdmin() {
       const mensaje = err?.message || 'No se pudo crear la cuenta de soporte.';
       setErrorSoporte(mensaje);
       addToast(mensaje, 'error');
+    }
+  };
+
+  const migrarPasswords = async () => {
+    const pendientes = obtenerUsuarios().filter((u) => u && u.password && !esHashBcrypt(u.password)).length;
+    if (pendientes === 0) {
+      addToast('Todas las contraseñas ya están en formato seguro.', 'success');
+      return;
+    }
+    const confirmado = await confirm({
+      title: '¿Migrar contraseñas al formato seguro?',
+      message: `Se guardarán ${pendientes} contraseña(s) en formato hash. Los usuarios seguirán entrando con su misma contraseña: sólo cambia la forma en que se almacena.`,
+      confirmText: 'Sí, migrar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmado) return;
+    setMigrandoPass(true);
+    try {
+      const r = await migrarPasswordsAHash();
+      setTickPass((t) => t + 1);
+      if (r.fallos > 0) {
+        addToast(`Se migraron ${r.migrados} contraseña(s) y ${r.fallos} fallaron. Reintenta la migración.`, 'error');
+      } else {
+        addToast(`${r.migrados} contraseña(s) migradas al formato seguro.`, 'success');
+      }
+    } catch (err) {
+      addToast(err?.message || 'No se pudo migrar las contraseñas.', 'error');
+    } finally {
+      setMigrandoPass(false);
     }
   };
 
@@ -412,6 +445,44 @@ export default function SuperAdmin() {
             Los contadores se envían agrupados una vez por minuto para no consumir de más.
             Origen: {metricas?.origen || '—'}
             {metricas?.origen === 'nuevo' ? ' (aún no hay mediciones)' : ''}
+          </div>
+        </section>
+
+        <section>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 12, flexWrap: 'wrap', marginBottom: 12,
+          }}>
+            <h2 style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.65, margin: 0 }}>
+              Seguridad de accesos
+            </h2>
+            <button
+              type="button"
+              onClick={migrarPasswords}
+              disabled={migrandoPass}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: 'transparent', color: 'var(--color-text-primary)',
+                border: '1px solid var(--color-border)', borderRadius: 8,
+                padding: '7px 11px', cursor: migrandoPass ? 'wait' : 'pointer',
+                fontSize: 12, opacity: migrandoPass ? 0.6 : 1,
+              }}
+              title="Guarda las contraseñas en formato seguro (hash) para que no sean legibles"
+            >
+              <TbShield /> {migrandoPass ? 'Migrando…' : 'Migrar contraseñas'}
+            </button>
+          </div>
+
+          <div style={{
+            ...caja, padding: 14, marginBottom: 14,
+            fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            {passPendientes === 0
+              ? <TbCircleCheck style={{ color: '#2fbf71', flexShrink: 0 }} />
+              : <TbLock style={{ color: '#e0a300', flexShrink: 0 }} />}
+            {passPendientes === 0
+              ? 'Todas las contraseñas están guardadas en formato seguro (hash).'
+              : `${passPendientes} contraseña(s) aún en texto plano. Migralas para que no sean legibles.`}
           </div>
         </section>
 

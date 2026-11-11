@@ -1,5 +1,25 @@
+import bcrypt from 'bcryptjs';
+
 export const PASSWORD_MINIMA = 8;
 export const PASSWORD_MAXIMA = 64;
+
+const PASSWORD_HASH_REGEX = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
+const COSTE_BCRYPT = 10;
+
+export function esHashBcrypt(valor) {
+  return typeof valor === 'string' && PASSWORD_HASH_REGEX.test(valor);
+}
+
+export function hashPassword(password) {
+  return bcrypt.hashSync(String(password ?? ''), COSTE_BCRYPT);
+}
+
+export function verificarPasswordAlmacenada(password, almacenada) {
+  if (esHashBcrypt(almacenada)) {
+    return bcrypt.compareSync(String(password ?? ''), almacenada);
+  }
+  return almacenada === String(password ?? '');
+}
 
 const MAYUSCULA = /[A-ZÁÉÍÓÚÑÜ]/;
 const ESPECIAL = /[^A-Za-z0-9ÁÉÍÓÚÑÜáéíóúñü]/;
