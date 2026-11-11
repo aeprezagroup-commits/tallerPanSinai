@@ -19,11 +19,9 @@ const ETAPAS = [
 
 export default function VehicleStatus() {
   const [query, setQuery] = useState('');
-  // Vista fila (tabla) o cuadrícula (tarjetas) de las unidades en el taller
   const [vistaUnidades, setVistaUnidades] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
   const [ordenes, setOrdenes] = useState([]);
 
-  // Escuchar órdenes en tiempo real
   useEffect(() => {
     const unsubscribe = escucharOrdenes((data) => {
       setOrdenes(data);
@@ -76,7 +74,6 @@ export default function VehicleStatus() {
   return (
     <div className="vehicle-status-page animate-fade-in" style={{ maxWidth: 960, margin: '0 auto' }}>
 
-      {/* Banner de Bienvenida del Módulo */}
       <div style={{
         background: 'linear-gradient(135deg, var(--color-accent-light), rgba(134, 153, 46, 0.03))',
         border: '1px solid var(--color-border-active)',
@@ -125,14 +122,11 @@ export default function VehicleStatus() {
         </div>
       </div>
 
-      {/* Buscador de Placa */}
       <div className="card" style={{ marginBottom: 16 }}>
         <form onSubmit={handleSearch}>
           <label className="form-label" style={{ marginBottom: 6 }}>
             Ingresa el número de placa o escanea el QR de la unidad:
           </label>
-          {/* La consulta se recalcula con cada placa; Limpiar restablece la
-              consulta y, con ella, el vehículo, la OT y el aviso de error. */}
           <div className="consulta-placa-bar">
             <div className="campo-placa">
               <input
@@ -188,7 +182,6 @@ export default function VehicleStatus() {
         </div>
       )}
 
-      {/* Estado vacío: sin búsqueda activa */}
       {!query.trim() && !vehiculo && !error && (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -205,11 +198,9 @@ export default function VehicleStatus() {
         </div>
       )}
 
-      {/* Resultados de la Unidad */}
       {vehiculo && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Ficha principal con Placa y Estado */}
           <div className="card" style={{
             background: 'linear-gradient(135deg, var(--color-bg-card), var(--color-bg-secondary))',
             border: '1px solid var(--color-border)'
@@ -217,7 +208,6 @@ export default function VehicleStatus() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                {/* Matrícula estilo placa salvadoreña */}
                 <div style={{
                   background: '#0d1321',
                   border: '2px solid var(--color-accent)',
@@ -246,7 +236,6 @@ export default function VehicleStatus() {
                 </div>
               </div>
 
-              {/* Estado actual con badge prominente */}
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>ESTADO EN EL TALLER:</div>
                 {ordenActual ? (
@@ -259,7 +248,6 @@ export default function VehicleStatus() {
               </div>
             </div>
 
-            {/* Stepper visual de etapas */}
             {ordenActual && (
               <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--color-border)' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 14 }}>
@@ -311,10 +299,8 @@ export default function VehicleStatus() {
             )}
           </div>
 
-          {/* Información detallada de la orden en curso */}
           {ordenActual ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 16 }}>
-              {/* Tarjeta de Trabajo */}
               <div className="card">
                 <div className="form-section-title" style={{ marginTop: 0 }}>
                   <IconoMascara className="icon" src="/iconos/taller.png" size={16} /> Detalle del Servicio Activo
@@ -351,7 +337,6 @@ export default function VehicleStatus() {
                 </div>
               </div>
 
-              {/* Ubicación y Acceso a la Orden de Trabajo */}
               <div className="card">
                 <div className="form-section-title" style={{ marginTop: 0 }}>
                   <IconoMascara className="icon" src="/iconos/ubicacion-taller.png" size={16} /> Ubicación en Taller
@@ -370,7 +355,6 @@ export default function VehicleStatus() {
                     <TbMapPin style={{ marginRight: 5, verticalAlign: -2, color: 'var(--color-accent)' }} /> <strong>Ubicación:</strong> Complejo Logístico Pan Sinaí, Bahía de Mantenimiento No. 3.
                   </div>
 
-                  {/* Cualquier rol con acceso puede abrir la orden desde aquí */}
                   {ordenActual.id && (
                     <Link
                       to={`/ordenes/${ordenActual.id}`}
@@ -399,7 +383,6 @@ export default function VehicleStatus() {
         </div>
       )}
 
-      {/* Unidades en el taller — vista fila o cuadrícula */}
       <div className="card" style={{ marginTop: 16 }}>
         <div className="form-section-title" style={{ marginTop: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <span><IconoMascara className="icon" src="/iconos/taller-reparacion.png" size={16} /> Unidades en el Taller ({ordenes.filter(o => o.estado !== 'entregado').length})</span>
@@ -491,7 +474,6 @@ export default function VehicleStatus() {
         )}
       </div>
 
-      {/* Pie con selector de áreas para cambiar de vista */}
       <div style={{
         marginTop: 24,
         padding: '12px 16px',

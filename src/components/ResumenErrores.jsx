@@ -1,15 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { TbAlertTriangle } from '../icons';
 
-/**
- * Resumen de errores AL INICIO del formulario.
- *
- * En cuanto aparece, la página sube hasta aquí y el recuadro toma el foco:
- * el usuario no tiene que bajar buscando qué campo falló. Se usa junto al
- * aviso de toast, que también sale arriba de la pantalla.
- *
- * @param {{errores?: Record<string, string|null|undefined>, titulo?: string}} props
- */
 export default function ResumenErrores({ errores, titulo = 'Revisa el formulario antes de continuar' }) {
   const lista = Object.values(errores || {}).filter(Boolean);
   const firma = lista.join('|');
@@ -17,7 +8,6 @@ export default function ResumenErrores({ errores, titulo = 'Revisa el formulario
 
   useEffect(() => {
     if (!firma) return;
-    // Scroll instantáneo: el resumen debe verse de inmediato, sin animación.
     const html = document.documentElement;
     const prev = html.style.scrollBehavior;
     html.style.scrollBehavior = 'auto';

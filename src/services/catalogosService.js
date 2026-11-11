@@ -1,14 +1,3 @@
-// CATÁLOGOS DEL SISTEMA — EDITABLES POR EL SUPER ADMIN
-// Rutas de camiones, áreas de taller y tareas del checklist.
-//
-// FUENTE DE VERDAD: Firestore (colección "catalogos", documentos
-//   rutas | areas | tareas).
-// RESPALDO: los valores que vienen en el código. Si la base todavía no
-//   tiene el documento —o no hay red— la aplicación sigue funcionando con
-//   esos valores, así que nunca se pierde el catálogo.
-//
-// La consola de soporte (/admin-secreto/bitacora) es la única interfaz que
-// escribe aquí: no hace falta tocar la base a mano.
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../firebase/config';
 import { aplicarAreas } from '../constants/areas';
@@ -21,11 +10,9 @@ const DOC_RUTAS = 'rutas';
 const DOC_AREAS = 'areas';
 const DOC_TAREAS = 'tareas';
 
-// Estado de la última carga (para que la consola muestre de dónde salió)
 let estado = { cargado: false, origen: 'respaldo', actualizadoEn: null, error: null };
 const oyentes = new Set();
 
-// Suscripción: la consola se entera cuando los catálogos cambian
 export function suscribirCatalogos(callback) {
   oyentes.add(callback);
   return () => oyentes.delete(callback);
@@ -68,13 +55,6 @@ function fechaMasReciente(...docs) {
   return fechas.length ? new Date(Math.max(...fechas)).toISOString() : null;
 }
 
-/**
- * Carga los tres catálogos desde Firestore y los aplica en memoria.
- * Se llama al arrancar la aplicación (no bloquea la interfaz) y después de
- * cada guardado. Nunca lanza: sin base, el sistema sigue con el respaldo.
- *
- * @returns {Promise<object>} estado de la carga
- */
 export async function cargarCatalogos() {
   const [rutas, areas, tareas] = await Promise.all([
     leerDocumento(DOC_RUTAS),
@@ -110,10 +90,6 @@ function registrarCambio(accion, detalle, datos) {
   });
 }
 
-/**
- * Guarda el catálogo de rutas de camiones.
- * @param {{predeterminadas: string[], porDepartamento: Record<string,string[]>, por?: string}} editor
- */
 export async function guardarCatalogoRutas({ predeterminadas, porDepartamento, por = '' } = {}) {
   const datos = {
     predeterminadas: Array.isArray(predeterminadas) ? predeterminadas : [],
@@ -132,10 +108,6 @@ export async function guardarCatalogoRutas({ predeterminadas, porDepartamento, p
   return datos;
 }
 
-/**
- * Guarda el catálogo de áreas del taller.
- * @param {{areas: string[], codigos: Record<string,string>, por?: string}} editor
- */
 export async function guardarCatalogoAreas({ areas, codigos, por = '' } = {}) {
   const datos = {
     areas: Array.isArray(areas) ? areas : [],
@@ -153,10 +125,6 @@ export async function guardarCatalogoAreas({ areas, codigos, por = '' } = {}) {
   return datos;
 }
 
-/**
- * Guarda el catálogo de tareas (checklist).
- * @param {{mantenimiento: object, empresa: object, genericas: object[], por?: string}} editor
- */
 export async function guardarCatalogoTareas({ mantenimiento, empresa, genericas, por = '' } = {}) {
   const datos = {
     mantenimiento: mantenimiento && typeof mantenimiento === 'object' ? mantenimiento : {},

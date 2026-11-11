@@ -1,17 +1,5 @@
-// CONSOLA DE AUDITORÍA — SUPER ADMINISTRACIÓN
-// Ruta OCULTA: no aparece en el menú lateral, ni en el hub de
-// administración, ni en el buscador Ctrl+K. Solo entra quien conoce la
-// dirección exacta y tiene sesión de administrador.
-//
-// Muestra:
-//   · Resumen del sistema (personal, flota, órdenes, gastos, fotos)
-//   · Consumo REAL de la aplicación (lecturas, escrituras, bytes, sesiones)
-//   · Bitácora completa con filtros (sesiones, altas, ediciones,
-//     eliminaciones y bajas de todo tipo)
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-// ICONOGRAFÍA UNIFICADA — un solo set (Lucide, trazo corporativo) para
-// toda la aplicación, vía src/icons.
 import {
   TbShield, TbArrowLeft, TbUsers, TbTruck, TbClipboardList,
   TbReceipt, TbImages, TbDatabase, TbGauge, TbSearch,
@@ -32,7 +20,6 @@ import { obtenerFlotaVehiculos } from '../services/vehiculosService';
 import { db, isFirebaseConfigured } from '../firebase/config';
 import { getCountFromServer, collection } from 'firebase/firestore';
 
-// Utilidades de presentación
 function formatoBytes(n) {
   const v = Number(n) || 0;
   if (v < 1024) return `${v} B`;
@@ -53,7 +40,6 @@ function fechaLegible(ms) {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-// Colores por tipo de evento
 const COLOR_TIPO = {
   sesion: '#4f8ef7',
   usuario: '#e0a300',
@@ -75,7 +61,6 @@ const FILTROS = [
   { id: 'eliminaciones', etiqueta: 'Eliminaciones', icono: <TbTrash /> },
 ];
 
-// Tarjeta de métrica
 function Tarjeta({ icono, etiqueta, valor, detalle, color }) {
   return (
     <div style={{
@@ -108,7 +93,6 @@ function Tarjeta({ icono, etiqueta, valor, detalle, color }) {
   );
 }
 
-// Página
 export default function SuperAdmin() {
   const navigate = useNavigate();
   const { currentUser, isSuperAdmin } = useAuth();
@@ -141,7 +125,6 @@ export default function SuperAdmin() {
       setTotalEventos(c);
       setPendientes(colaPendiente());
 
-      // Conteos baratos del resto de la base (solo números)
       if (isFirebaseConfigured && db) {
         const colecciones = ['ordenes_trabajo', 'gastos_vehiculo', 'vehiculos_fotos_base'];
         const resultados = await Promise.all(
@@ -163,13 +146,9 @@ export default function SuperAdmin() {
 
   useEffect(() => { recargar(); }, [recargar]);
 
-  // Personal del taller: la cuenta de soporte queda fuera de los conteos
   const usuarios = obtenerPersonalVisible();
   const flota = obtenerFlotaVehiculos();
 
-  // MODO DE INSTALACIÓN — mientras la cuenta de soporte no exista, el
-  // administrador puede crearla desde aquí (una sola vez). En cuanto existe,
-  // la ruta queda reservada al super administrador.
   const [formSoporte, setFormSoporte] = useState(false);
   const [nombreSoporte, setNombreSoporte] = useState('admin');
   const [passSoporte, setPassSoporte] = useState('');
@@ -196,8 +175,6 @@ export default function SuperAdmin() {
       setPassSoporte('');
       setFormSoporte(false);
       addToast(`Cuenta de soporte "${creado.nombre}" creada. Entra con esa cuenta para usar la consola.`, 'success');
-      // La ruta se reevalúa sola: con la cuenta existente, el administrador
-      // sale de la consola y solo entra el super administrador.
     } catch (err) {
       const mensaje = err?.message || 'No se pudo crear la cuenta de soporte.';
       setErrorSoporte(mensaje);
@@ -205,7 +182,6 @@ export default function SuperAdmin() {
     }
   };
 
-  // Filtrado en el cliente (evita depender de índices compuestos)
   const filtrados = eventos.filter((ev) => {
     if (filtro === 'eliminaciones') {
       const esBorrado = ev.accion === 'eliminar' || ev.accion === 'baja';
@@ -223,7 +199,6 @@ export default function SuperAdmin() {
 
   const aMostrar = filtrados.slice(0, visibles);
 
-  // Conteos por tipo para los botones de filtro
   const conteoTipo = (id) => {
     if (id === 'todo') return eventos.length;
     if (id === 'eliminaciones') {
@@ -242,7 +217,6 @@ export default function SuperAdmin() {
 
   const irAtras = () => navigate('/admin');
 
-  // Render
   const panel = { maxWidth: 1180, margin: '0 auto', padding: '24px 20px 60px' };
   const caja = {
     background: 'var(--color-bg-secondary)',
@@ -251,11 +225,7 @@ export default function SuperAdmin() {
   };
 
   return (
-    // Contenedor relativo: la consola vive dentro del Layout del sistema
-    // (menú lateral + barra superior), así que no debe fijar su propia
-    // altura de pantalla ni pelear con la barra superior pegajosa.
     <div style={{ background: 'var(--color-bg-primary)', color: 'var(--color-text-primary)' }}>
-      {/* Encabezado */}
       <header style={{
         borderBottom: '1px solid var(--color-border)',
         background: 'var(--color-bg-secondary)',
@@ -331,9 +301,6 @@ export default function SuperAdmin() {
           </div>
         )}
 
-        {/* ---------------------------------------------------------
-            MODO DE INSTALACIÓN — crear la cuenta de soporte
-           --------------------------------------------------------- */}
         {modoInstalacion && (
           <section style={{ ...caja, padding: '18px 18px 20px', marginBottom: 20, borderLeft: '3px solid #e0a300' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -400,14 +367,8 @@ export default function SuperAdmin() {
           </section>
         )}
 
-        {/* ---------------------------------------------------------
-            CATÁLOGOS EDITABLES (solo el super administrador)
-           --------------------------------------------------------- */}
         {isSuperAdmin && <PanelCatalogos />}
 
-        {/* ---------------------------------------------------------
-            RESUMEN
-           --------------------------------------------------------- */}
         <section style={{ marginBottom: 26 }}>
           <h2 style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.65, margin: '0 0 12px' }}>
             Resumen del sistema
@@ -429,9 +390,6 @@ export default function SuperAdmin() {
           </div>
         </section>
 
-        {/* ---------------------------------------------------------
-            CONSUMO REAL
-           --------------------------------------------------------- */}
         <section style={{ marginBottom: 26 }}>
           <h2 style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.65, margin: '0 0 12px' }}>
             <TbGauge style={{ marginRight: 8 }} />
@@ -457,9 +415,6 @@ export default function SuperAdmin() {
           </div>
         </section>
 
-        {/* ---------------------------------------------------------
-            BITÁCORA
-           --------------------------------------------------------- */}
         <section>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -483,7 +438,6 @@ export default function SuperAdmin() {
             </button>
           </div>
 
-          {/* Filtros */}
           <div style={{ ...caja, padding: 14, marginBottom: 14 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
               {FILTROS.map((f) => {
@@ -532,7 +486,6 @@ export default function SuperAdmin() {
             </div>
           </div>
 
-          {/* Lista */}
           <div style={caja}>
             {cargando ? (
               <div style={{ padding: 30, textAlign: 'center', opacity: 0.65, fontSize: 13 }}>
@@ -624,7 +577,6 @@ export default function SuperAdmin() {
           )}
         </section>
 
-        {/* Pie */}
         <footer style={{
           marginTop: 34, paddingTop: 16,
           borderTop: '1px solid var(--color-border)',

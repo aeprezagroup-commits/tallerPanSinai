@@ -39,10 +39,8 @@ import ModalPortal from '../components/ModalPortal';
 import ResumenErrores from '../components/ResumenErrores';
 import IconoMascara from '../components/IconoMascara';
 
-// Módulos del área de administración: /admin/personal y /admin/vehiculos
 export default function Admin({ seccion = 'personal' }) {
   const esPersonal = seccion !== 'vehiculos';
-  // La cuenta de soporte (superadmin) queda fuera de este listado
   const [usuarios, setUsuarios] = useState(obtenerPersonalVisible);
   const [flota, setFlota] = useState(obtenerFlotaVehiculos);
   const [busquedaVehiculo, setBusquedaVehiculo] = useState('');
@@ -52,15 +50,11 @@ export default function Admin({ seccion = 'personal' }) {
   const { addToast, confirm } = useToast();
   const { currentUser } = useAuth();
 
-  // Contraseña temporal recién generada: se muestra UNA sola vez al
-  // administrador para que se la entregue en mano a la persona.
   const [reinicioPassword, setReinicioPassword] = useState(null);
 
-  // Estados de errores de validación de formulario
   const [erroresUsuario, setErroresUsuario] = useState({});
   const [erroresVehiculo, setErroresVehiculo] = useState({});
 
-  // Estados formulario nuevo usuario (también usado para editar: usuarioEditando)
   const FORM_USUARIO_VACIO = {
     nombre: '',
     password: '',
@@ -71,15 +65,11 @@ export default function Admin({ seccion = 'personal' }) {
     rutas: []
   };
   const [nuevoUsuario, setNuevoUsuario] = useState(FORM_USUARIO_VACIO);
-  // Si se está editando un usuario existente, guarda su id
   const [usuarioEditando, setUsuarioEditando] = useState(null);
 
-  // Los formularios de alta (usuario y vehículo) permanecen ocultos hasta
-  // que se pida registrar algo nuevo: la pantalla abre con las listas.
   const [verFormUsuario, setVerFormUsuario] = useState(false);
   const [verFormVehiculo, setVerFormVehiculo] = useState(false);
 
-  // Estados formulario nuevo vehículo
   const [nuevoVehiculo, setNuevoVehiculo] = useState({
     placa: '',
     marca: '',
@@ -94,7 +84,6 @@ export default function Admin({ seccion = 'personal' }) {
     observaciones: ''
   });
 
-  // Modal de asignación: ruta / ubicación / centro de costo de una unidad
   const [asignacionVehiculo, setAsignacionVehiculo] = useState(null);
 
   const cargarDatos = () => {
@@ -102,8 +91,6 @@ export default function Admin({ seccion = 'personal' }) {
     setFlota(obtenerFlotaVehiculos());
   };
 
-  // Estado fotográfico por placa: las fotos se completan cuando la unidad
-  // ingresa al taller, así que faltar no es una alerta.
   const [fotosEstado, setFotosEstado] = useState({});
 
   const cargarEstadoFotos = async () => {
@@ -117,7 +104,6 @@ export default function Admin({ seccion = 'personal' }) {
 
   useEffect(() => {
     if (!esPersonal) cargarEstadoFotos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seccion]);
 
   useEffect(() => {
@@ -133,8 +119,6 @@ export default function Admin({ seccion = 'personal' }) {
     };
   }, []);
 
-  // ---- USUARIOS / MECÁNICOS ----
-  // Alterna una ruta en la zona del formulario (toggle)
   const toggleRuta = (ruta) => {
     setNuevoUsuario(prev => {
       const rutas = Array.isArray(prev.rutas) ? prev.rutas : [];
@@ -145,13 +129,10 @@ export default function Admin({ seccion = 'personal' }) {
     });
   };
 
-  // Carga un usuario existente en el formulario para editar su zona/datos
   const handleEditarUsuario = (u) => {
     setUsuarioEditando(u.id);
     setNuevoUsuario({
       nombre: u.nombre || '',
-      // La contraseña NUNCA se carga en el formulario: no se puede ver ni
-      // queda expuesta en el navegador. Vacío = conservar la actual.
       password: '',
       rol: u.rol || 'mecanico',
       cargo: u.cargo || '',
@@ -159,7 +140,6 @@ export default function Admin({ seccion = 'personal' }) {
       departamento: u.departamento || '',
       rutas: Array.isArray(u.rutas) ? u.rutas : []
     });
-    // Lleva el foco al formulario (arriba de la página)
     setVerFormUsuario(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -170,8 +150,6 @@ export default function Admin({ seccion = 'personal' }) {
     setVerFormUsuario(false);
   };
 
-  // Abre o cierra el formulario de alta desde el botón del encabezado.
-  // Al abrir, arranca en blanco (si había una edición en curso se descarta).
   const alternarFormularioNuevo = () => {
     if (!esPersonal) {
       setVerFormVehiculo(v => !v);
@@ -194,7 +172,6 @@ export default function Admin({ seccion = 'personal' }) {
       errores.nombre = 'Ya existe un usuario o técnico registrado con este nombre.';
     }
 
-    // Al EDITAR, si ingresa contraseña se valida. Al crear, se asigna la genérica automática.
     const cambiaPassword = usuarioEditando && password.length > 0;
     if (cambiaPassword) {
       const errorPassword = validarPassword(password);
@@ -208,7 +185,6 @@ export default function Admin({ seccion = 'personal' }) {
     }
     setErroresUsuario({});
 
-    // Toda escritura en la base compartida se anuncia antes de ejecutarse.
     const confirmado = await confirm({
       title: usuarioEditando ? '¿Guardar cambios del usuario?' : '¿Crear un usuario nuevo?',
       message: usuarioEditando
@@ -223,7 +199,6 @@ export default function Admin({ seccion = 'personal' }) {
     try {
       if (usuarioEditando) {
         const cambios = { ...nuevoUsuario, nombre };
-        // Sin contraseña nueva no se toca la que ya tiene.
         if (!password) delete cambios.password;
         actualizarUsuario(usuarioEditando, cambios);
         addToast(`Datos de "${nombre}" actualizados correctamente`, 'success');
@@ -278,11 +253,6 @@ export default function Admin({ seccion = 'personal' }) {
     cargarDatos();
   };
 
-  /**
-   * Reinicia la contraseña de una persona: genera una temporal y deja la
-   * cuenta marcada para que el sistema le obligue a cambiarla al ingresar.
-   * La temporal se muestra una sola vez; no se guarda en ningún historial.
-   */
   const handleReiniciarPassword = async (u) => {
     const confirmado = await confirm({
       title: '¿Reiniciar la contraseña?',
@@ -316,7 +286,6 @@ export default function Admin({ seccion = 'personal' }) {
     }
   };
 
-  // ---- FLOTA / VEHÍCULOS ----
   const handleCrearVehiculo = async (e) => {
     e.preventDefault();
     const errores = {};
@@ -353,7 +322,6 @@ export default function Admin({ seccion = 'personal' }) {
     }
     setErroresVehiculo({});
 
-    // Verificación de duplicado en flota activa
     const yaExiste = flota.some(v => normalizarPlaca(v.placa) === placa);
     if (yaExiste) {
       const confirmarActualizacion = await confirm({
@@ -365,7 +333,6 @@ export default function Admin({ seccion = 'personal' }) {
       });
       if (!confirmarActualizacion) return;
     } else {
-      // Alta nueva: se anuncia el registro antes de escribir en la flota.
       const confirmado = await confirm({
         title: '¿Registrar vehículo en la flota?',
         message: `Se dará de alta la placa "${placa}" (${marca} ${modelo}) en el catálogo del taller.`,
@@ -409,7 +376,6 @@ export default function Admin({ seccion = 'personal' }) {
     }
   };
 
-  // Guarda la nueva asignación de una unidad (reubicación en el país)
   const handleGuardarAsignacion = async (e) => {
     e.preventDefault();
     if (!asignacionVehiculo) return;
@@ -455,7 +421,6 @@ export default function Admin({ seccion = 'personal' }) {
 
     eliminarVehiculoCatalogo(placa);
 
-    // Ciclo de vida: el camión dado de baja pierde sus fotos
     try {
       const res = await eliminarFotosVehiculo(placa);
       const mb = res.bytesLiberados > 0
@@ -478,7 +443,6 @@ export default function Admin({ seccion = 'personal' }) {
     cargarEstadoFotos();
   };
 
-  // ---- DESCARGA Y SUBIDA CSV ----
   const handleDescargarPlantilla = () => {
     const csvContent = '\uFEFF' + generarPlantillaCSV();
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -504,7 +468,6 @@ export default function Admin({ seccion = 'personal' }) {
       cancelText: 'Cancelar',
       danger: false
     });
-    // Se libera el input en ambos caminos para poder volver a elegir el archivo.
     e.target.value = '';
     if (!confirmado) return;
 
@@ -536,7 +499,6 @@ export default function Admin({ seccion = 'personal' }) {
     v.departamento?.toLowerCase().includes(busquedaVehiculo.toLowerCase())
   );
 
-  // Personal filtrado por nombre, cargo, rol, teléfono o zona
   const qUsuario = busquedaUsuario.trim().toLowerCase();
   const usuariosFiltrados = usuarios.filter(u =>
     !qUsuario ||
@@ -547,12 +509,10 @@ export default function Admin({ seccion = 'personal' }) {
     zonaTexto(u).toLowerCase().includes(qUsuario)
   );
 
-  // Estado real del formulario de alta (sirve para el botón del encabezado)
   const formularioAbierto = esPersonal ? verFormUsuario || Boolean(usuarioEditando) : verFormVehiculo;
 
   return (
     <div className="animate-fade-in">
-      {/* Encabezado del módulo activo */}
       <div
         className="page-header"
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}
@@ -578,10 +538,8 @@ export default function Admin({ seccion = 'personal' }) {
         </button>
       </div>
 
-      {/* MÓDULO: GESTIÓN DE MECÁNICOS Y PERSONAL */}
       {esPersonal && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 16 }}>
-          {/* Formulario nuevo usuario — a la vista solo cuando se pide dar de alta */}
           {(verFormUsuario || usuarioEditando) && (
           <div className="card">
             <div className="form-section-title" style={{ marginTop: 0 }}>
@@ -691,13 +649,11 @@ export default function Admin({ seccion = 'personal' }) {
                   value={nuevoUsuario.telefono}
                   onChange={e => setNuevoUsuario({
                     ...nuevoUsuario,
-                    // Restricción de entrada: únicamente números.
                     telefono: e.target.value.replace(/\D/g, '').slice(0, 15)
                   })}
                 />
               </div>
 
-              {/* ---- ZONA DE OPERACIÓN (filtra los vehículos/órdenes que verá) ---- */}
               <div className="form-group" style={{ marginBottom: 9 }}>
                 <label className="form-label">Zona: Departamento</label>
                 <select
@@ -772,7 +728,6 @@ export default function Admin({ seccion = 'personal' }) {
           </div>
           )}
 
-          {/* Lista de mecánicos y personal */}
           <div className="card">
             <div className="form-section-title" style={{ marginTop: 0 }}>
               <IconoMascara className="icon" src="/iconos/registro.png" size={16} /> Personal Registrado en Pan Sinaí ({usuariosFiltrados.length})
@@ -885,10 +840,8 @@ export default function Admin({ seccion = 'personal' }) {
         </div>
       )}
 
-      {/* MÓDULO: BASE DE VEHÍCULOS Y PLANTILLA */}
       {!esPersonal && (
         <div>
-          {/* Barra de Acciones de Plantilla Masiva */}
           <div className="card" style={{ marginBottom: 20, background: 'linear-gradient(135deg, rgba(249,115,22,0.08), var(--color-bg-card))' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
               <div>
@@ -923,7 +876,6 @@ export default function Admin({ seccion = 'personal' }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 16 }}>
-            {/* Formulario para agregar vehículo individual — a la vista solo al dar de alta */}
             {verFormVehiculo && (
             <div className="card">
               <div className="form-section-title" style={{ marginTop: 0 }}>
@@ -1042,7 +994,6 @@ export default function Admin({ seccion = 'personal' }) {
                       value={nuevoVehiculo.conductorHabitual}
                       onChange={e => setNuevoVehiculo({
                         ...nuevoVehiculo,
-                        // Restricción de entrada: solo letras y espacios.
                         conductorHabitual: e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, '')
                       })}
                     />
@@ -1089,7 +1040,6 @@ export default function Admin({ seccion = 'personal' }) {
             </div>
             )}
 
-            {/* Listado de unidades registradas con QR y búsqueda */}
             <div className="card">
               <div className="form-section-title" style={{ marginTop: 0 }}>
                 <IconoMascara className="icon" src="/iconos/taller-reparacion.png" size={16} /> Flota Registrada ({flotaFiltrada.length})
@@ -1147,7 +1097,6 @@ export default function Admin({ seccion = 'personal' }) {
                             {v.centroCosto || centroCostoPorDepartamento(v.departamento) || 'S/CENTRO'}
                           </span>
                         </div>
-                        {/* Base fotográfica: se completa al ingresar la unidad al taller */}
                         <div style={{ fontSize: 10.5, marginTop: 4, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <span
                             className={`badge ${estFotos?.completo ? 'badge-finalizado' : 'badge-info'}`}
@@ -1209,7 +1158,6 @@ export default function Admin({ seccion = 'personal' }) {
         </div>
       )}
 
-      {/* MODAL DE ASIGNACIÓN: RUTA / UBICACIÓN / CENTRO DE COSTO */}
       {asignacionVehiculo && (
         <ModalPortal>
           <div className="modal-overlay" onClick={() => setAsignacionVehiculo(null)}>
@@ -1294,7 +1242,6 @@ export default function Admin({ seccion = 'personal' }) {
         </ModalPortal>
       )}
 
-      {/* MODAL PARA VER / IMPRIMIR QR DEL VEHÍCULO */}
       {qrModalVehiculo && (
         <ModalPortal>
           <div className="modal-overlay qr-print-parent" onClick={() => setQrModalVehiculo(null)}>
@@ -1311,7 +1258,6 @@ export default function Admin({ seccion = 'personal' }) {
                   {qrModalVehiculo.marca} {qrModalVehiculo.modelo} • Pan Sinaí
                 </div>
 
-                {/* Generación QR mediante API SVG estándar */}
                 <div style={{
                   background: '#fff',
                   padding: 16,
@@ -1345,7 +1291,6 @@ export default function Admin({ seccion = 'personal' }) {
         </ModalPortal>
       )}
 
-      {/* MODAL: CONTRASEÑA TEMPORAL TRAS EL REINICIO */}
       {reinicioPassword && (
         <ModalPortal>
           <div className="modal-overlay" onClick={() => setReinicioPassword(null)}>

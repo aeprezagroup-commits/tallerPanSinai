@@ -19,10 +19,6 @@ import StatusBadge from '../components/StatusBadge';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import IconoMascara from '../components/IconoMascara';
 
-// REGLA DEL SISTEMA: un vehículo tiene SOLO 4 fotos para toda su vida,
-// viviendo en la base (vehiculos_fotos_base). Aquí no se guarda NINGUNA
-// copia en la orden: se muestran las 4 vigentes y quien entrega puede
-// reemplazar cualquier costado (se quita la vieja y se pone la nueva).
 const LADOS_FICHA = [
   { key: 'frontal', num: 1, label: 'Frontal', vacio: 'Sin foto frontal' },
   { key: 'lateralIzquierdo', num: 2, label: 'Lateral Izq.', vacio: 'Sin foto lateral izq.' },
@@ -37,14 +33,12 @@ export default function Salida() {
   const [guardando, setGuardando] = useState(false);
   const [isCertOpen, setIsCertOpen] = useState(false);
   const [fechaSalidaTexto] = useState(() => new Date().toLocaleString('es-SV'));
-  // Vista fila (tabla) o cuadrícula (tarjetas) de unidades listas para entrega
   const [vista, setVista] = useState('fila');
 
   const [personaRetira, setPersonaRetira] = useState('');
   const [observacionesFinales, setObservacionesFinales] = useState('');
   const [recomendaciones, setRecomendaciones] = useState('');
 
-  // Las 4 fotos vigentes del vehículo (leídas de la base, nunca de la orden)
   const [fotosBase, setFotosBase] = useState({});
   const [cargandoFotos, setCargandoFotos] = useState(false);
   const [actualizandoLado, setActualizandoLado] = useState('');
@@ -63,15 +57,12 @@ export default function Salida() {
     return () => unsubscribe();
   }, []);
 
-  // Visibilidad por rol: un mecánico solo ve sus propias órdenes
   const ordenesVisibles = filtrarOrdenesPorUsuario(ordenes, currentUser);
 
-  // Solo vehículos listos para entrega o finalizados técnicamente
   const ordenesListas = ordenesVisibles.filter(o => o.estado === 'listo_entrega' || o.estado === 'finalizado');
   const otrasEnTaller = ordenesVisibles.filter(o => o.estado !== 'finalizado' && o.estado !== 'listo_entrega' && o.estado !== 'entregado');
   const ordenActual = ordenesVisibles.find(o => o.id === ordenSeleccionadaId);
 
-  // Cargar las 4 fotos vigentes de la base cada vez que se elige una unidad
   useEffect(() => {
     let vivo = true;
     const placa = ordenActual?.placa || '';
@@ -90,8 +81,6 @@ export default function Salida() {
     return () => { vivo = false; };
   }, [ordenActual?.placa]);
 
-  // desdeCamara=true fuerza la cámara (capture="environment" en móviles);
-  // sin esa opción se abre el selector de archivos para subir una foto.
   const pedirFotoLado = (lado, desdeCamara = false) => {
     ladoPendienteRef.current = lado;
     const inp = fotoInputRef.current;
@@ -102,8 +91,6 @@ export default function Salida() {
     inp.click();
   };
 
-  // Reemplaza UN costado: se quita la foto vieja de la base y se pone la nueva.
-  // Así el vehículo siempre queda con exactamente 4 fotos.
   const handleFotoLado = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -148,7 +135,6 @@ export default function Salida() {
       return;
     }
 
-    // Quien entrega es siempre el usuario con sesión iniciada
     const entregadoPor = currentUser?.nombre || 'Recepción de Taller';
 
     const confirmado = await confirm({
@@ -170,9 +156,6 @@ export default function Salida() {
         recomendaciones: recomendaciones.trim()
       });
 
-      // IMPORTANTE: aquí NO se guarda ninguna foto en la orden.
-      // La entrega se da fe con las MISMAS 4 fotos de la base del vehículo,
-      // que ya fueron mostradas y pudieron reemplazarse arriba.
       addToast(`¡Vehículo ${ordenActual?.placa || ''} entregado y orden cerrada con éxito!`, 'success');
       navigate('/admin/historial');
     } catch (err) {
@@ -200,7 +183,6 @@ export default function Salida() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
-        {/* Columna Izquierda: Selección de Vehículo */}
         <div className="card">
           <div className="form-section-title" style={{ marginTop: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
             <span><IconoMascara className="icon" src="/iconos/salida-taller.png" size={16} /> Unidades Listas para Entrega</span>
@@ -326,7 +308,6 @@ export default function Salida() {
           )}
         </div>
 
-        {/* Columna Derecha: Formulario de Cierre */}
         <div className="card">
           <form onSubmit={handleCerrarOrden}>
             <div className="form-section-title" style={{ marginTop: 0 }}>
@@ -349,7 +330,6 @@ export default function Salida() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    {/* El gasto de reparación solo lo registra y consulta la administración */}
                     {isAdmin && (
                       <>
                         <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Gasto de Reparación</div>
@@ -448,7 +428,6 @@ export default function Salida() {
                   placeholder="Nombre del motorista que retira"
                   value={personaRetira}
                   onChange={(e) => setPersonaRetira(
-                    // Restricción de entrada: únicamente letras y espacios.
                     e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, '')
                   )}
                   required
@@ -500,7 +479,6 @@ export default function Salida() {
               />
             </div>
 
-            {/* Las MISMAS 4 fotos de la base: quien entrega da fe con estas imágenes */}
             <div className="form-group" style={{ marginBottom: 20 }}>
               <label className="form-label">Fotos de Estado al Entregar</label>
               <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 10 }}>
@@ -578,7 +556,6 @@ export default function Salida() {
                             <TbCamera size={16} /> {lado.vacio}
                           </div>
                         )}
-                        {/* Siempre las DOS opciones: tomar desde cámara o subir */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 8 }}>
                           <button
                             type="button"
@@ -642,7 +619,6 @@ export default function Salida() {
         </div>
       </div>
 
-      {/* Modal Certificado de Despacho e Inspección Oficial */}
       {ordenActual && (
         <InspectionCertificateModal
           isOpen={isCertOpen}

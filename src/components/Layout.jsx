@@ -17,8 +17,6 @@ import Sidebar from './Sidebar';
 
 
 export default function Layout() {
-  // Inicialización inteligente: en dispositivos móviles (< 768px) inicia cerrado;
-  // en tablets, laptops y pantallas de escritorio inicia abierto de forma ensamblada
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
       if (window.innerWidth < 768) return false;
@@ -30,9 +28,6 @@ export default function Layout() {
 
   const location = useLocation();
 
-  // Cambio de pantalla: se vuelve al inicio de la página. Sin esto, el scroll
-  // de la vista anterior queda guardado y el encabezado de la nueva pantalla
-  // arranca debajo de la barra superior pegajosa.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [location.pathname]);
@@ -65,7 +60,6 @@ export default function Layout() {
         e.preventDefault();
         setCommandPaletteOpen(prev => !prev);
       }
-      // Cerrar sidebar con Escape
       if (e.key === 'Escape') {
         setSidebarOpen(prev => {
           if (prev) {
@@ -100,31 +94,25 @@ export default function Layout() {
     }
   };
 
-  // Sin sesión iniciada no se accede al panel de trabajo del taller
   if (!currentUser) {
     return <Navigate to="/" replace />;
   }
 
   return (
     <div className="app-layout">
-      {/* Overlay oscuro para pantallas pequeñas / móviles */}
       <div
         className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`}
         onClick={closeSidebar}
       />
 
-      {/* Sidebar con animación de entrada / salida */}
       <Sidebar
         sidebarOpen={sidebarOpen}
         closeSidebar={closeSidebar}
       />
 
-      {/* Contenido Principal con adaptación de margen dinámica */}
       <main className={`main-content ${sidebarOpen ? 'sidebar-visible' : 'sidebar-collapsed'}`}>
-        {/* Top Bar Enterprise unificado y responsivo */}
         <header className="enterprise-topbar">
           <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Botón para ocultar / mostrar menú */}
             <button
               type="button"
               className="topbar-sidebar-toggle-btn"
@@ -136,7 +124,6 @@ export default function Layout() {
             </button>
           </div>
 
-          {/* Indicador de Módulo Actual */}
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center' }}>
             <span style={{
               fontSize: 11,
@@ -180,7 +167,6 @@ export default function Layout() {
               <TbCpu />
             </button>
 
-            {/* Chip del Operador Logueado */}
             <div className="topbar-operator-chip" title={`Usuario activo: ${currentUser?.nombre || 'Personal'}`}
               style={{ transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
             >
@@ -202,7 +188,6 @@ export default function Layout() {
               </div>
             </div>
 
-            {/* Botón Salir del Sistema en Topbar */}
             <button
               type="button"
               className="topbar-icon-btn"
@@ -239,7 +224,6 @@ export default function Layout() {
         </div>
       </main>
 
-      {/* Global Command Palette Spotlight */}
       <CommandPalette
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}

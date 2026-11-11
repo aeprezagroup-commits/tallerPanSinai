@@ -86,13 +86,11 @@ export default function Dashboard() {
     return () => observador.disconnect();
   }, [loading]);
 
-  // Lista de mecánicos registrados
   const mecanicosPersonal = useMemo(() => {
     const todos = obtenerPersonalVisible();
     return todos.filter(u => u.rol === 'mecanico' && u.activo !== false);
   }, []);
 
-  // Métricas calculadas para administración de flota y taller
   const stats = useMemo(() => {
     const total = ordenes.length;
     const enEspera = ordenes.filter(o => o.estado === 'ingresado').length;
@@ -102,13 +100,11 @@ export default function Dashboard() {
     const entregados = ordenes.filter(o => o.estado === 'entregado').length;
     const activosEnTaller = ordenes.filter(o => o.estado !== 'entregado').length;
 
-    // Distribución de unidades y reporte histórico de fallas e incidencias por área de taller
     const mapaAreas = {};
     const mapaFallasHistoricas = {};
     let totalFallasContadas = 0;
 
     ordenes.forEach(o => {
-      // Registrar todas las áreas involucradas en la orden o su área principal
       const areasDeOrden = Array.isArray(o.areasTrabajo) && o.areasTrabajo.length > 0
         ? o.areasTrabajo
         : [o.areaPrincipal || 'General'];
@@ -156,7 +152,6 @@ export default function Dashboard() {
       .sort((a, b) => b.totalFallas - a.totalFallas);
     const maxFallasArea = Math.max(...reporteFallasPorArea.map(f => f.totalFallas), 1);
 
-    // Costo total invertido en taller
     let gastoTotalFlota = 0;
     let gastoRepuestosFlota = 0;
     let gastoManoObraFlota = 0;
@@ -180,10 +175,8 @@ export default function Dashboard() {
 
     const tiempoPromedioHoras = countConTiempo > 0 ? (sumaTiempoHoras / countConTiempo).toFixed(1) : '2.8';
 
-    // Eficiencia operativa / resolución
     const tasaFinalizacion = total > 0 ? Math.round(((finalizados + entregados) / total) * 100) : 100;
 
-    // 1. ANÁLISIS DE RUTAS QUE MÁS RECURSOS HAN GASTADO
     const mapaRutas = {};
     ordenes.forEach(o => {
       const rutaNom = o.ruta || 'Ruta sin clasificar';
@@ -214,7 +207,6 @@ export default function Dashboard() {
       .map(r => ({ ...r, totalUnidadesDistintas: r.unidades.size }))
       .sort((a, b) => b.totalGasto - a.totalGasto);
 
-    // 2. ANÁLISIS GEOGRÁFICO POR DEPARTAMENTOS
     const mapaDeptos = {};
     ordenes.forEach(o => {
       const dep = o.departamento || 'San Salvador';
@@ -232,7 +224,6 @@ export default function Dashboard() {
     const deptosOrdenados = Object.values(mapaDeptos).sort((a, b) => b.totalGasto - a.totalGasto);
     const maxGastoDepto = Math.max(...deptosOrdenados.map(d => d.totalGasto), 1);
 
-    // 3. ANÁLISIS DE UNIDADES / VEHÍCULOS QUE MÁS GASTAN RECURSOS
     const mapaVehiculos = {};
     ordenes.forEach(o => {
       const placa = o.placa || 'S/P';
@@ -260,7 +251,6 @@ export default function Dashboard() {
       .sort((a, b) => b.totalGasto - a.totalGasto)
       .slice(0, 5);
 
-    // 4. CONTROL ADMINISTRATIVO DEL TRABAJO DE CADA EMPLEADO MECÁNICO
     const rendimientoMecanicos = mecanicosPersonal.map(mec => {
       const ordenesMec = ordenes.filter(o => o.mecanicoAsignado === mec.nombre || o.mecanicoReceptor === mec.nombre);
       const enProcesoMec = ordenesMec.find(o => o.estado === 'en_proceso' && o.mecanicoAsignado === mec.nombre);
@@ -276,7 +266,6 @@ export default function Dashboard() {
         recursosManejados += Number(o.costoTotal) || 0;
       });
 
-      // Cálculo de efectividad (si terminó en tiempo esperado o tasa de resolución)
       const efectividad = ordenesMec.length > 0
         ? Math.min(Math.round((completadas / Math.max(ordenesMec.length, 1)) * 100) + 15, 100)
         : 95;
@@ -336,17 +325,12 @@ export default function Dashboard() {
     );
   }
 
-  // Filtrado opcional de rutas por departamento
   const rutasFiltradas = filtroDepto === 'TODOS'
     ? stats.rutasOrdenadas
     : stats.rutasOrdenadas.filter(r => r.departamento === filtroDepto);
 
   const maxGastoRuta = Math.max(...(rutasFiltradas.map(r => r.totalGasto) || [1]), 1);
 
-  /*
-  DONUT — Distribución de órdenes por estado
-     (cálculo directo, después del retorno temprano de carga)
-  */
   const donut = (() => {
     const colores = {
       ingresado: '#fbbf24',
@@ -363,8 +347,6 @@ export default function Dashboard() {
       pausado: 'Pausadas / repuestos',
     };
 
-    // Agrupa por "clase" para juntar variantes (pend. diagnóstico, esperando
-    // repuestos, pend. autorización… → todas cuentan como pausadas)
     const conteo = { ingresado: 0, en_proceso: 0, finalizado: 0, entregado: 0, pausado: 0 };
     ordenes.forEach((o) => {
       const clase = ESTADOS_CONFIG[o.estado]?.clase || 'ingresado';
@@ -372,7 +354,7 @@ export default function Dashboard() {
     });
 
     const total = ordenes.length;
-    const circ = 2 * Math.PI * 74; // r = 74
+    const circ = 2 * Math.PI * 74; 
     let acumulado = 0;
 
     const items = Object.keys(conteo)
@@ -395,7 +377,6 @@ export default function Dashboard() {
     return { total, circ, items };
   })();
 
-  /* EXPORTACIONES DEL MÓDULO REPORTES (CSV compatible con Excel) */
   const descargarCSV = (nombreArchivo, encabezados, filas) => {
     if (!filas.length) return;
     const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
@@ -465,7 +446,6 @@ export default function Dashboard() {
 
   return (
     <div className="animate-fade-in">
-      {/* Barra de Telemetría Superior */}
       <div className="telemetry-bar">
         <div className="telemetry-item">
           <span className="status-dot" style={{ background: '#22c55e' }} />
@@ -480,7 +460,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Header Ejecutivo — Módulo Reportes */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <BotonVolver a="/admin" etiqueta="Volver al Panel" />
@@ -501,7 +480,6 @@ export default function Dashboard() {
         ))}
       </nav>
 
-      {/* Franja de KPIs ejecutivos — panel de control del taller */}
       <div className="kpi-color-grid">
         <div className="kpi-color-card kpi-verde">
           <div className="kpi-color-top">
@@ -548,7 +526,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Gráfico: órdenes por estado */}
       <div id="rep-estados" className="card" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <TbChartBar style={{ color: 'var(--color-accent)', fontSize: 20 }} />
@@ -607,7 +584,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Exportaciones del módulo Reportes */}
       <div id="rep-exportaciones" className="card" style={{ marginBottom: 24 }}>
         <div className="form-section-title" style={{ marginTop: 0 }}>
           <IconoMascara className="icon" src="/iconos/taller-balances.png" size={16} /> Exportaciones (CSV / Excel)
@@ -631,7 +607,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Tarjetas de Estadísticas Operativas */}
       <div id="rep-operativo" className="stats-grid">
         <div className="stat-card orange">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -706,7 +681,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Distribución de Unidades en Taller por Área de Trabajo */}
       <div id="rep-areas" className="card" style={{ marginTop: 24, marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -774,7 +748,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* REPORTE HISTÓRICO DE FALLAS E INCIDENCIAS POR ÁREA TÉCNICA */}
       <div id="rep-fallas" className="card" style={{ marginTop: 24, marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -847,7 +820,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* SECCIÓN 1: Rutas de Distribución con Mayor Gasto de Recursos */}
       <div id="rep-rutas" className="card" style={{ marginTop: 24, marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: 16 }}>
           <div>
@@ -961,9 +933,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* SECCIÓN 2: Gasto por Departamento & Top Unidades que Más Gastan */}
       <div id="rep-gastos" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))', gap: 20, marginBottom: 24 }}>
-        {/* Distribución por Departamentos */}
         <div className="card">
           <div className="card-header" style={{ marginBottom: 14 }}>
             <div>
@@ -1022,7 +992,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Top 5 Unidades con Mayor Consumo de Recursos */}
         <div className="card">
           <div className="card-header" style={{ marginBottom: 14 }}>
             <div>
@@ -1089,7 +1058,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* SECCIÓN 3: Control Administrativo y Productividad de Empleados Mecánicos */}
       <div id="rep-personal" className="card" style={{ marginBottom: 24 }}>
         <div className="card-header" style={{ marginBottom: 16 }}>
           <div>
@@ -1186,7 +1154,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* SECCIÓN 4: Monitoreo en Vivo de Vehículos en Taller */}
       <div id="rep-taller" style={{ marginTop: 24, marginBottom: 40 }}>
         <div className="card-header">
           <div>

@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-/**
- * ModalPortal: Renderiza cualquier modal directamente en document.body
- * para evitar que quede atrapado en el stacking context de la topbar o del layout.
- * Además, bloquea el scroll de la página de fondo mientras el modal está activo.
- */
 export default function ModalPortal({ children }) {
   const [mounted, setMounted] = useState(false);
 

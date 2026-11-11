@@ -2,10 +2,6 @@ import { useState } from 'react';
 import { TbRotateClockwise, TbX } from '../icons';
 import ModalPortal from './ModalPortal';
 
-/**
- * Reactivar una OT que fue finalizada por error (vuelve a "En Proceso").
- * Solo encargado de taller / administración y con JUSTIFICACIÓN OBLIGATORIA.
- */
 export default function ReactivarOrdenModal({ isOpen, onClose, orden, onConfirmar, guardando = false }) {
   const [justificacion, setJustificacion] = useState('');
   const [error, setError] = useState('');

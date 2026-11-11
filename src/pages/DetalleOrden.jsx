@@ -37,8 +37,6 @@ const LADOS_FICHA = [
   { key: 'trasera', num: 4, label: 'Trasera', tag: 'Posterior', vacio: 'Sin foto trasera' }
 ];
 
-// Documentos de gasto: facturas de proveedor o vales de almacén.
-// Compatibilidad: si no existe facturas[], se deriva de los campos antiguos.
 const docsDesdeLegacy = (f) => {
   if (Array.isArray(f?.facturas)) return f.facturas;
   const provs = (Array.isArray(f?.proveedores) && f.proveedores.length)
@@ -66,7 +64,6 @@ export default function DetalleOrden() {
   const navigate = useNavigate();
   const { addToast, confirm } = useToast();
   const { currentUser, isAdmin } = useAuth();
-  // Una orden guardada solo la modifica el encargado de taller o el administrador
   const puedeModificar = puedeModificarOrden(currentUser);
   const [mecanicos] = useState(() => obtenerMecanicosActivos());
 
@@ -77,10 +74,8 @@ export default function DetalleOrden() {
   const [isCertOpen, setIsCertOpen] = useState(false);
   const [isFinalizacionOpen, setIsFinalizacionOpen] = useState(false);
   const [guardandoFinalizacion, setGuardandoFinalizacion] = useState(false);
-  // Reactivación de OT finalizada por error (encargado/admin, justificación obligatoria)
   const [isReactivarOpen, setIsReactivarOpen] = useState(false);
   const [guardandoReactivar, setGuardandoReactivar] = useState(false);
-  // Modal profesional de transición de estado autorizada
   const [modalTransicion, setModalTransicion] = useState({
     abierto: false,
     nuevoEstado: '',
@@ -88,7 +83,6 @@ export default function DetalleOrden() {
     motivo: '',
     guardando: false
   });
-  // Base fotográfica del vehículo (estado ACTUAL de los 4 costados, compartida entre órdenes)
   const [fotosBase, setFotosBase] = useState(null);
   const [ladoPendiente, setLadoPendiente] = useState(null);
   const baseInputRef = useRef(null);
@@ -103,8 +97,6 @@ export default function DetalleOrden() {
     return () => { cancelado = true; };
   }, [orden?.placa]);
 
-  // desdeCamara=true fuerza la cámara (capture="environment" en móviles);
-  // sin esa opción se abre el selector de archivos para subir una foto.
   const actualizarFotoBase = (lado, desdeCamara = false) => {
     setLadoPendiente(lado);
     const inp = baseInputRef.current;
@@ -168,7 +160,6 @@ export default function DetalleOrden() {
     setFormEdit(prev => ({ ...prev, [name]: value }));
   };
 
-  // Mecánicos de apoyo (lista con botón + para agregar más)
   const apoyosForm = (Array.isArray(formEdit.mecanicosApoyo) && formEdit.mecanicosApoyo.length > 0)
     ? formEdit.mecanicosApoyo
     : (formEdit.mecanicoAsignado2 ? [formEdit.mecanicoAsignado2] : []);
@@ -182,7 +173,6 @@ export default function DetalleOrden() {
   const agregarApoyoForm = () => setApoyosForm([...slotsApoyoForm, '']);
   const quitarApoyoForm = (i) => setApoyosForm(slotsApoyoForm.filter((_, j) => j !== i));
 
-  // Documentos de gasto: facturas (Proveedor + DTE) o vales de Almacén
   const docsForm = docsDesdeLegacy(formEdit);
   const sumaDocs = docsForm.reduce((s, d) => s + (parseFloat(d.total) || 0), 0);
   const agregarDoc = (tipo) => setFormEdit(prev => ({
@@ -201,7 +191,6 @@ export default function DetalleOrden() {
   }));
 
   const handleGuardar = async () => {
-    // Validación de integridad de datos del vehículo
     const placaNorm = normalizarPlaca(formEdit.placa);
     const marcaNorm = (formEdit.marca || '').trim();
     const modeloNorm = (formEdit.modelo || '').trim();
@@ -241,7 +230,6 @@ export default function DetalleOrden() {
       return;
     }
 
-    // Confirmación previa: los cambios se guardan en la orden del taller.
     const confirmadoEdicion = await confirm({
       title: '¿Guardar cambios de la orden?',
       message: `Se actualizará la orden ${formatoOT(orden)} (${orden?.placa || 'unidad'}) con los datos modificados.`,
@@ -253,7 +241,6 @@ export default function DetalleOrden() {
 
     try {
       const cMo = Math.max(0, parseFloat(formEdit.costoManoObra) || 0);
-      // Documentos de gasto válidos (con proveedor/vale/detalle/monto)
       const docsNorm = docsForm
         .filter(d => (d.proveedor || '').trim() || (d.vale || '').trim() || (d.detalle || '').trim() || parseFloat(d.total))
         .map(d => ({
@@ -270,7 +257,6 @@ export default function DetalleOrden() {
         return;
       }
 
-      // El total de repuestos es la suma de facturas y vales
       const cRep = docsNorm.reduce((s, d) => s + d.total, 0);
       const resumenDocs = docsNorm
         .map(d => `${d.tipo === 'almacen'
@@ -282,7 +268,6 @@ export default function DetalleOrden() {
         .map(d => ({ nombre: d.proveedor, dte: d.dte }));
 
       await actualizarOrden(id, {
-        // placa ya validada y normalizada arriba (sin guiones, en mayúsculas)
         placa: placaNorm,
         marca: formEdit.marca,
         modelo: formEdit.modelo,
@@ -292,15 +277,12 @@ export default function DetalleOrden() {
         kilometraje: formEdit.kilometraje ? Number(formEdit.kilometraje) : (orden.kilometraje || null),
         departamento: formEdit.departamento || orden.departamento,
         ruta: formEdit.ruta || orden.ruta,
-        // Los costos solo los carga y modifica la administración
         ...(isAdmin ? {
           costoRepuestos: cRep,
           costoManoObra: cMo,
           costoTotal: cRep + cMo,
           detalleRepuestos: resumenDocs,
-          // Documentos de gasto: facturas de proveedor y vales de almacén
           facturas: docsNorm,
-          // Compatibilidad con vistas que leen los campos antiguos
           proveedores: provNorm,
           proveedor: provNorm[0]?.nombre || '',
           dte: provNorm[0]?.dte || '',
@@ -367,7 +349,6 @@ export default function DetalleOrden() {
     }
   };
 
-  // Formulario de finalización: trabajo realizado y vale de bodega
   const handleFinalizarOrden = async (detalle) => {
     if (!puedeCambiarEstadoActividad(orden, currentUser)) {
       addToast('Solo el encargado de taller, administración o el mecánico asignado a esta OT puede cambiar los estados.', 'warning');
@@ -388,7 +369,6 @@ export default function DetalleOrden() {
     }
   };
 
-  // Reactivar una OT finalizada por error: vuelve a "En Proceso" (solo encargado/admin)
   const handleReactivar = async (justificacion) => {
     setGuardandoReactivar(true);
     try {
@@ -415,7 +395,6 @@ export default function DetalleOrden() {
 
   if (!orden) return null;
 
-  // Regla de negocio: un mecánico solo puede ver sus propias órdenes
   if (!puedeVerOrden(orden, currentUser)) {
     return (
       <div className="animate-fade-in">
@@ -435,7 +414,6 @@ export default function DetalleOrden() {
 
   return (
     <div className="animate-fade-in">
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <BotonVolver a="/ordenes" etiqueta="Volver a Órdenes" margen={false} />
@@ -462,7 +440,6 @@ export default function DetalleOrden() {
         </div>
 
         <div className="btn-group">
-          {/* Botón Acta de Taller Imprimible */}
           <button
             type="button"
             className="btn btn-secondary"
@@ -502,7 +479,6 @@ export default function DetalleOrden() {
         </div>
       </div>
 
-      {/* Estado actual + cambiar estado seguro con validación */}
       <div className="card" style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -524,7 +500,6 @@ export default function DetalleOrden() {
               </span>
             ) : (
               (TRANSICIONES_VALIDAS[orden.estado] || []).map((trans) => {
-                // Reabrir una OT finalizada por error = REACTIVACIÓN (encargado/admin con justificación)
                 const esReactivacion = trans === 'en_proceso' && (orden.estado === 'finalizado' || orden.estado === 'listo_entrega');
                 if (esReactivacion && !puedeReactivarOrden(currentUser)) return null;
 
@@ -549,7 +524,6 @@ export default function DetalleOrden() {
                     className={`btn btn-sm ${etiqueta.cls}`}
                     onClick={() => {
                       if (trans === 'finalizado') {
-                        // El mecánico no puede cerrar una OT incompleta: solo el encargado con justificación
                         if (currentUser?.rol === 'mecanico' && !ordenCompleta(orden)) {
                           addToast(
                             'No puedes cerrar la OT: quedan actividades pendientes. Solo el encargado de taller puede cerrarla con justificación.',
@@ -557,16 +531,13 @@ export default function DetalleOrden() {
                           );
                           return;
                         }
-                        // Al finalizar exige el formulario de trabajo realizado + vale de bodega
                         setIsFinalizacionOpen(true);
                         return;
                       }
                       if (esReactivacion) {
-                        // Reactivar exige justificación obligatoria
                         setIsReactivarOpen(true);
                         return;
                       }
-                      // En lugar de window.prompt, abrir modal nativo profesional
                       setModalTransicion({
                         abierto: true,
                         nuevoEstado: trans,
@@ -585,9 +556,7 @@ export default function DetalleOrden() {
         </div>
       </div>
 
-      {/* Detalles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 20 }}>
-        {/* Datos del vehículo */}
         <div className="card">
           <div className="form-section-title" style={{ marginTop: 0 }}>
             <IconoMascara className="icon" src="/iconos/taller-reparacion.png" size={16} /> Datos del Vehículo y Operación
@@ -701,7 +670,6 @@ export default function DetalleOrden() {
           )}
         </div>
 
-        {/* Registro Administrativo de Costos y Recursos (solo administración) */}
         {isAdmin && (
           <div className="card">
             <div className="form-section-title" style={{ marginTop: 0 }}>
@@ -712,7 +680,6 @@ export default function DetalleOrden() {
             </p>
             {editando ? (
               <>
-                {/* Resumen horizontal: suma de facturas/vales y total */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 12, alignItems: 'end' }}>
                   <div className="form-group" style={{ gap: 4 }}>
                     <label className="form-label">Repuestos e Insumos ($ USD)</label>
@@ -736,7 +703,6 @@ export default function DetalleOrden() {
                   </div>
                 </div>
 
-                {/* Botones: facturas de proveedor y vales de almacén */}
                 <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap', alignItems: 'center' }}>
                   <span className="form-label" style={{ margin: 0 }}>Agregar documento:</span>
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => agregarDoc('proveedor')}>
@@ -750,7 +716,6 @@ export default function DetalleOrden() {
                   </span>
                 </div>
 
-                {/* Lista de documentos: cada factura/vale con sus campos */}
                 <div style={{ marginTop: 12 }}>
                   {docsForm.length === 0 && (
                     <div style={{
@@ -776,7 +741,6 @@ export default function DetalleOrden() {
                         marginBottom: 10
                       }}
                     >
-                      {/* Tipo de documento: Proveedor o Almacén */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                         <div className="btn-group">
                           <button
@@ -813,7 +777,6 @@ export default function DetalleOrden() {
                         </button>
                       </div>
 
-                      {/* Campos según el tipo seleccionado */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 8, alignItems: 'end' }}>
                         {doc.tipo === 'almacen' ? (
                           <div className="form-group" style={{ gap: 4 }}>
@@ -964,7 +927,6 @@ export default function DetalleOrden() {
           </div>
         )}
 
-        {/* Recepción */}
         <div className="card">
           <div className="form-section-title" style={{ marginTop: 0 }}>
             <IconoMascara className="icon" src="/iconos/personal-taller.png" size={16} /> Recepción
@@ -1001,7 +963,6 @@ export default function DetalleOrden() {
           )}
         </div>
 
-        {/* Información capturada en la recepción del vehículo */}
         <div className="card">
           <div className="form-section-title" style={{ marginTop: 0 }}>
             <IconoMascara className="icon" src="/iconos/registro.png" size={16} /> Recepción: Motivo de Ingreso
@@ -1060,7 +1021,6 @@ export default function DetalleOrden() {
           )}
         </div>
 
-        {/* Asignación de taller */}
         <div className="card">
           <div className="form-section-title" style={{ marginTop: 0 }}>
             <IconoMascara className="icon" src="/iconos/taller.png" size={16} /> Taller
@@ -1166,7 +1126,6 @@ export default function DetalleOrden() {
         </div>
       </div>
 
-      {/* MÓDULO DE ACTIVIDADES DE REPARACIÓN Y MANO DE OBRA */}
       <div className="card" style={{ marginTop: 20 }}>
         <div className="form-section-title" style={{ marginTop: 0 }}>
           <IconoMascara className="icon" src="/iconos/llave-inglesa.png" size={16} /> Actividades Técnicas de Reparación ({orden.actividades?.length || 0})
@@ -1227,7 +1186,6 @@ export default function DetalleOrden() {
         )}
       </div>
 
-      {/* TRAZABILIDAD Y AUDITORÍA DE ESTADOS (HISTORIAL) */}
       <div className="card" style={{ marginTop: 20 }}>
         <div className="form-section-title" style={{ marginTop: 0 }}>
           <IconoMascara className="icon" src="/iconos/historial.png" size={16} /> Expediente de Trazabilidad y Auditoría de Estados
@@ -1280,7 +1238,6 @@ export default function DetalleOrden() {
         )}
       </div>
 
-      {/* Base fotográfica del vehículo: ESTADO ACTUAL de los 4 costados (actualizable) */}
       <div className="card" style={{ marginTop: 20 }}>
         <div className="form-section-title" style={{ marginTop: 0 }}>
           <TbCamera className="icon" /> Inspección Perimetral 360° — Estado Actual de la Unidad
@@ -1304,10 +1261,6 @@ export default function DetalleOrden() {
         />
         <div className="side-photos-grid">
           {LADOS_FICHA.map((lado) => {
-            // FUENTE ÚNICA: las 4 fotos viven en la base del vehículo.
-            // La orden no guarda copia; siempre se muestra la foto VIGENTE.
-            // El segundo término es solo para órdenes antiguas que aún traen
-            // datos semilla (se limpian solos cuando no hay nada en la base).
             const foto = fotosBase?.[lado.key] || orden.fotosLados?.[lado.key];
             return (
               <div key={lado.key} className="side-photo-card">
@@ -1325,7 +1278,6 @@ export default function DetalleOrden() {
                     {lado.vacio}
                   </div>
                 )}
-                {/* Siempre las DOS opciones: tomar desde cámara o subir */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 8 }}>
                   <button
                     type="button"
@@ -1378,7 +1330,6 @@ export default function DetalleOrden() {
         </div>
       </div>
 
-      {/* Fotos adicionales de evidencia */}
       {(orden.fotosIngreso?.length > 0 || orden.fotosSalida?.length > 0) && (
         <div className="card" style={{ marginTop: 20 }}>
           <div className="form-section-title" style={{ marginTop: 0 }}>
@@ -1411,7 +1362,6 @@ export default function DetalleOrden() {
         </div>
       )}
 
-      {/* Datos de salida si ya fue entregado */}
       {orden.estado === 'entregado' && (
         <div className="card" style={{ marginTop: 20 }}>
           <div className="form-section-title" style={{ marginTop: 0 }}>
@@ -1442,7 +1392,6 @@ export default function DetalleOrden() {
         </div>
       )}
 
-      {/* Botón guardar edición */}
       {editando && (
         <div className="btn-group" style={{ justifyContent: 'flex-end', marginTop: 24, marginBottom: 20 }}>
           <button className="btn btn-secondary btn-lg" onClick={() => { setEditando(false); setFormEdit(orden); }}>
@@ -1454,7 +1403,6 @@ export default function DetalleOrden() {
         </div>
       )}
 
-      {/* Modal Profesional de Transición de Estado */}
       {modalTransicion.abierto && (
         <ModalPortal>
           <div className="modal-backdrop" onClick={() => !modalTransicion.guardando && setModalTransicion(prev => ({ ...prev, abierto: false }))}>
@@ -1541,14 +1489,12 @@ export default function DetalleOrden() {
         </ModalPortal>
       )}
 
-      {/* Modal Acta de Taller e Inspección de Entrega */}
       <InspectionCertificateModal
         isOpen={isCertOpen}
         onClose={() => setIsCertOpen(false)}
         orden={orden}
       />
 
-      {/* Formulario de Finalización de Orden de Trabajo */}
       <FinalizacionOrdenModal
         isOpen={isFinalizacionOpen}
         onClose={() => setIsFinalizacionOpen(false)}
@@ -1558,7 +1504,6 @@ export default function DetalleOrden() {
         incompleta={!ordenCompleta(orden)}
       />
 
-      {/* Reactivación de OT finalizada por error */}
       <ReactivarOrdenModal
         isOpen={isReactivarOpen}
         onClose={() => setIsReactivarOpen(false)}

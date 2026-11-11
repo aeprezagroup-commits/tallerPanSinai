@@ -8,13 +8,7 @@ import {
 import IconoMascara from '../components/IconoMascara';
 import { useAuth } from '../context/AuthContext';
 
-// ICONOGRAFÍA DEL PANEL
-//    Las tarjetas usan los iconos descargados para el taller
-//    (PNG de línea en public/iconos) aplicados como máscara CSS: heredan
-//    el color de cada módulo y se leen igual en tema claro y oscuro.
-//    Las flechas y adornos siguen en Lucide, como el resto de la app.
 
-// Módulos del área de administración — colores usando variables CSS del sistema de diseño
 const MODULOS = [
   {
     to: '/admin/reportes',
@@ -66,12 +60,6 @@ const MODULOS = [
   },
 ];
 
-/*
-MÓDULO OCULTO — CONSOLA DE SOPORTE (/admin-secreto/bitacora)
-   Aparece en el panel ÚNICAMENTE cuando la sesión es la cuenta super
-   administrador: es el acceso directo a la consola, para no tener que
-   escribir la ruta a mano. Un administrador normal nunca ve esta tarjeta
-   y la ruta lo rebotaría a /admin. */
 const MODULO_SOPORTE = {
   to: '/admin-secreto/bitacora',
   icono: <IconoMascara src="/iconos/taller.png" size={26} />,
@@ -86,13 +74,10 @@ export default function AdminHub() {
   const { currentUser, isSuperAdmin } = useAuth();
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  // Los 6 módulos visibles para todo administrador + la consola reservada
-  // al super administrador, si esa es la cuenta que abrió sesión.
   const modulos = isSuperAdmin ? [...MODULOS, MODULO_SOPORTE] : MODULOS;
 
   return (
     <div className="animate-fade-in">
-      {/* Encabezado con bienvenida personalizada */}
       <div className="page-header">
         <BotonVolver a="/inicio" etiqueta="Volver al Inicio" />
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -117,7 +102,6 @@ export default function AdminHub() {
         </div>
       </div>
 
-      {/* Módulos de Administración */}
       <div style={{ marginBottom: 8 }}>
         <div style={{
           fontSize: 9.5, fontWeight: 800, color: 'var(--color-text-muted)',

@@ -29,8 +29,6 @@ import { obtenerFotosBase, guardarFotosBase, LADOS_VEHICULO } from '../services/
 import ScannerModal from '../components/ScannerModal';
 import IconoMascara from '../components/IconoMascara';
 
-// Convierte la lista de tareas (del catálogo tocado o escritas a mano)
-// en actividades de la OT con su área y tiempo estimado
 function construirActividades(tareas, mecanico = '', areaDefault = 'General') {
   return tareas.map((t, i) => ({
     id: `act-${Date.now().toString(36)}-${i + 1}`,
@@ -49,14 +47,11 @@ export default function NuevaOrden() {
   const location = useLocation();
   const { addToast, confirm } = useToast();
   const { currentUser, isAdmin: esAdmin } = useAuth();
-  // El mecánico que llena la recepción queda atado a su usuario: receptor y encargado no se modifican
   const esMecanico = currentUser?.rol === 'mecanico';
 
   const [loading, setLoading] = useState(false);
-  // Tipo de atención: 'taller' (ingreso normal) o 'asistencia' (técnico en sitio, autoasignado)
   const [modoAtencion, setModoAtencion] = useState('taller');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  // Anclas para navegación y scroll automático intuitivo (especialmente en móvil)
   const datosVehiculoRef = useRef(null);
   const seccionRecepcionRef = useRef(null);
   const seccionMotivoRef = useRef(null);
@@ -65,7 +60,6 @@ export default function NuevaOrden() {
   const botonGuardarRef = useRef(null);
   const pendienteScrollRef = useRef(false);
 
-  // Al abrir el formulario de nueva orden, asegurar inicio en la parte superior
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -74,19 +68,12 @@ export default function NuevaOrden() {
   const [historialPrevio, setHistorialPrevio] = useState([]);
   const [mecanicos] = useState(() => obtenerMecanicosActivos());
   const [fechaIngresoTexto] = useState(() => new Date().toLocaleString('es-SV'));
-  // ---- ACTIVIDADES / CHECKLIST DE TAREAS ----
-  // El mecánico toca tareas de un catálogo precargado en vez de escribirlas.
-  // tareasMarcadas: ids del catálogo seleccionadas (Set)
-  // tareasManuales: tareas escritas a mano (para lo que no está en la lista)
-  // tareasOmitidasMotivos: motivo por el que se desmarcó una tarea de MANTENIMIENTO (pre-marcada)
-  const [servicioMantenimiento, setServicioMantenimiento] = useState(''); // 'mantenimiento_5000' | 'mantenimiento_20000'
+  const [servicioMantenimiento, setServicioMantenimiento] = useState(''); 
   const [tareasMarcadas, setTareasMarcadas] = useState(() => new Set());
   const [tareasManuales, setTareasManuales] = useState([]);
   const [tareasOmitidasMotivos, setTareasOmitidasMotivos] = useState({});
   const [nuevaActividad, setNuevaActividad] = useState('');
 
-  // Fotos de los 4 costados: mostradas desde la BASE del vehículo (estado actual).
-  // Solo se suben a la base los archivos que el usuario cambie en este formulario.
   const [fotosLados, setFotosLados] = useState({
     frontal: '',
     lateralIzquierdo: '',
@@ -107,17 +94,14 @@ export default function NuevaOrden() {
     ruta: 'Ruta 01 - San Salvador Centro & Escalerón',
     conductorEntrega: '',
     mecanicoReceptor: '',
-    diagnosticoInicial: '',   // descripción libre del motivo (si el motivo la requiere)
-    motivoIngreso: '',        // id del motivo seleccionado (define Mantenimiento vs Reparación)
-    tipoTrabajo: 'Reparación',// se deriva del motivo (compatibilidad con datos guardados)
+    diagnosticoInicial: '',   
+    motivoIngreso: '',        
+    tipoTrabajo: 'Reparación',
     mecanicoAsignado: '',
     tiempoEstimadoHoras: ''
   });
-  // Áreas de Taller elegidas para "Fallas o daños" (1 o varias → tareas de cada una).
-  // Se guarda como Set; el valor de texto (para la OT) se deriva: areaPrincipalTexto.
   const [areasSeleccionadas, setAreasSeleccionadas] = useState(() => new Set());
 
-  // Carga la base fotográfica del vehículo (estado actual de los 4 costados)
   const cargarBaseFotos = useCallback(async (placa) => {
     try {
       const base = await obtenerFotosBase(placa);
@@ -160,14 +144,10 @@ export default function NuevaOrden() {
     }
   }, [location.search, cargarBaseFotos]);
 
-  // En modo "Asistencia": el usuario que llegó al lugar y presionó el botón se autoasigna de inmediato
   useEffect(() => {
     if (modoAtencion === 'asistencia' && currentUser?.nombre) {
       setForm(prev => ({
         ...prev,
-        // El encargado/admin NO acude al sitio: no se autoasigna nada con su
-        // nombre (se limpia si lo estaba) para que indiquen quién acude y quién
-        // introduce la unidad. El mecánico sí acude → queda con su usuario.
         mecanicoAsignado: esMecanico
           ? (prev.mecanicoAsignado || currentUser.nombre)
           : (prev.mecanicoAsignado === currentUser.nombre ? '' : prev.mecanicoAsignado),
@@ -182,12 +162,8 @@ export default function NuevaOrden() {
         'info'
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modoAtencion, currentUser?.nombre, esMecanico]);
 
-  // El Mecánico Receptor se llena SOLO con el usuario logueado: nadie más puede estar usando esa sesión.
-  // Si quien recibe es un MECÁNICO, el receptor queda BLOQUEADO con su usuario.
-  // La ASIGNACIÓN (encargado) en Ingreso a Taller sí puede decidirse: compañero, uno mismo o sin asignar.
   useEffect(() => {
     if (!currentUser?.nombre) return;
     setForm(prev => {
@@ -200,7 +176,6 @@ export default function NuevaOrden() {
   }, [currentUser?.nombre, esMecanico]);
 
 
-  // Función para autocompletar si la placa existe en el catálogo de Pan Sinaí o en órdenes previas
   const aplicarAutocompletado = async (placaABuscar) => {
     cargarBaseFotos(placaABuscar);
     const vehiculo = buscarVehiculoCatalogo(placaABuscar);
@@ -219,7 +194,6 @@ export default function NuevaOrden() {
         conductorEntrega: vehiculo.conductorHabitual || prev.conductorEntrega
       }));
       addToast(`Vehículo detectado en catálogo. Asignado a ${vehiculo.departamento} (${vehiculo.ruta}).`, 'success');
-      // Auto-scroll hacia la sección de recepción de forma suave
       setTimeout(() => {
         seccionRecepcionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 350);
@@ -227,12 +201,10 @@ export default function NuevaOrden() {
       setVehiculoDetectado(null);
     }
 
-    // Buscar historial previo de este vehículo en el taller
     try {
       const previas = await buscarPorPlaca(placaABuscar);
       if (previas && previas.length > 0) {
         setHistorialPrevio(previas);
-        // Pre-cargar kilometraje si no está puesto
         const ultima = previas[0];
         if (ultima.kilometraje) {
           addToast(`Se encontraron ${previas.length} ingresos previos de esta unidad en taller.`, 'info');
@@ -251,8 +223,6 @@ export default function NuevaOrden() {
     pendienteScrollRef.current = true;
   };
 
-  // Al cerrarse el escáner tras una lectura exitosa, la vista baja hasta la
-  // ficha de la unidad: en móvil el resultado quedaba fuera de pantalla.
   useEffect(() => {
     if (isScannerOpen || !pendienteScrollRef.current) return;
     pendienteScrollRef.current = false;
@@ -269,7 +239,6 @@ export default function NuevaOrden() {
     if (file) {
       const url = URL.createObjectURL(file);
       setFotosLados(prev => ({ ...prev, [lado]: url }));
-      // Se sube a la BASE del vehículo al guardar la orden (no a la evidencia de la orden)
       setFotosLadosNuevas(prev => ({ ...prev, [lado]: file }));
     }
     e.target.value = '';
@@ -280,10 +249,6 @@ export default function NuevaOrden() {
     setFotosLadosNuevas(prev => ({ ...prev, [lado]: '' }));
   };
 
-  // ---- CHECKLIST: selección de tareas del catálogo ----
-  // El catálogo visible depende del MOTIVO de ingreso:
-  //  - Mantenimiento  → lista del servicio tocado (5,000 o 20,000 km), PRE-MARCADA
-  //  - Fallas o daños → tareas de TODAS las áreas seleccionadas (1 o varias)
   const modoMantenimiento = form.tipoTrabajo === 'Mantenimiento';
   const areasArr = [...areasSeleccionadas];
   const areaPrincipalTexto = areasArr.join(', ');
@@ -297,8 +262,6 @@ export default function NuevaOrden() {
       : [];
   })();
 
-  // Tareas finales que se convertirán en actividades de la OT:
-  // las marcadas del catálogo + las escritas a mano
   const tareasFinales = [
     ...tareasCatalogo.filter(t => tareasMarcadas.has(t.id)),
     ...tareasManuales.map(t => ({
@@ -310,8 +273,6 @@ export default function NuevaOrden() {
     }))
   ];
 
-  // Tareas de MANTENIMIENTO desmarcadas (la lista viene pre-marcada; si se quita
-  // una, debe indicarse el motivo: repuesto faltante, no aplica, etc.)
   const tareasOmitidasFinales = modoMantenimiento
     ? tareasCatalogo
       .filter(t => !tareasMarcadas.has(t.id))
@@ -323,7 +284,6 @@ export default function NuevaOrden() {
       }))
     : [];
 
-  // Alterna el "check" de una tarea del catálogo visible
   const alternarTarea = (id) => {
     const estabaMarcada = tareasMarcadas.has(id);
     setTareasMarcadas(prev => {
@@ -332,7 +292,6 @@ export default function NuevaOrden() {
       return next;
     });
     if (!estabaMarcada) {
-      // Se vuelve a marcar como hecha → ya no pide motivo de omisión
       setTareasOmitidasMotivos(prev => {
         if (!(id in prev)) return prev;
         const { [id]: _quitado, ...resto } = prev;
@@ -341,7 +300,6 @@ export default function NuevaOrden() {
     }
   };
 
-  // Marca o desmarca todas las tareas del catálogo visible
   const marcarTodas = (marcar) => {
     setTareasMarcadas(prev => {
       const next = new Set(prev);
@@ -351,12 +309,10 @@ export default function NuevaOrden() {
     if (marcar) setTareasOmitidasMotivos({});
   };
 
-  // Motivo por el que se omite una tarea de mantenimiento (pre-marcada desmarcada)
   const marcarMotivoOmitida = (id, texto) => {
     setTareasOmitidasMotivos(prev => ({ ...prev, [id]: texto }));
   };
 
-  // Motivo de ingreso → define Mantenimiento vs Reparación y limpia el checklist
   const seleccionarMotivo = (motivo) => {
     setForm(prev => ({
       ...prev,
@@ -367,15 +323,11 @@ export default function NuevaOrden() {
     setAreasSeleccionadas(new Set());
     setTareasMarcadas(new Set());
     setTareasOmitidasMotivos({});
-    // Auto-scroll hacia la sección de tareas/áreas
     setTimeout(() => {
       seccionTareasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 250);
   };
 
-  // Áreas de Taller → en "Fallas o daños" es selección MÚLTIPLE (1 o varias).
-  // Al cambiarlas, las marcas de tareas que ya no pertenecen a las áreas elegidas
-  // se podan para que el contador y el envío sean coherentes.
   const seleccionarAreaTaller = (area) => {
     const next = new Set(areasSeleccionadas);
     if (next.has(area)) next.delete(area); else next.add(area);
@@ -390,7 +342,6 @@ export default function NuevaOrden() {
     });
   };
 
-  // Servicio de mantenimiento (5,000 / 20,000 km): al elegirlo, la lista viene PRE-MARCADA
   const seleccionarServicioMantenimiento = (grupo) => {
     const apagando = servicioMantenimiento === grupo;
     setServicioMantenimiento(apagando ? '' : grupo);
@@ -403,7 +354,6 @@ export default function NuevaOrden() {
     setTareasOmitidasMotivos({});
   };
 
-  // Tareas escritas a mano (escapan al catálogo)
   const agregarActividadManual = () => {
     const desc = nuevaActividad.trim();
     if (!desc) {
@@ -485,10 +435,6 @@ export default function NuevaOrden() {
       }
     }
 
-    // REGLA DE OPERACIÓN: el camión que INGRESA AL TALLER no puede guardarse
-    // sin su registro fotográfico. La orden no guarda copia de las fotos: la
-    // base del vehículo es el único registro, así que este es el momento en
-    // que se completan o actualizan los 4 costados.
     if (modoAtencion === 'taller') {
       const faltantes = LADOS_VEHICULO.filter((lado) => !fotosLados[lado]);
       if (faltantes.length > 0) {
@@ -509,7 +455,6 @@ export default function NuevaOrden() {
       }
     }
 
-    // Confirmación previa: la orden se escribe en la base compartida.
     const placaPreview = normalizarPlaca(form.placa) || 'sin placa';
     const confirmadoOrden = await confirm({
       title: modoAtencion === 'asistencia' ? '¿Registrar asistencia?' : '¿Crear orden de trabajo?',
@@ -522,11 +467,6 @@ export default function NuevaOrden() {
 
     setLoading(true);
     try {
-      // 1) Actualizar la BASE fotográfica del vehículo.
-      //    REGLA: cada vehículo tiene SOLO 4 fotos para toda su vida.
-      //    Si el camión no tiene fotos, aquí se cargan; si un costado cambia
-      //    (golpe nuevo, reparación), se elimina la vieja y se pone la nueva.
-      //    La orden NUNCA guarda copia: solo lee las 4 de la base.
       const placaLimpia = normalizarPlaca(form.placa);
       const cambiosLados = {};
       for (const lado of LADOS_VEHICULO) {
@@ -551,8 +491,6 @@ export default function NuevaOrden() {
         }
       }
 
-      // 2) Crear la orden. Sin fotos embebidas: el documento queda de ~1 KB
-      //    y en Detalle de Orden se muestran las 4 fotos vigentes de la base.
       await crearOrden({
         ...form,
         placa: placaLimpia,
@@ -564,11 +502,9 @@ export default function NuevaOrden() {
         tipoAtencion: modoAtencion,
         creadoPor: currentUser?.nombre || 'Sistema',
         tiempoEstimadoHoras: parseFloat(form.tiempoEstimadoHoras) || 0,
-        // Tareas tocadas en el checklist + manuales → actividades de la OT
         ...(tareasFinales.length > 0
           ? { actividades: construirActividades(tareasFinales, form.mecanicoAsignado, areaDefecto) }
           : {}),
-        // Tareas de mantenimiento omitidas (pre-marcadas y desmarcadas) con su motivo
         ...(tareasOmitidasFinales.length > 0 ? { tareasOmitidas: tareasOmitidasFinales } : {})
       });
 
@@ -587,19 +523,14 @@ export default function NuevaOrden() {
     }
   };
 
-  // ¿La placa ya se escribió/escaneó pero no corresponde a una unidad de la flota?
   const placaNoEnFlota = form.placa.trim().length >= 4 && !vehiculoDetectado;
-  // Regla operativa: si la unidad no existe en la flota, los campos de trabajo deben permanecer bloqueados
   const camposBloqueados = !vehiculoDetectado;
 
-  // Estado del registro fotográfico (obligatorio para el ingreso al taller)
   const fotosCompletas = LADOS_VEHICULO.filter((lado) => fotosLados[lado]).length;
 
-  // Kilometraje anterior guardado en el sistema (última visita de la unidad)
   const kmAnterior = historialPrevio?.[0]?.kilometraje;
   const kmAnteriorTexto = kmAnterior ? `${Number(kmAnterior).toLocaleString('es-SV')} km` : 'Sin registro';
 
-  // Características de la unidad → un solo cuadro informativo (solo lectura)
   const caracteristicasVehiculo = [
     ['Marca', form.marca],
     ['Modelo', form.modelo],
@@ -630,7 +561,6 @@ export default function NuevaOrden() {
         </button>
       </div>
 
-      {/* Modal de Escaneo con Cámara */}
       <ScannerModal
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
@@ -638,7 +568,6 @@ export default function NuevaOrden() {
       />
 
       <form onSubmit={handleSubmit}>
-        {/* SECCIÓN: Tipo de Atención (dos apartados: Ingreso a Taller / Asistencia) */}
         <div className="card" style={{ marginBottom: 24 }}>
           <div className="form-section-title" style={{ marginTop: 0 }}>
             <IconoMascara className="icon" src="/iconos/consultas-taller.png" size={16} /> Tipo de Atención *
@@ -725,7 +654,6 @@ export default function NuevaOrden() {
           ref={datosVehiculoRef}
           style={{ marginBottom: 24, scrollMarginTop: 84 }}
         >
-          {/* SECCIÓN: Datos del vehículo */}
           <div className="form-section-title" style={{ marginTop: 0 }}>
             <IconoMascara className="icon" src="/iconos/taller-reparacion.png" size={16} /> Datos del Vehículo
           </div>
@@ -754,7 +682,6 @@ export default function NuevaOrden() {
           )}
 
           <div className="form-grid">
-            {/* Placa: SOLO se obtiene con el botón verde (digitar / QR / foto) */}
             <div className="form-group">
               <label className="form-label">Placa o Código QR *</label>
               <div style={{
@@ -781,7 +708,6 @@ export default function NuevaOrden() {
               </span>
             </div>
 
-            {/* Kilometraje NUEVO: editable solo si la unidad es válida */}
             <div className="form-group">
               <label className="form-label">Nuevo Kilometraje (Km)</label>
               <input
@@ -802,7 +728,6 @@ export default function NuevaOrden() {
               </span>
             </div>
 
-            {/* Aviso de bloqueo estricto: la placa NO corresponde a una unidad de la flota */}
             {placaNoEnFlota && (
               <div className="form-group full-width form-bloque">
                 <div style={{
@@ -837,7 +762,6 @@ export default function NuevaOrden() {
               </div>
             )}
 
-            {/* Aún no se obtiene la placa */}
             {!form.placa.trim() && (
               <div className="form-group full-width">
                 <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
@@ -847,8 +771,6 @@ export default function NuevaOrden() {
             )}
           </div>
 
-          {/* CUADRO INFORMATIVO: todas las características de la unidad que quedan
-              almacenadas en el sistema (solo lectura, en un solo espacio) */}
           {vehiculoDetectado && (
             <div className="form-bloque" style={{
               marginTop: 4,
@@ -902,7 +824,6 @@ export default function NuevaOrden() {
             </div>
           )}
 
-          {/* SECCIÓN: Datos de Recepción, Diagnóstico, Tareas y Fotos protegidos por el registro de flota */}
           <fieldset
             disabled={camposBloqueados}
             style={{
@@ -934,10 +855,6 @@ export default function NuevaOrden() {
                   required={modoAtencion === 'taller'}
                 />
               </div>
-              {/* Receptor: automático con el usuario logueado (quien recibe la unidad).
-                Para el MECÁNICO queda BLOQUEADO con su sesión (no editable).
-                Asignación (encargado): en Ingreso a Taller se decide (compañero, uno mismo o SIN ASIGNAR);
-                en Asistencia en Sitio queda autoasignada y bloqueada */}
               <div className="form-group">
                 <label className="form-label">
                   Usuario Receptor *{esMecanico && (
@@ -971,9 +888,6 @@ export default function NuevaOrden() {
                 </span>
               </div>
 
-              {/* Encargado de INTRODUCCIÓN de la unidad: en Ingreso a Taller ya se
-                podía decidir; en Asistencia en Sitio el encargado/admin también
-                puede elegir cualquier mecánico (solo el MECÁNICO queda bloqueado). */}
               <div className="form-group">
                 <label className="form-label">
                   Encargado de trabajar en la Unidad
@@ -1036,7 +950,6 @@ export default function NuevaOrden() {
               </div>
             </div>
 
-            {/* SECCIÓN: Motivo de Ingreso — 2 opciones: Mantenimiento programado | Fallas o daños */}
             <div className="form-section-title" ref={seccionMotivoRef}>
               <IconoMascara className="icon" src="/iconos/registro.png" size={16} /> Motivo de Ingreso *
             </div>
@@ -1085,7 +998,6 @@ export default function NuevaOrden() {
               })}
             </div>
 
-            {/* Si el motivo es "Otro", describir el problema */}
             {MOTIVOS_INGRESO.find(m => m.id === form.motivoIngreso)?.requiereTexto && (
               <div className="form-group full-width form-bloque" style={{ marginBottom: 14 }}>
                 <label className="form-label">Describa el motivo / problema *</label>
@@ -1100,7 +1012,6 @@ export default function NuevaOrden() {
               </div>
             )}
 
-            {/* SECCIÓN: Áreas de Taller — solo en "Fallas o danos": el usuario elige 1 o varias */}
             {form.motivoIngreso === 'falla' && (
               <div className="form-bloque">
                 <div className="form-section-title">
@@ -1141,7 +1052,6 @@ export default function NuevaOrden() {
               </div>
             )}
 
-            {/* SECCIÓN: Tareas a realizar — checklist precargado (sin escribir) */}
             <div className="form-section-title" ref={seccionTareasRef}>
               <IconoMascara className="icon" src="/iconos/llave-inglesa.png" size={16} /> Tareas a Realizar
             </div>
@@ -1153,7 +1063,6 @@ export default function NuevaOrden() {
               )}
             </p>
 
-            {/* Mantenimiento: elegir servicio 5,000 / 20,000 km (la lista sale PRE-MARCADA) */}
             {modoMantenimiento && (
               <div className="form-bloque" style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
@@ -1193,14 +1102,12 @@ export default function NuevaOrden() {
               </div>
             )}
 
-            {/* Fallas: las tareas salen de las áreas elegidas arriba */}
             {form.motivoIngreso === 'falla' && areasSeleccionadas.size === 0 && (
               <p className="form-bloque" style={{ fontSize: 12.5, color: 'var(--color-text-muted)', padding: '10px 12px', background: 'var(--color-bg-input)', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-md)', margin: 0, marginBottom: 12 }}>
                 Seleccione al menos un área de taller para desplegar las tareas sugeridas.
               </p>
             )}
 
-            {/* Paso 2: checklist de tareas del catálogo */}
             {tareasCatalogo.length > 0 && (
               <div className="task-checklist form-bloque">
                 <div className="task-checklist-header">
@@ -1214,7 +1121,6 @@ export default function NuevaOrden() {
                 </div>
                 {tareasCatalogo.map(t => {
                   const marcada = tareasMarcadas.has(t.id);
-                  // En mantenimiento, si la tarea viene DESMARCADA (pre-marcada quitada) pide motivo
                   const omitidaEnMantenimiento = modoMantenimiento && !marcada;
                   return (
                     <div key={t.id}>
@@ -1249,14 +1155,12 @@ export default function NuevaOrden() {
               </div>
             )}
 
-            {/* Mantenimiento sin servicio elegido todavía */}
             {modoMantenimiento && !servicioMantenimiento && (
               <p className="form-bloque" style={{ fontSize: 12.5, color: 'var(--color-text-muted)', padding: '10px 12px', background: 'var(--color-bg-input)', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-md)', margin: 0 }}>
                 Seleccione la pauta de kilometraje para cargar las actividades correspondientes.
               </p>
             )}
 
-            {/* Resumen: las actividades que se crearán en la OT */}
             {tareasFinales.length > 0 && (
               <div className="form-bloque" style={{ marginTop: 16 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
@@ -1328,7 +1232,6 @@ export default function NuevaOrden() {
               </div>
             )}
 
-            {/* Tareas de mantenimiento omitidas (pre-marcadas y desmarcadas, con motivo) */}
             {tareasOmitidasFinales.length > 0 && (
               <div className="form-bloque" style={{ marginTop: 16 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
@@ -1359,7 +1262,6 @@ export default function NuevaOrden() {
               </div>
             )}
 
-            {/* Paso 4: agregar una tarea que no esté en la lista (opcional) */}
             <div style={{ marginTop: 16 }}>
               <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
                 ¿Falta una tarea? Agréguela (opcional):
@@ -1387,7 +1289,6 @@ export default function NuevaOrden() {
               </div>
             </div>
 
-            {/* SECCIÓN: Inspección Perimetral = ESTADO ACTUAL (base fotográfica del vehículo) */}
             <div className="form-section-title" ref={seccionFotosRef}>
               <TbCamera className="icon" /> Inspección Perimetral 360° (Estado Actual de la Unidad)
               <span
@@ -1402,7 +1303,6 @@ export default function NuevaOrden() {
             </p>
 
             <div className="side-photos-grid">
-              {/* Frontal */}
               <div className="side-photo-card">
                 <div className="side-photo-header">
                   <span className="side-photo-label"><TbCamera /> 1. Frontal</span>
@@ -1428,7 +1328,6 @@ export default function NuevaOrden() {
                     </div>
                     <span className="side-photo-upload-text">Foto Frontal</span>
                     <span className="side-photo-upload-hint">Frente y parrilla</span>
-                    {/* Siempre las DOS opciones: tomar desde cámara o subir */}
                     <div className="side-photo-actions">
                       <label className="btn btn-primary btn-sm side-photo-option">
                         <TbCamera /> Cámara
@@ -1454,7 +1353,6 @@ export default function NuevaOrden() {
                 )}
               </div>
 
-              {/* Lateral Izquierdo */}
               <div className="side-photo-card">
                 <div className="side-photo-header">
                   <span className="side-photo-label"><TbCamera /> 2. Lateral Izquierdo</span>
@@ -1480,7 +1378,6 @@ export default function NuevaOrden() {
                     </div>
                     <span className="side-photo-upload-text">Costado Izq.</span>
                     <span className="side-photo-upload-hint">Lado del motorista</span>
-                    {/* Siempre las DOS opciones: tomar desde cámara o subir */}
                     <div className="side-photo-actions">
                       <label className="btn btn-primary btn-sm side-photo-option">
                         <TbCamera /> Cámara
@@ -1506,7 +1403,6 @@ export default function NuevaOrden() {
                 )}
               </div>
 
-              {/* Lateral Derecho */}
               <div className="side-photo-card">
                 <div className="side-photo-header">
                   <span className="side-photo-label"><TbCamera /> 3. Lateral Derecho</span>
@@ -1532,7 +1428,6 @@ export default function NuevaOrden() {
                     </div>
                     <span className="side-photo-upload-text">Costado Der.</span>
                     <span className="side-photo-upload-hint">Lado del copiloto</span>
-                    {/* Siempre las DOS opciones: tomar desde cámara o subir */}
                     <div className="side-photo-actions">
                       <label className="btn btn-primary btn-sm side-photo-option">
                         <TbCamera /> Cámara
@@ -1558,7 +1453,6 @@ export default function NuevaOrden() {
                 )}
               </div>
 
-              {/* Trasera */}
               <div className="side-photo-card">
                 <div className="side-photo-header">
                   <span className="side-photo-label"><TbCamera /> 4. Vista Trasera</span>
@@ -1584,7 +1478,6 @@ export default function NuevaOrden() {
                     </div>
                     <span className="side-photo-upload-text">Foto Trasera</span>
                     <span className="side-photo-upload-hint">Compuerta / Baúl</span>
-                    {/* Siempre las DOS opciones: tomar desde cámara o subir */}
                     <div className="side-photo-actions">
                       <label className="btn btn-primary btn-sm side-photo-option">
                         <TbCamera /> Cámara
@@ -1613,7 +1506,6 @@ export default function NuevaOrden() {
           </fieldset>
         </div>
 
-        {/* Botones de acción (sticky al pie en móvil) */}
         <div className="form-actions-bar" ref={botonGuardarRef}>
           <button
             type="button"

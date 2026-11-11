@@ -2,11 +2,6 @@ import { useState } from 'react';
 import { TbCircleCheck, TbX, TbAlertTriangle } from '../icons';
 import ModalPortal from './ModalPortal';
 
-// Formulario de Finalización de Orden de Trabajo:
-// Las fases y actividades ya fueron marcadas en la OT y los repuestos/facturas
-// son administrados directamente por el Administrador de Taller.
-// Si la orden está completa, solo requiere confirmación directa.
-// Si la orden tiene actividades pendientes (`incompleta`), requiere justificación del cierre.
 export default function FinalizacionOrdenModal(props) {
   if (!props.isOpen) return null;
   return <FinalizacionModalContent key={props.orden?.id || 'finalizar'} {...props} />;
@@ -62,7 +57,6 @@ function FinalizacionModalContent({ onClose, orden, onConfirmar, guardando = fal
                 </div>
               </div>
 
-              {/* OT incompleta: cierre excepcional solo del encargado/admin con justificación */}
               {incompleta ? (
                 <div style={{
                   border: '1px solid rgba(237, 168, 60, 0.45)',

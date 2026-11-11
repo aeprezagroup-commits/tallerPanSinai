@@ -1,6 +1,3 @@
-// SERVICIOS FIREBASE - ÓRDENES DE TRABAJO
-// Soporta Firebase Firestore y Modo Local/Demo Reactivo
-// Modelo Integral de Taller Mecánico - El Salvador
 import { normalizarPlaca } from '../utils/placas';
 import {
   collection,
@@ -27,7 +24,6 @@ import { registrarBitacora, TIPOS_BITACORA } from '../services/bitacoraService';
 const ORDERS_COLLECTION = 'ordenes_trabajo';
 const LOCAL_STORAGE_KEY = 'pan_sinai_ordenes_data_v3';
 
-// Reglas de transición de estados válidos del taller
 export const TRANSICIONES_VALIDAS = {
   ingresado: ['pendiente_diagnostico', 'en_proceso', 'cancelado'],
   pendiente_diagnostico: ['en_proceso', 'esperando_repuestos', 'pendiente_autorizacion', 'cancelado'],
@@ -41,9 +37,7 @@ export const TRANSICIONES_VALIDAS = {
   cancelado: []
 };
 
-// UTILIDADES DE CRONOMETRAJE REAL
 
-// Convierte una marca de tiempo (Firestore / ISO / Date) a milisegundos
 function toMillis(marca) {
   if (!marca) return null;
   if (typeof marca.toMillis === 'function') return marca.toMillis();
@@ -52,19 +46,16 @@ function toMillis(marca) {
   return Number.isNaN(ms) ? null : ms;
 }
 
-// Minutos reales transcurridos desde una marca de tiempo
 export function minutosDesde(marca) {
   const ms = toMillis(marca);
   if (!ms) return 0;
   return Math.max(0, Math.round((Date.now() - ms) / 60000));
 }
 
-// Marca de tiempo actual en formato ISO (evita valores pendientes de serverTimestamp)
 function marcaActual() {
   return new Date().toISOString();
 }
 
-// Minutos reales de una orden: tiempo ya acumulado + tramo en curso
 function minutosRealesDeOrden(orden, minutosAlternativos = 0) {
   const base = Number(orden?.tiempoRealMinutos) || 0;
   const parcial = orden?.trabajoEnCurso ? minutosDesde(orden.tiempoInicioTrabajo) : 0;
@@ -73,7 +64,6 @@ function minutosRealesDeOrden(orden, minutosAlternativos = 0) {
 }
 
 
-// Helper para envolver fechas de Firebase / LocalStorage
 function wrapLocalData(item) {
   let fechaIng = item.fechaIngreso;
   if (fechaIng && typeof fechaIng === 'string') {
@@ -96,7 +86,6 @@ function wrapLocalData(item) {
   };
 }
 
-// Inicializar almacenamiento local
 function getLocalOrders() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -106,7 +95,6 @@ function getLocalOrders() {
     }
     const parsed = JSON.parse(raw);
     const lista = parsed.map(wrapLocalData);
-    // Backfill: toda orden debe tener su contador 1..infinito para facilitar la búsqueda
     if (asignarNumerosFaltantes(lista)) saveLocalOrders(lista, false);
     return lista;
   } catch {
@@ -128,15 +116,12 @@ function saveLocalOrders(orders, dispatch = true) {
   }
 }
 
-// CONTADOR DE ÓRDENES DE TRABAJO (1, 2, 3 ... hasta el infinito)
-// Facilita la búsqueda: OT-0001, OT-0002, ...
 export function formatoOT(orden) {
   const n = Number(orden?.numeroOrden);
   if (n > 0) return `OT-${String(n).padStart(4, '0')}`;
   return `OT-${String(orden?.id || '').slice(0, 6).toUpperCase()}`;
 }
 
-// Asigna número correlativo (por fecha de ingreso) a órdenes sin contador
 function asignarNumerosFaltantes(ordenes) {
   const sinNumero = ordenes
     .filter(o => !(Number(o.numeroOrden) > 0))
@@ -148,7 +133,6 @@ function asignarNumerosFaltantes(ordenes) {
   return true;
 }
 
-// Siguiente número de orden disponible
 async function siguienteNumeroOrden() {
   if (isFirebaseConfigured && db) {
     try {
@@ -170,10 +154,8 @@ async function siguienteNumeroOrden() {
   return max + 1;
 }
 
-// OPERACIONES CRUD COMPATIBLES DUAL-MODE
 
 export async function crearOrden(datosOrden) {
-  // Contador correlativo de la orden (búsqueda facilitada: OT-0001, OT-0002, ...)
   const numeroOrden = await siguienteNumeroOrden();
 
   const initialActividades = Array.isArray(datosOrden.actividades) && datosOrden.actividades.length > 0
@@ -244,11 +226,6 @@ export async function crearOrden(datosOrden) {
       actualizadoEn: serverTimestamp()
     };
 
-    // ---- PRESUPUESTO POR DOCUMENTO (Firestore: 1 MB máximo) ----
-    // Si las fotos no caben, se descarta primero la copia de las 4 fotos de
-    // base (ya viven en vehiculos_fotos_base y DetalleOrden las lee de ahí)
-    // y en último caso se recortan las de ingreso. Así NUNCA se reventará
-    // el documento y no se "caerá" la foto.
     if (!cabenFotosDe(orden)) {
       orden.fotosLados = { frontal: '', lateralIzquierdo: '', lateralDerecho: '', trasera: '' };
       console.warn(
@@ -277,7 +254,6 @@ export async function crearOrden(datosOrden) {
     });
     return { id: docRef.id, ...orden };
   } else {
-    // Modo local / demo
     const orders = getLocalOrders();
     const newId = 'ord-' + Date.now().toString(36);
     const cRep = Number(datosOrden.costoRepuestos) || 0;
@@ -380,7 +356,6 @@ export async function actualizarOrden(id, datos) {
   }
 }
 
-// Transición segura de estado con validación
 export async function cambiarEstado(id, nuevoEstado, usuario = 'Administrador', motivo = '') {
   const orden = await obtenerOrden(id);
   if (!orden) throw new Error('Orden no encontrada');
@@ -413,7 +388,6 @@ export async function cambiarEstado(id, nuevoEstado, usuario = 'Administrador', 
   });
 }
 
-// GESTIÓN DE SUB-ACTIVIDADES DE REPARACIÓN
 
 export async function agregarActividad(ordenId, nuevaActividad) {
   const orden = await obtenerOrden(ordenId);
@@ -466,7 +440,6 @@ export async function iniciarActividad(ordenId, actividadId, mecanico) {
     return act;
   });
 
-  // Al iniciar una actividad, la orden pasa a 'en_proceso' si estaba ingresada
   const updates = { actividades, trabajoEnCurso: true };
   if (!orden.trabajoEnCurso || !orden.tiempoInicioTrabajo) {
     updates.tiempoInicioTrabajo = marcaActual();
@@ -497,7 +470,6 @@ export async function pausarActividad(ordenId, actividadId, motivoPausa, observa
     return act;
   });
 
-  // Si todas las actividades están pausadas por repuestos, reflejar en la orden
   const todasPausadasRepuestos = actividades.every(a => a.estado === 'pausado' && a.motivoPausa === 'esperando_repuestos');
   const updates = { actividades, trabajoEnCurso: false };
   if (motivoPausa === 'esperando_repuestos' || todasPausadasRepuestos) {
@@ -551,7 +523,6 @@ export async function finalizarActividad(ordenId, actividadId, notasFinales = ''
   return actualizarOrden(ordenId, updates);
 }
 
-// Operaciones generales de orden
 export async function iniciarTrabajo(id) {
   const orden = await obtenerOrden(id);
   const nuevoHistorial = [
@@ -622,7 +593,6 @@ export async function finalizarTrabajo(id, minutosTotal, detalleCierre = {}) {
     tiempoRealMinutos: minutosRealesDeOrden(orden, minutosTotal),
     tiempoInicioTrabajo: null,
     trabajoEnCurso: false,
-    // Formulario de finalización de orden de trabajo
     ...(trabajoRealizado ? { trabajoRealizado } : {}),
     ...(valeBodega ? { valeBodega } : {}),
     ...(detalleRepuestos ? { detalleRepuestos } : {}),
@@ -633,8 +603,6 @@ export async function finalizarTrabajo(id, minutosTotal, detalleCierre = {}) {
   });
 }
 
-// Reactivar una OT finalizada o lista para entrega (hubo un error).
-// Requiere justificación obligatoria y es acción del encargado/administración.
 export async function reactivarOrden(id, usuario = 'Taller', justificacion = '') {
   const orden = await obtenerOrden(id);
   if (!orden) throw new Error('Orden no encontrada');

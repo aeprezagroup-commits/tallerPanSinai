@@ -28,14 +28,12 @@ export default function Historial() {
   const [loading, setLoading] = useState(true);
   const [mecanicos, setMecanicos] = useState(() => obtenerMecanicosActivos());
 
-  // Filtros avanzados
   const [filtroTexto, setFiltroTexto] = useState('');
   const [filtroArea, setFiltroArea] = useState('Todas');
   const [filtroMecanico, setFiltroMecanico] = useState('Todos');
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
-  // Vista fila (tabla) o cuadrícula (tarjetas)
   const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
 
   useEffect(() => {
@@ -63,7 +61,6 @@ export default function Historial() {
         const matchModelo = o.modelo?.toUpperCase().includes(q);
         const matchId = o.id?.toUpperCase().includes(q);
         const matchConductor = o.conductorEntrega?.toUpperCase().includes(q);
-        // Búsqueda por contador de orden (OT-0001 o 1)
         const matchOT = formatoOT(o).toUpperCase().includes(q) ||
           (qDigitos && String(o.numeroOrden || '') === qDigitos);
         if (!matchPlaca && !matchMarca && !matchModelo && !matchId && !matchConductor && !matchOT) {
@@ -81,7 +78,6 @@ export default function Historial() {
         return false;
       }
 
-      // Filtro de fechas
       if (fechaDesde && o.fechaIngreso?.toDate) {
         const fechaIng = new Date(o.fechaIngreso.toDate());
         const desde = new Date(fechaDesde);
@@ -107,7 +103,6 @@ export default function Historial() {
     });
   };
 
-  // Exportar reporte operativo real a CSV
   const exportarCSV = () => {
     if (ordenesFiltradas.length === 0) return;
 
@@ -195,10 +190,7 @@ export default function Historial() {
         </button>
       </div>
 
-      {/* La tarjeta "Expediente por Unidad" se quitó de esta vista: los
-          filtros de abajo ya buscan por placa y cada OT abre su detalle. */}
 
-      {/* Buscador y Filtros Combinables */}
       <div className="card" style={{ marginBottom: 24 }}>
         <h3 className="card-title" style={{ marginBottom: 16 }}>Filtros de Búsqueda Combinables</h3>
         <div className="form-grid">
@@ -295,7 +287,6 @@ export default function Historial() {
         </div>
       </div>
 
-      {/* Resultados de la Búsqueda */}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 className="card-title" style={{ margin: 0 }}>

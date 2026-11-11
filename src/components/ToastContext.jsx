@@ -40,7 +40,6 @@ export function ToastProvider({ children }) {
     };
 
     setToasts(prev => {
-      // Máximo 4 notificaciones simultáneas para no saturar la vista
       const slice = prev.length >= 4 ? prev.slice(prev.length - 3) : prev;
       return [...slice, newToast];
     });
@@ -52,7 +51,6 @@ export function ToastProvider({ children }) {
     }
   }, [removeToast]);
 
-  // Diálogo modal de confirmación profesional con Promise
   const confirm = useCallback(({
     title = '¿Confirmar acción requerida?',
     message = '¿Estás seguro de continuar con esta operación?',
@@ -90,7 +88,6 @@ export function ToastProvider({ children }) {
     setConfirmDialog(null);
   };
 
-  // Atajos de teclado en el diálogo de confirmación: Esc para cancelar
   useEffect(() => {
     if (!confirmDialog) return;
 
@@ -122,13 +119,6 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={{ addToast, confirm }}>
       {children}
 
-      {/* Contenedor de Toasts con animación profesional.
-           Se portalea a <body> (igual que los modales) porque #root tiene
-           z-index: 1 y crea su propio stacking context: dentro de #root los
-           mensajes nunca podían superar a los modales que viven en body
-           (z-index 99999), por lo que al guardar un gasto el aviso quedaba
-           oculto detrás del formulario. En body compiten por z-index y con
-           1000000 quedan por encima de todas las capas. */}
       {createPortal(
         <aside className="toast-container" aria-live="polite" aria-atomic="true">
           {toasts.map(toast => (
@@ -169,7 +159,6 @@ export function ToastProvider({ children }) {
         document.body
       )}
 
-      {/* Modal de Confirmación Profesional (reemplazo de window.confirm) */}
       {confirmDialog && (
         <ModalPortal>
           <div

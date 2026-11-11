@@ -1,12 +1,5 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-// ICONOGRAFÍA DEL MENÚ LATERAL
-//    Los ítems de navegación usan los iconos descargados para el taller
-//    (PNG de línea en public/iconos) aplicados como máscara CSS: heredan
-//    el color de cada ítem y se leen igual en tema claro y oscuro.
-//    Los controles de la interfaz (tema, ocultar menú, cerrar sesión)
-//    mantienen Lucide, igual que el resto de la aplicación.
 import IconoMascara from './IconoMascara';
-// Controles de interfaz (no son ítems de navegación)
 import {
   TbLogout,
   TbSun,
@@ -47,7 +40,6 @@ export default function Sidebar({
 
   return (
     <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-      {/* Cabecera con Logotipo y botón de ocultar */}
       <div className="sidebar-logo">
         <Link to="/inicio" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div className="sidebar-logo-icon">
@@ -70,7 +62,6 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* Identificador del Perfil Activo */}
       <div style={{
         padding: '10px 14px',
         borderBottom: '1px solid var(--color-border)',
@@ -97,28 +88,19 @@ export default function Sidebar({
         }} title="Sistema en línea" />
       </div>
 
-      {/* Navegación según el ROL del usuario */}
       <nav className="sidebar-nav">
 
-        {/*
-VISTA DEL MECÁNICO COMÚN
-   Cola de recepción (autoasignarse), sus órdenes asignadas
-   y módulo de entrega al conductor
-*/}
         {isMecanico && (
           <>
             <div style={{ padding: '8px 8px 4px', fontSize: 9.5, fontWeight: 800, color: 'var(--color-text-muted)', letterSpacing: 0.6 }}>
               Mis unidades de trabajo
             </div>
 
-            {/* Ingreso de vehículo */}
             <NavLink to="/nueva-orden" className={({ isActive }) => `nav-link nav-link-mecanico ${isActive ? 'active' : ''}`}>
               <span className="nav-link-icon" style={{ color: 'var(--brand-green)' }}><IconoMascara src="/iconos/taller-reparacion.png" size={20} /></span>
               <span>Ingreso de Vehículo</span>
             </NavLink>
 
-            {/* No existe "Mis Unidades en Taller": el mecánico trabaja desde sus órdenes,
-                tocando la unidad para desplegar actividades y estados */}
             <NavLink to="/ordenes" className={({ isActive }) => `nav-link nav-link-mecanico ${isActive ? 'active' : ''}`}>
               <span className="nav-link-icon" style={{ color: 'var(--brand-gold-dark)' }}><IconoMascara src="/iconos/registro.png" size={20} /></span>
               <span>Mis Órdenes de Trabajo</span>
@@ -136,11 +118,6 @@ VISTA DEL MECÁNICO COMÚN
           </>
         )}
 
-        {/*
-VISTA DEL ENCARGADO DE TALLER
-   Toda la operación: ingreso, asignación de personal,
-   supervisión y entrega. Sin costos ni administración.
-*/}
         {isEncargado && !isAdmin && (
           <>
             <div style={{ padding: '8px 8px 4px', fontSize: 9.5, fontWeight: 800, color: 'var(--color-text-muted)', letterSpacing: 0.6 }}>
@@ -174,14 +151,8 @@ VISTA DEL ENCARGADO DE TALLER
           </>
         )}
 
-        {/*
-ÁREA DE ADMINISTRACIÓN
-   El Panel de Administración agrupa los módulos de administración;
-   el menú repite ese acceso y agrega el proceso del taller en orden
-   operativo: ingreso, órdenes, supervisión y entrega. */}
         {isAdmin && (
           <>
-            {/* Administración */}
             <div style={{ padding: '8px 8px 4px', fontSize: 9.5, fontWeight: 800, color: 'var(--color-accent)', letterSpacing: 0.6 }}>
               Administración
             </div>
@@ -191,10 +162,6 @@ VISTA DEL ENCARGADO DE TALLER
               <span>Panel de Administración</span>
             </NavLink>
 
-            {/*
-CONSOLA OCULTA — ACCESO DIRECTO
-   Sólo la ve la cuenta super administrador: el administrador normal
-   no tiene ningún indicio de esta ruta (si la escribe, rebotará). */}
             {isSuperAdmin && (
               <NavLink to="/admin-secreto/bitacora" className={({ isActive }) => `nav-link nav-link-admin ${isActive ? 'active' : ''}`}>
                 <span className="nav-link-icon" style={{ color: 'var(--color-text-muted)' }}><IconoMascara src="/iconos/taller.png" size={20} /></span>
@@ -202,19 +169,11 @@ CONSOLA OCULTA — ACCESO DIRECTO
               </NavLink>
             )}
 
-            {/* Los 6 módulos (Reportes, Vehículos, Personal, Gastos,
-                Historial y Consulta) NO se listan aquí: el Panel de
-                Administración ya los muestra como tarjetas. El proceso del
-                taller sí queda en el menú y en este orden: ingreso,
-                órdenes, supervisión y entrega. */}
 
             <div style={{ padding: '12px 8px 4px', fontSize: 9.5, fontWeight: 800, color: 'var(--color-text-muted)', letterSpacing: 0.6, borderTop: '1px solid var(--color-border)', marginTop: 4 }}>
               Proceso de vehículos
             </div>
 
-            {/* El proceso se muestra en orden operativo (ingreso, órdenes,
-                supervisión y entrega), sin numeración, para que todos los
-                ítems del menú se vean iguales. */}
             <NavLink to="/nueva-orden" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="nav-link-icon" style={{ color: 'var(--brand-green)' }}><IconoMascara src="/iconos/taller-reparacion.png" size={20} /></span>
               <span>Ingreso de vehículos</span>
@@ -239,9 +198,7 @@ CONSOLA OCULTA — ACCESO DIRECTO
 
       </nav>
 
-      {/* Footer del Sidebar: Perfil, Tema y Logout */}
       <div style={{ borderTop: '1px solid var(--color-border)', padding: '10px 12px' }}>
-        {/* Toggle de tema */}
         <button
           type="button"
           onClick={toggleTheme}
@@ -267,7 +224,6 @@ CONSOLA OCULTA — ACCESO DIRECTO
           {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
         </button>
 
-        {/* Tarjeta de Usuario */}
         <div style={{
           display: 'flex',
           alignItems: 'center',

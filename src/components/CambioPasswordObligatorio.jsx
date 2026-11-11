@@ -6,16 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastContext';
 import { validarPassword, PASSWORD_MINIMA } from '../utils/passwords';
 
-/**
- * PUERTA DE SEGURIDAD DEL INGRESO
- * ---------------------------------------------------------------------------
- * Cuando el administrador reinicia una contraseña, la cuenta queda marcada
- * con `debeCambiarPassword`. Esta pantalla BLOQUEA el sistema hasta que la
- * persona defina una contraseña propia que cumpla la política.
- *
- * No hay selector de "mostrar contraseña": por buena práctica la contraseña
- * nunca se ve en pantalla.
- */
 export default function CambioPasswordObligatorio() {
   const { currentUser, actualizarPasswordPropia, logout } = useAuth();
   const { addToast } = useToast();

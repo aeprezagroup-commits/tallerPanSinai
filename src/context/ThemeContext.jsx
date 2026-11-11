@@ -7,7 +7,6 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  // Por defecto tema claro (fondo blanco/crema de marca Pan Sinaí)
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('pan_sinai_theme') || 'light';
   });

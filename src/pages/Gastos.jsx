@@ -59,7 +59,6 @@ const fmtFechaAuto = (v) => {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 };
 
-// Referencia documental: DTE/CCF de proveedor o N° de vale del almacén
 const docRef = (g) => {
   if (g?.dte || g?.ccf) return g.dte || g.ccf;
   if (g?.vale) return `VALE ${g.vale}`;
@@ -68,12 +67,8 @@ const docRef = (g) => {
 
 const esAlmacenG = (g) => g?.tipo === 'almacen' || (!g?.dte && !g?.ccf && !!g?.vale);
 
-// En almacén no se captura dinero (el costo lo lleva otro sistema): si el
-// registro no tiene monto, en lugar de $0.00 se muestra un guion.
 const montoTexto = (g) => (esAlmacenG(g) && !(Number(g.monto) > 0)) ? '—' : fmtMoney(montoConDescuento(g));
 
-// OTs de una placa vigentes en un mes (YYYY-MM): no canceladas,
-// ingreso antes del fin del mes y salida/abierta después del inicio del mes
 function calcularOtsDelMes(ordenes, unidad, mes) {
   const k = normPlaca(unidad);
   if (!k) return [];
@@ -100,7 +95,6 @@ export default function Gastos() {
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
 
-  // Filtros
   const mesActual = new Date().toISOString().slice(0, 7);
   const [filtroMes, setFiltroMes] = useState(mesActual);
   const [busqueda, setBusqueda] = useState('');
@@ -109,13 +103,11 @@ export default function Gastos() {
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
 
-  // Modal de registro/edición
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [form, setForm] = useState(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
 
-  // Flota vigente (ruta, ubicación y centro de costo de cada unidad)
   const [flota, setFlota] = useState(() => {
     try { return obtenerFlotaVehiculos() || []; } catch { return []; }
   });
@@ -128,7 +120,6 @@ export default function Gastos() {
     const unsubO = escucharOrdenes((data) => {
       setOrdenes(Array.isArray(data) ? data : []);
     });
-    // La flota puede cambiar (nuevas unidades o cambio de ruta/centro de costo)
     const onFlota = () => {
       try { setFlota(obtenerFlotaVehiculos() || []); } catch { setFlota([]); }
     };
@@ -140,8 +131,6 @@ export default function Gastos() {
     };
   }, []);
 
-  // Catálogo de vehículos: base de OT + flota vigente.
-  // La flota manda en asignación actual (ruta, ubicación, centro de costo).
   const catalogo = useMemo(() => {
     const map = new Map();
     ordenes.forEach(o => {
@@ -178,7 +167,7 @@ export default function Gastos() {
           fuente: 'Flota Pan Sinaí'
         });
       });
-    } catch { /* sin flota local */ }
+    } catch {  }
     return map;
   }, [ordenes, flota]);
 
@@ -189,7 +178,6 @@ export default function Gastos() {
     return Array.from(set);
   }, [catalogo, gastos]);
 
-  // Vehículo detectado al escribir/seleccionar la placa
   const vehiculoDetectado = useMemo(() => {
     const k = normPlaca(form.unidad);
     if (!k) return null;
@@ -197,9 +185,6 @@ export default function Gastos() {
     return v ? { encontrado: true, ...v } : { encontrado: false, placa: form.unidad.trim() };
   }, [form.unidad, catalogo]);
 
-  // OTs del mes en las que se puede cargar el gasto
-  // (mes de la fecha del gasto, placa coincidente, no cancelada,
-  //  y vigente dentro de ese mes: ingreso ≤ fin de mes y salida/hoy ≥ inicio de mes)
   const mesGasto = (form.fecha || '').slice(0, 7);
 
   const otsDelMes = useMemo(
@@ -273,7 +258,6 @@ export default function Gastos() {
 
   const abrirEdicion = (g) => {
     setEditandoId(g.id);
-    // Solo conserva la OT si sigue vigente en el mes de la fecha del gasto
     const mes = (g.fecha || FORM_VACIO.fecha).slice(0, 7);
     const otsValidas = calcularOtsDelMes(ordenes, g.unidad, mes);
     const ordenId = (g.ordenId && otsValidas.some(o => o.id === g.ordenId)) ? g.ordenId : '';
@@ -305,8 +289,6 @@ export default function Gastos() {
     const { name, value } = e.target;
     setForm(prev => {
       const next = { ...prev, [name]: value };
-      // Al escribir la placa: precargar el centro de costo según la
-      // ubicación/centro del vehículo (solo si el usuario no escribió otro)
       if (name === 'unidad') {
         const veh = catalogo.get(normPlaca(value));
         if (veh && !next.centroCosto) {
@@ -314,7 +296,6 @@ export default function Gastos() {
           if (centro) next.centroCosto = centro;
         }
       }
-      // Si cambia la placa o la fecha, la OT elegida podría ya no aplicar al mes
       if ((name === 'unidad' || name === 'fecha') && next.ordenId) {
         const lista = calcularOtsDelMes(ordenes, next.unidad, (next.fecha || '').slice(0, 7));
         if (!lista.some(o => o.id === next.ordenId)) next.ordenId = '';
@@ -326,13 +307,10 @@ export default function Gastos() {
   const cambiarTipo = (tipo) => {
     setForm(prev => {
       const cambioDeTipo = prev.tipo !== tipo;
-      // Desde almacén no se pide monto (ese costo lo registra otro sistema):
-      // al cambiar de tipo se limpia para no guardar un valor oculto.
       const limpiarMonto = tipo === 'almacen' && cambioDeTipo;
       return {
         ...prev,
         tipo,
-        // Desde almacén no hay descuento: se limpia para no guardar un valor oculto.
         descuento: tipo === 'almacen' ? '' : prev.descuento,
         ...(limpiarMonto ? { monto: '' } : {}),
         ...(tipo === 'almacen' ? { dte: '', proveedor: '', centroCosto: prev.centroCosto || 'TALLER' } : { vale: '' })
@@ -373,8 +351,6 @@ export default function Gastos() {
       return;
     }
 
-    // La cantidad de repuestos se pide en ambos tipos; desde almacén no se
-    // pide monto (ese costo lo registra otro sistema).
     if (form.cantidad !== '' && form.cantidad !== null && form.cantidad !== undefined) {
       const cantNum = Number(form.cantidad);
       if (isNaN(cantNum) || cantNum <= 0) {
@@ -406,10 +382,8 @@ export default function Gastos() {
       return;
     }
 
-    // Confirmación previa: el gasto se escribe en la base compartida.
     const docPrevio = esAlmacen ? form.vale.trim() : form.dte.trim();
     const detalle = form.gastos.trim() || 'concepto sin detalle';
-    // Almacén: no se pide dinero, así que el aviso habla del vale, no del monto.
     const cantTxt = form.cantidad !== '' && form.cantidad !== null && form.cantidad !== undefined
       ? ` (${form.cantidad} repuestos)` : '';
     const mensajeAlmacen = editandoId
@@ -441,7 +415,6 @@ export default function Gastos() {
         proveedor: esAlmacen ? '' : form.proveedor.trim(),
         gastos: form.gastos.trim(),
         cantidad: form.cantidad === '' ? '' : (Number(form.cantidad) || form.cantidad),
-        // Almacén sin cantidad ni monto capturados: se guarda 0 (nunca NaN).
         monto: Number.isFinite(montoNum) ? montoNum : 0,
         descuento: descNum,
         centroCosto: form.centroCosto.trim() || 'TALLER',
@@ -560,7 +533,6 @@ export default function Gastos() {
         </div>
       </div>
 
-      {/* Filtros + totales */}
       <div className="filters-bar" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end', background: 'var(--color-bg-card)', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', marginBottom: 24 }}>
         <div className="form-group" style={{ flex: '2 1 260px', minWidth: 220, marginBottom: 0 }}>
           <label className="form-label">Búsqueda</label>
@@ -626,7 +598,6 @@ export default function Gastos() {
         </div>
       </div>
 
-      {/* Totales con desglose mensual */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-secondary)' }}>
           Resumen de Gasto {filtroMes !== 'todos' ? `(${MESES[Number(filtroMes.split('-')[1]) - 1]?.toUpperCase()} ${filtroMes.split('-')[0]})` : '(Histórico General)'}
@@ -796,7 +767,6 @@ export default function Gastos() {
         </div>
       )}
 
-      {/* Modal de registro / edición */}
       {modalAbierto && (
         <ModalPortal>
           <div className="modal-backdrop" onClick={cerrarModal}>
@@ -809,7 +779,6 @@ export default function Gastos() {
               </div>
               <div className="modal-body" style={{ padding: 20 }}>
                 <form onSubmit={handleGuardar}>
-                {/* Tipo de registro */}
                 <div className="form-group" style={{ gap: 4, marginBottom: 12 }}>
                   <label className="form-label">Tipo de registro *</label>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -858,7 +827,6 @@ export default function Gastos() {
                   </div>
                 </div>
 
-                {/* Vehículo detectado en la base: ficha completa (ruta, ubicación, centro de costo) */}
                 {vehiculoDetectado && (
                   <div style={{
                     marginTop: 12, padding: '10px 12px',
@@ -914,7 +882,6 @@ export default function Gastos() {
                   </div>
                 )}
 
-                {/* OT del mes disponibles para esa placa */}
                 <div className="form-group" style={{ gap: 4, marginTop: 12, marginBottom: 0 }}>
                   <label className="form-label">
                     OT en las que se puede cargar el gasto {mesLabel ? `(${mesLabel})` : ''}

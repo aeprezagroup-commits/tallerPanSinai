@@ -1,9 +1,3 @@
-// SERVICIO DE CATÁLOGO Y FLOTA DE VEHÍCULOS
-// Plantillas CSV, Precarga y Autocompletado de datos
-//
-// FUENTE DE VERDAD: Firestore (colección "vehiculos_catalogo")
-// Espejo de respaldo: localStorage
-// Caché en memoria: para que obtenerFlotaVehiculos() siga siendo síncrono
 import { normalizarPlaca } from '../utils/placas';
 import { crearRepositorio } from '../firebase/repositorio';
 import { registrarBitacora, TIPOS_BITACORA } from './bitacoraService';
@@ -40,10 +34,6 @@ export const RUTAS_PREDETERMINADAS = [
   'Ruta 12 - Cojutepeque / San Vicente'
 ];
 
-/**
- * Años disponibles para el desplegable de "Año de fabricación".
- * Se calcula al arrancar para que el catálogo no envejezca.
- */
 export const ANIOS_VEHICULO = (() => {
   const tope = new Date().getFullYear();
   const lista = [];
@@ -51,21 +41,12 @@ export const ANIOS_VEHICULO = (() => {
   return lista;
 })();
 
-/**
- * Combobox SIN escritura libre: devuelve el catálogo listo para un <select>.
- * Si el registro ya guardado trae un valor fuera del catálogo (datos antiguos
- * o ruta manual), se antepara para que el desplegable muestre el valor real
- * en lugar de otra opción y provocar una modificación accidental al guardar.
- */
 export function opcionesCatalogo(catalogo, valorHeredado) {
   const valor = String(valorHeredado ?? '').trim();
   if (valor && !catalogo.includes(valor)) return [valor, ...catalogo];
   return catalogo;
 }
 
-/**
- * Mapeo de rutas correspondientes a cada departamento de El Salvador
- */
 export const RUTAS_POR_DEPARTAMENTO = {
   'San Salvador': [
     'Ruta 01 - San Salvador Centro & Escalerón',
@@ -119,23 +100,11 @@ export function obtenerRutasPorDepartamento(depto) {
   return RUTAS_POR_DEPARTAMENTO[depto] || RUTAS_PREDETERMINADAS;
 }
 
-// ---------------------------------------------------------------------------
-// CATÁLOGO EDITABLE (super admin)
-// Aplica las rutas guardadas en Firestore mutando las estructuras en el
-// sitio: quien ya importó RUTAS_PREDETERMINADAS o RUTAS_POR_DEPARTAMENTO
-// ve el catálogo nuevo sin recargar la aplicación.
-// ---------------------------------------------------------------------------
 function reemplazar(destino, nuevos) {
   destino.length = 0;
   destino.push(...nuevos);
 }
 
-/**
- * Sustituye las rutas de camiones por las guardadas por el super admin.
- *
- * @param {string[]} predeterminadas lista maestra de rutas
- * @param {Record<string,string[]>} porDepartamento rutas válidas por departamento
- */
 export function aplicarRutas(predeterminadas, porDepartamento) {
   const lista = (Array.isArray(predeterminadas) ? predeterminadas : [])
     .map(r => String(r || '').trim())
@@ -153,10 +122,6 @@ export function aplicarRutas(predeterminadas, porDepartamento) {
   }
 }
 
-/**
- * Copia de trabajo del catálogo de rutas para el editor del super admin.
- * @returns {{predeterminadas: string[], porDepartamento: Record<string,string[]>}}
- */
 export function obtenerEditorRutas() {
   return {
     predeterminadas: [...RUTAS_PREDETERMINADAS],
@@ -164,7 +129,6 @@ export function obtenerEditorRutas() {
   };
 }
 
-// Base de flota inicial preconfigurada para Pan Sinaí con cobertura nacional
 const FLOTA_INICIAL = [
   {
     placa: 'P345892',
@@ -246,7 +210,6 @@ const FLOTA_INICIAL = [
   }
 ];
 
-// Repositorio: Firestore = verdad · localStorage = espejo · memoria = caché
 const repoVehiculos = crearRepositorio({
   coleccion: 'vehiculos_catalogo',
   claveLocal: 'pan_sinai_flota_vehiculos_v2',
@@ -257,10 +220,6 @@ const repoVehiculos = crearRepositorio({
   nombre: 'vehiculos',
 });
 
-/**
- * Centro de costo derivado de la ubicación (departamento) del vehículo.
- * Ej: 'San Miguel' -> 'SAN MIGUEL' (sin acentos, mayúsculas)
- */
 export function centroCostoPorDepartamento(departamento) {
   if (!departamento) return '';
   return String(departamento)
@@ -270,7 +229,6 @@ export function centroCostoPorDepartamento(departamento) {
     .toUpperCase();
 }
 
-// Lee la caché (síncrono). Es la misma firma de siempre.
 export function obtenerFlotaVehiculos() {
   try {
     return repoVehiculos.obtener();
@@ -279,7 +237,6 @@ export function obtenerFlotaVehiculos() {
   }
 }
 
-// Actualiza caché + espejo local de inmediato (síncrono, no bloquea).
 export function guardarFlotaVehiculos(flota) {
   try {
     repoVehiculos.reemplazar(flota);
@@ -288,13 +245,6 @@ export function guardarFlotaVehiculos(flota) {
   }
 }
 
-/**
- * Hidrata desde Firestore al arrancar la aplicación.
- * - Firestore con datos → manda sobre lo local.
- * - Firestore vacío     → siembra desde el espejo (migración inicial).
- * - Sin conexión        → se queda con el espejo y sigue funcionando.
- * Nunca lanza; la app no depende de que esto termine.
- */
 export function hidratarVehiculos() {
   return repoVehiculos.hidratar().catch((e) => {
     console.warn('[vehiculos] hidratación fallida:', e);
@@ -302,30 +252,21 @@ export function hidratarVehiculos() {
   });
 }
 
-/** Espera a que termine la hidratación desde la base (para el arranque). */
 export function esperarHidratacionVehiculos() {
   return repoVehiculos.esperarHidratacion();
 }
 
-/**
- * Busca un vehículo por coincidencia de placa (exacta o parcial)
- */
 export function buscarVehiculoCatalogo(query) {
   if (!query) return null;
   const flota = obtenerFlotaVehiculos();
   const qClean = query.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-  // 1. Coincidencia exacta
   const exacto = flota.find(v => v.placa.replace(/[^A-Z0-9]/g, '').toUpperCase() === qClean);
   if (exacto) return exacto;
 
-  // 2. Coincidencia si contiene
   return flota.find(v => v.placa.replace(/[^A-Z0-9]/g, '').toUpperCase().includes(qClean)) || null;
 }
 
-/**
- * Agrega o actualiza un vehículo en el catálogo con validación de integridad
- */
 export function registrarVehiculoCatalogo(vehiculo) {
   if (!vehiculo) {
     throw new Error('No se proporcionaron datos para el vehículo.');
@@ -346,7 +287,6 @@ export function registrarVehiculoCatalogo(vehiculo) {
     throw new Error('El modelo del vehículo es obligatorio.');
   }
 
-  // Validación de año si se especifica
   let anioValido = '';
   if (vehiculo.anio !== undefined && vehiculo.anio !== null && String(vehiculo.anio).trim() !== '') {
     const anioNum = parseInt(vehiculo.anio, 10);
@@ -357,7 +297,6 @@ export function registrarVehiculoCatalogo(vehiculo) {
     anioValido = String(anioNum);
   }
 
-  // Validación de VIN si se especifica
   const vinNorm = (vehiculo.vin || '').trim().toUpperCase();
   if (vinNorm && vinNorm.length > 17) {
     throw new Error('El número VIN no puede superar los 17 caracteres alfanuméricos.');
@@ -392,7 +331,6 @@ export function registrarVehiculoCatalogo(vehiculo) {
   }
 
   guardarFlotaVehiculos(flota);
-  // persistirUno ya registra la escritura en las métricas
   repoVehiculos.persistirUno(registroGuardado);
   registrarBitacora({
     tipo: TIPOS_BITACORA.VEHICULO,
@@ -403,11 +341,6 @@ export function registrarVehiculoCatalogo(vehiculo) {
   return vehiculoSanitizado;
 }
 
-/**
- * Actualiza datos de un vehículo existente del catálogo.
- * Reutiliza la validación de registrarVehiculoCatalogo (que ya hace upsert)
- * y protege la placa: no se puede renombrar la unidad desde la ficha.
- */
 export function actualizarVehiculoCatalogo(placa, cambios = {}) {
   const placaNorm = normalizarPlaca(placa);
   if (!placaNorm) {
@@ -423,16 +356,13 @@ export function actualizarVehiculoCatalogo(placa, cambios = {}) {
   return registrarVehiculoCatalogo({ ...actual, ...cambios, placa: actual.placa });
 }
 
-/**
- * Elimina un vehículo del catálogo
- */
 export function eliminarVehiculoCatalogo(placa) {
   let flota = obtenerFlotaVehiculos();
   const placaNorm = normalizarPlaca(placa);
   const previa = flota.find(v => normalizarPlaca(v.placa) === placaNorm);
   flota = flota.filter(v => normalizarPlaca(v.placa) !== placaNorm);
   guardarFlotaVehiculos(flota);
-  repoVehiculos.borrarUno(placaNorm); // a Firestore, sin bloquear
+  repoVehiculos.borrarUno(placaNorm); 
   registrarBitacora({
     tipo: TIPOS_BITACORA.VEHICULO,
     accion: 'eliminar',
@@ -447,17 +377,11 @@ export function eliminarVehiculoCatalogo(placa) {
   });
 }
 
-/**
- * Genera el contenido de plantilla CSV para descargar
- */
 export function generarPlantillaCSV() {
   const encabezados = 'PLACA,MARCA,MODELO,NUMERO_MOTOR,ANIO,TIPO_UNIDAD,CONDUCTOR_HABITUAL,OBSERVACIONES\n';
   return encabezados;
 }
 
-/**
- * Parsea e importa un archivo CSV cargado por el usuario con validación estricta
- */
 export function importarVehiculosCSV(textoCSV) {
   const lineas = textoCSV.split(/\r?\n/).filter(linea => linea.trim().length > 0);
   if (lineas.length <= 1) {
@@ -467,7 +391,6 @@ export function importarVehiculosCSV(textoCSV) {
   const vehiculosImportados = [];
   let omitidosPorIncompletos = 0;
 
-  // Omitir cabecera (índice 0)
   for (let i = 1; i < lineas.length; i++) {
     const columnas = lineas[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
     if (columnas.length >= 3) {
@@ -475,7 +398,6 @@ export function importarVehiculosCSV(textoCSV) {
       const marca = (columnas[1] || '').trim();
       const modelo = (columnas[2] || '').trim();
 
-      // Seguridad: requerir placa, marca y modelo completos
       if (!placa || placa.length < 3 || !marca || !modelo) {
         omitidosPorIncompletos++;
         continue;
@@ -513,7 +435,6 @@ export function importarVehiculosCSV(textoCSV) {
     );
   }
 
-  // Fusionar con el catálogo existente
   const flotaActual = obtenerFlotaVehiculos();
   const mapa = new Map();
   flotaActual.forEach(v => mapa.set(normalizarPlaca(v.placa), v));
@@ -521,7 +442,6 @@ export function importarVehiculosCSV(textoCSV) {
 
   const nuevaFlota = Array.from(mapa.values());
   guardarFlotaVehiculos(nuevaFlota);
-  // Llevar lo importado a la base (sin bloquear la interfaz)
   vehiculosImportados.forEach((v) => repoVehiculos.persistirUno(v));
 
   return {

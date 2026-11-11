@@ -36,10 +36,8 @@ export default function CommandPalette({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  // Lista de accesos directos base (según rol)
   const staticActions = [
     { id: 'act-new', titulo: 'Recepción e Ingreso de Vehículo', subtitulo: 'Módulo de Recepción EST-01', icono: <TbCirclePlus />, path: '/nueva-orden' },
-    // El mecánico no tiene módulo de taller aparte: trabaja desde sus órdenes
     ...(!isMecanico ? [{ id: 'act-bays', titulo: 'Vehículos en Taller', subtitulo: 'Área de reparación EST-02', icono: <TbTools />, path: '/taller' }] : []),
     { id: 'act-orders', titulo: isMecanico ? 'Mis Órdenes de Trabajo' : 'Órdenes de Trabajo', subtitulo: 'Supervisión y control de actividades EST-03', icono: <TbList />, path: '/ordenes' },
     { id: 'act-out', titulo: 'Inspección de Despacho y Salida', subtitulo: 'Cierre y entrega de vehículos EST-04', icono: <TbCircleCheck />, path: '/salida' },
@@ -54,10 +52,8 @@ export default function CommandPalette({ isOpen, onClose }) {
     ] : [])
   ];
 
-  // Filtrado combinado
   const q = query.trim().toLowerCase();
 
-  // Visibilidad por rol: un mecánico solo busca entre sus propias órdenes + cola de recepción
   const ordenesVisibles = isMecanico ? visiblesParaTaller(ordenes, currentUser) : filtrarOrdenesPorUsuario(ordenes, currentUser);
 
   const resultadosOrdenes = ordenesVisibles
@@ -148,7 +144,6 @@ export default function CommandPalette({ isOpen, onClose }) {
           onClick={e => e.stopPropagation()}
           onKeyDown={handleKeyDown}
         >
-          {/* Search Input Bar */}
           <div className="command-palette-input-wrap">
             <TbSearch className="command-palette-search-icon" />
             <input
@@ -168,7 +163,6 @@ export default function CommandPalette({ isOpen, onClose }) {
             </button>
           </div>
 
-          {/* Results List */}
           <div className="command-palette-list">
             {todosResultados.length === 0 ? (
               <div className="command-palette-empty">
@@ -202,7 +196,6 @@ export default function CommandPalette({ isOpen, onClose }) {
             )}
           </div>
 
-          {/* Footer shortcuts */}
           <div className="command-palette-footer">
             <div style={{ display: 'flex', gap: 14 }}>
               <span><kbd>↑</kbd> <kbd>↓</kbd> Navegar</span>

@@ -13,14 +13,12 @@ import {
   estadoCatalogos, suscribirCatalogos,
 } from '../services/catalogosService';
 
-// Pestañas del editor de catálogos
 const PESTANAS = [
   { id: 'rutas', etiqueta: 'Rutas de camiones', icono: <TbTruck size={16} /> },
   { id: 'areas', etiqueta: 'Áreas del taller', icono: <TbList size={16} /> },
   { id: 'tareas', etiqueta: 'Tareas del checklist', icono: <TbClipboardList size={16} /> },
 ];
 
-// Copia de trabajo del catálogo de áreas (valores en memoria)
 function copiaAreas() {
   return {
     areas: [...AREAS_TRABAJO],
@@ -28,9 +26,6 @@ function copiaAreas() {
   };
 }
 
-// Filas de tarea listas para editar, según el grupo elegido:
-//   mantenimiento → índices sobre base5000 / extendidas20000
-//   reparación     → textos del área (empresa) + genéricas del área
 function filasDeGrupo(grupo, area, editor) {
   if (grupo === 'mtto5000') {
     return editor.mantenimiento.base5000.map((t, idx) => ({ ...t, origen: 'base', idx }));
@@ -54,11 +49,6 @@ function filasDeGrupo(grupo, area, editor) {
   return [...empresa, ...genericas];
 }
 
-/**
- * CONSOLA DE CATÁLOGOS — solo para el super administrador.
- * Rutas de camiones, áreas del taller y tareas del checklist, editadas
- * desde aquí y guardadas en Firestore: no hace falta tocar la base.
- */
 export default function PanelCatalogos() {
   const { currentUser } = useAuth();
   const { addToast, confirm } = useToast();
@@ -72,7 +62,6 @@ export default function PanelCatalogos() {
   const [areas, setAreas] = useState(copiaAreas);
   const [tareas, setTareas] = useState(() => obtenerEditorTareas());
 
-  // Grupos de tareas: mantenimiento + una entrada por área de reparación
   const grupos = [
     { id: 'mtto5000', etiqueta: 'Mantenimiento · 5,000 km' },
     { id: 'mtto20000', etiqueta: 'Mantenimiento · 20,000 km' },
@@ -82,12 +71,10 @@ export default function PanelCatalogos() {
   const [grupoSel, setGrupoSel] = useState('rep:Motor');
   const [busquedaTarea, setBusquedaTarea] = useState('');
 
-  // Si el área elegida dejó de existir en el catálogo, se vuelve al primero
   const grupoActual = grupos.some(g => g.id === grupoSel)
     ? grupoSel
     : (grupos[0]?.id || 'mtto5000');
 
-  // Al cargar desde Firestore (o al guardar) se refresca la copia de trabajo
   const reiniciar = useCallback(() => {
     setRutas(obtenerEditorRutas());
     setAreas(copiaAreas());
@@ -102,7 +89,6 @@ export default function PanelCatalogos() {
 
   const marcar = (quien) => setSucio(s => ({ ...s, [quien]: true }));
 
-  // ---------------------------------------------------------------- RUTAS
   const editarRuta = (i, valor) => {
     setRutas(r => ({ ...r, predeterminadas: r.predeterminadas.map((x, j) => (j === i ? valor : x)) }));
     marcar('rutas');
@@ -151,7 +137,6 @@ export default function PanelCatalogos() {
     marcar('rutas');
   };
 
-  // ---------------------------------------------------------------- ÁREAS
   const editarArea = (i, valor) => {
     setAreas(a => {
       const vieja = a.areas[i];
@@ -200,7 +185,6 @@ export default function PanelCatalogos() {
     marcar('areas');
   };
 
-  // --------------------------------------------------------------- TAREAS
   const esReparacion = grupoActual.startsWith('rep:');
   const areaGrupo = esReparacion ? grupoActual.slice(4) : '';
   const filas = useMemo(() => {
@@ -292,7 +276,6 @@ export default function PanelCatalogos() {
     marcar('tareas');
   };
 
-  // --------------------------------------------------------------- GUARDAR
   const guardar = async () => {
     const pestanaActual = PESTANAS.find(p => p.id === pestana);
     const confirmado = await confirm({
@@ -307,7 +290,6 @@ export default function PanelCatalogos() {
     try {
       const por = currentUser?.nombre || 'Soporte';
       if (pestana === 'rutas') {
-        // Los departamentos solo guardan rutas que existan en la lista maestra
         const maestras = rutas.predeterminadas.map(r => r.trim()).filter(Boolean);
         const porDepartamento = Object.fromEntries(
           Object.entries(rutas.porDepartamento)
@@ -334,8 +316,6 @@ export default function PanelCatalogos() {
   };
 
   const hayCambios = sucio[pestana];
-  // Se puede guardar si hay ediciones, o si la base todavía no tiene el
-  // catálogo (primer guardado: aún no hay nada que "descartar").
   const puedeGuardar = hayCambios || info.origen !== 'firestore';
   const caja = { background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 12 };
 
@@ -366,7 +346,6 @@ export default function PanelCatalogos() {
         </button>
       </div>
 
-      {/* Pestañas */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         {PESTANAS.map(p => (
           <button
@@ -380,7 +359,6 @@ export default function PanelCatalogos() {
         ))}
       </div>
 
-      {/* ---------------------------------------------------------- RUTAS */}
       {pestana === 'rutas' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 18 }}>
           <div>
@@ -464,7 +442,6 @@ export default function PanelCatalogos() {
         </div>
       )}
 
-      {/* ---------------------------------------------------------- ÁREAS */}
       {pestana === 'areas' && (
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
@@ -514,7 +491,6 @@ export default function PanelCatalogos() {
         </div>
       )}
 
-      {/* --------------------------------------------------------- TAREAS */}
       {pestana === 'tareas' && (
         <div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>

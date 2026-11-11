@@ -31,12 +31,6 @@ const MOTIVOS_PAUSA = [
   { id: 'fin_turno', label: 'Fin de turno o descanso programado' }
 ];
 
-/**
- * Panel operativo completo de una orden de trabajo:
- * asignación, actividades con estados (Iniciar/Pausar/Listo), cronómetro,
- * pausa global y finalización. Se despliega al tocar una orden (móvil) o
- * dentro de la tarjeta del área de reparación (escritorio).
- */
 const AVISO_ESTADOS = 'Solo el encargado de taller, administración o el mecánico asignado a esta OT puede cambiar los estados.';
 
 export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos = [], mostrarFooter = true }) {
@@ -71,10 +65,8 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     guardando: false
   });
 
-  // Reactivación de una OT finalizada por error (encargado/admin, con justificación)
   const [modalReactivar, setModalReactivar] = useState({ abierto: false, guardando: false });
 
-  // Reloj local: refresca el cronómetro en vivo de esta unidad
   const [ahora, setAhora] = useState(() => Date.now());
 
   const { addToast, confirm } = useToast();
@@ -87,7 +79,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     return () => clearInterval(reloj);
   }, []);
 
-  // Verificar si un mecánico ya tiene una labor activa en otra unidad
   const verificarConcurrenciaMecanico = (mecanico, ordenIdActual) => {
     if (!mecanico) return null;
     const ordenEnCurso = todasLasOrdenes.find(o =>
@@ -109,7 +100,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     }
   };
 
-  // Mecánicos de APoyo: una lista con + para agregar más cuando la situación lo amerita
   const slotsApoyo = apoyosDeOrden(orden);
   const slotsVisibles = slotsApoyo.length > 0 ? slotsApoyo : [''];
 
@@ -118,7 +108,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
       const limpios = nuevos.map(v => (v || '').trim());
       await actualizarOrden(orden.id, {
         mecanicosApoyo: limpios,
-        // Campo clásico sincronizado con el primer apoyo (compatibilidad)
         mecanicoAsignado2: limpios.find(Boolean) || null
       });
       const lista = limpios.filter(Boolean);
@@ -191,7 +180,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         await pausarActividad(ordenPausa.id, actividadId, motivo, observacion);
         addToast(`Actividad pausada: ${motivo === 'esperando_repuestos' ? 'Esperando repuestos' : motivo}`, 'warning');
       } else {
-        // El servicio calcula los minutos reales transcurridos desde el inicio del tramo
         await pausarTrabajo(ordenPausa.id, Number(ordenPausa.tiempoRealMinutos) || 0, motivo);
         addToast(`Trabajo pausado para ${ordenPausa.placa} (${motivo})`, 'warning');
       }
@@ -207,8 +195,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
       addToast(AVISO_ESTADOS, 'warning');
       return;
     }
-    // El mecánico solo puede cerrar una OT COMPLETA (todas las actividades finalizadas);
-    // una OT incompleta solo la cierra el encargado/administración con justificación.
     if (isMecanico && !ordenCompleta(orden)) {
       const pendientes = (orden.actividades || []).filter(a => a.estado !== 'finalizado').length;
       addToast(
@@ -217,7 +203,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
       );
       return;
     }
-    // El mecánico debe registrar el trabajo realizado y el vale de bodega antes de cerrar
     setModalFinalizacion({ abierto: true, orden, guardando: false });
   };
 
@@ -239,7 +224,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     if (!ordenFin) return;
     setModalFinalizacion(prev => ({ ...prev, guardando: true }));
     try {
-      // El servicio calcula el tiempo real total (acumulado + tramo en curso)
       await finalizarTrabajo(ordenFin.id, Number(ordenFin.tiempoRealMinutos) || 0, detalle);
       setModalFinalizacion({ abierto: false, orden: null, guardando: false });
       addToast(`Orden de ${ordenFin.placa} finalizada y lista para entrega.`, 'success');
@@ -250,13 +234,11 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     }
   };
 
-  // Acciones sobre sub-actividades con control estricto de secuencia
   const handleIniciarSubActividad = async (act, actIndex = null) => {
     if (!puedeCambiarEstados) {
       addToast(AVISO_ESTADOS, 'warning');
       return;
     }
-    // 1. Control de secuencia: verificar si la actividad previa ya concluyó
     const idx = actIndex !== null ? actIndex : actividades.findIndex(a => a.id === act.id);
     if (idx > 0) {
       const actPrevia = actividades[idx - 1];
@@ -269,7 +251,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
       }
     }
 
-    // 2. Control de concurrencia interna: no permitir múltiples actividades en curso simultáneas en la misma OT
     const otraActEnCurso = actividades.find(a => a.id !== act.id && a.estado === 'en_proceso');
     if (otraActEnCurso) {
       addToast(
@@ -331,7 +312,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
       return;
     }
 
-    // Confirmación previa: la actividad se agrega a la orden del taller.
     const confirmado = await confirm({
       title: '¿Añadir actividad a la orden?',
       message: `Se agregará "${descripcion.trim()}" a la orden (${mins} min estimados).`,
@@ -364,7 +344,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     }
   };
 
-  // Cálculos de tiempo
   const horasEst = Number(orden.tiempoEstimadoHoras || 0);
   const minutosEstimados = horasEst * 60;
   let minutosTramo = 0;
@@ -383,7 +362,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
 
   return (
     <>
-      {/* Área de trabajo y costos (solo administración) */}
       <div className="order-card-info" style={{ justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
           <TbTools className="icon" />
@@ -396,7 +374,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         )}
       </div>
 
-      {/* Asignación de personal / autoasignación de unidad */}
       {esColaRecepcion(orden) && isMecanico ? (
         <div className="order-card-info" style={{ marginBottom: 12 }}>
           <TbUser className="icon" />
@@ -506,7 +483,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         </div>
       )}
 
-      {/* DESGLOSE DE ACTIVIDADES TÉCNICAS (una fila por actividad) */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.02)',
         border: '1px solid var(--color-border)',
@@ -549,10 +525,8 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
               const actPausada = act.estado === 'pausado';
               const actFinalizada = act.estado === 'finalizado';
 
-              // Control de secuencia: verificar si la tarea anterior concluyó
               const esPrimeraActividad = actIndex === 0;
               const previaFinalizada = esPrimeraActividad || actividades[actIndex - 1]?.estado === 'finalizado';
-              // Concurrencia interna: si ya hay alguna tarea en proceso en esta misma orden
               const hayOtraEnCurso = actividades.some(a => a.id !== act.id && a.estado === 'en_proceso');
               const iniciarBloqueado = !previaFinalizada || hayOtraEnCurso || !puedeCambiarEstados;
               const motivoBloqueo = !puedeCambiarEstados
@@ -668,7 +642,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         )}
       </div>
 
-      {/* Panel Cronométrico General y Acciones */}
       <div style={{
         background: 'var(--color-bg-input)',
         borderRadius: 'var(--radius-md)',
@@ -695,7 +668,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
           </span>
         </div>
 
-        {/* Barra de progreso de tiempo */}
         <div style={{
           width: '100%',
           height: 6,
@@ -765,7 +737,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
               </button>
             )}
 
-            {/* Reactivar OT finalizada por error — solo encargado / administración */}
             {(orden.estado === 'finalizado' || orden.estado === 'listo_entrega') && puedeReactivarOrden(currentUser) && (
               <button
                 type="button"
@@ -830,7 +801,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         </div>
       )}
 
-      {/* MODAL DE PAUSA CON MOTIVO Y OBSERVACIONES */}
       {modalPausa.abierto && (
         <ModalPortal>
           <div className="modal-backdrop" onClick={(e) => e.stopPropagation()}>
@@ -889,7 +859,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         </ModalPortal>
       )}
 
-      {/* MODAL DE AGREGAR SUB-ACTIVIDAD */}
       {modalNuevaActividad.abierto && (
         <ModalPortal>
           <div className="modal-backdrop" onClick={(e) => e.stopPropagation()}>
@@ -988,7 +957,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         </ModalPortal>
       )}
 
-      {/* MODAL DE ADVERTENCIA DE CONCURRENCIA DE MECÁNICOS */}
       {modalConcurrencia.abierto && (
         <ModalPortal>
           <div className="modal-backdrop" onClick={(e) => e.stopPropagation()}>
@@ -1039,7 +1007,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         </ModalPortal>
       )}
 
-      {/* Formulario de Finalización de Orden de Trabajo */}
       <div onClick={(e) => e.stopPropagation()}>
         <FinalizacionOrdenModal
           isOpen={modalFinalizacion.abierto}
@@ -1049,7 +1016,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
           guardando={modalFinalizacion.guardando}
           incompleta={!ordenCompleta(orden)}
         />
-        {/* Reactivación de OT finalizada por error */}
         <ReactivarOrdenModal
           isOpen={modalReactivar.abierto}
           onClose={() => setModalReactivar(prev => ({ ...prev, abierto: false }))}

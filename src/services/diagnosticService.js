@@ -1,5 +1,3 @@
-// SERVICIO DE TELEMETRÍA Y DIAGNÓSTICO OBD-II
-// Motor de Diagnóstico OBD-II, Códigos DTC y Escaneo 360°
 
 export const DTC_DATABASE = [
   {
@@ -89,11 +87,9 @@ export const PUNTOS_INSPECCION_360 = [
   { id: 'luces', nombre: 'Sistema de Alumbrado y Señalización', zona: 'electrico', icono: 'sun', x: 92, y: 50 }
 ];
 
-// Generar telemetría dinámica y coherente con base en la placa
 export function obtenerTelemetriaVehiculo(placa = '') {
   const seed = (placa || 'DEFAULT').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
 
-  // Parámetros calculados
   const bateria = (12.2 + ((seed % 18) / 10)).toFixed(1);
   const tempRefrigerante = 82 + (seed % 16);
   const presionAceite = 38 + (seed % 14);
@@ -103,14 +99,12 @@ export function obtenerTelemetriaVehiculo(placa = '') {
   const saludGeneral = Math.max(70, Math.min(99, 100 - ((seed % 28))));
   const vidaAceite = Math.max(15, Math.min(95, 100 - ((seed * 3) % 85)));
 
-  // Selección de códigos DTC simulados para esta unidad
   const dtcIndices = [(seed % DTC_DATABASE.length)];
   if (milActivo) {
     dtcIndices.push((seed + 2) % DTC_DATABASE.length);
   }
   const codigos = dtcIndices.map(i => DTC_DATABASE[i]);
 
-  // Generar hash de verificación criptográfica simulado
   const hashIntegridad = Array.from({ length: 16 }, (_, i) =>
     ((seed * (i + 1) * 31) % 256).toString(16).padStart(2, '0')
   ).join('');
@@ -131,7 +125,6 @@ export function obtenerTelemetriaVehiculo(placa = '') {
   };
 }
 
-// Generador de firmas criptográficas para auditoría de taller
 export function generarCertificadoAuditoria(orden) {
   const fecha = new Date().toISOString();
   const rawStr = `${orden.id || 'ORD'}-${orden.placa || 'PLACA'}-${orden.estado}-${fecha}`;

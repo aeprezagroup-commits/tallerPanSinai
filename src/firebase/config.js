@@ -1,7 +1,3 @@
-// CONFIGURACIÓN DE FIREBASE
-// Los valores se leen de variables de entorno (ver .env / .env.local).
-// Vite los inyecta en el build; en Firebase Hosting quedan embebidos en el bundle.
-// Si faltan valores, la app opera en MODO LOCAL/DEMO (localStorage).
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';

@@ -15,7 +15,6 @@ export default function Taller() {
   const [mecanicos, setMecanicos] = useState(obtenerMecanicosActivos());
   const [mecanicoFiltro, setMecanicoFiltro] = useState('Todos');
   const [estadoFiltro, setEstadoFiltro] = useState('activos');
-  // Vista "fila" (tabla) por defecto: más fácil de visualizar en dispositivos
   const [vista, setVista] = useState('fila');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
 
@@ -38,7 +37,6 @@ export default function Taller() {
     };
   }, []);
 
-  // Visibilidad por rol: el mecánico ve su cola de recepción + sus órdenes asignadas
   const ordenesVisibles = visiblesParaTaller(ordenes, currentUser);
 
   const ordenesFiltradas = ordenesVisibles.filter((o) => {
@@ -69,7 +67,6 @@ export default function Taller() {
           <p>Supervisión en vivo y tiempos por mecánico.</p>
         </div>
         <div className="btn-group">
-          {/* Toggle vista: fila (tabla) o cuadrícula de tarjetas */}
           <div className="btn-group" style={{ marginRight: 12 }}>
             <button
               className={`btn btn-sm ${vista === 'fila' ? 'btn-primary' : 'btn-secondary'}`}
@@ -90,7 +87,6 @@ export default function Taller() {
         </div>
       </div>
 
-      {/* Barra de Filtros Operativos */}
       <div className="filters-bar" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end', background: 'var(--color-bg-card)', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', marginBottom: 24 }}>
         {!isMecanico && (
           <div className="form-group" style={{ flex: '1 1 240px', minWidth: 200, marginBottom: 0 }}>
@@ -140,7 +136,6 @@ export default function Taller() {
           <p>No se registran unidades asignadas en el área de reparación con este criterio.</p>
         </div>
       ) : vista === 'fila' ? (
-        /* VISTA Fila (tabla) — toca la fila para desplegar el detalle operativo completo */
         <div className="table-container">
           <table className="table">
             <thead>
@@ -255,7 +250,6 @@ export default function Taller() {
           </table>
         </div>
       ) : (
-        /* VISTA: Cuadrícula de tarjetas — el detalle operativo se ve completo en cada tarjeta */
         <div className="order-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(360px, 100%), 1fr))', gap: 20 }}>
           {ordenesFiltradas.map((orden, index) => (
             <div key={orden.id} className={`order-card estado-${orden.estado}`} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -282,7 +276,6 @@ export default function Taller() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                   <StatusBadge estado={orden.estado} />
-                  {/* El mecánico sabe por qué ve esta unidad en su lista */}
                   {isMecanico && (
                     <span style={{
                       fontSize: 9,
@@ -301,7 +294,6 @@ export default function Taller() {
                 </div>
               </div>
 
-              {/* Panel operativo completo: asignación, actividades, cronómetro y cierre */}
               <div className="order-card-body" style={{ flex: 1 }}>
                 <OrdenOperativa
                   orden={orden}

@@ -1,33 +1,16 @@
-/*
-SISTEMA DE DISEÑO - TALLER PAN SINAÍ
-   Paleta oficial de marca (logo Pan Sinaí):
-   verde olivo, rojo vino y dorado trigo
-   sobre fondo crema/blanco
-*/
 
-/* ---- Google Fonts (Tipografía Empresarial Logística tipo LOGEX) ---- */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* ---- Paleta de Marca Pan Sinaí (constante en ambos temas) ---- */
 :root {
   --brand-green: #86992e;
-  /* verde olivo (corona del logo) */
   --brand-green-dark: #6b7a22;
-  /* verde olivo oscuro */
   --brand-green-soft: #a7b958;
-  /* verde olivo claro */
   --brand-red: #a6233c;
-  /* rojo vino (texto "Sinaí") */
   --brand-red-dark: #851a31;
-  /* rojo vino oscuro */
   --brand-gold: #eda83c;
-  /* dorado trigo (espigas) */
   --brand-gold-dark: #c2801f;
-  /* dorado trigo oscuro */
   --brand-cream: #fbf8f1;
-  /* crema de fondo */
   --brand-cream-dark: #f2ede0;
-  /* crema sombra */
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -35,12 +18,10 @@ SISTEMA DE DISEÑO - TALLER PAN SINAÍ
   --radius-xl: 20px;
   --radius-full: 9999px;
 
-  /* Tipografía Moderna Enterprise SaaS (Estilo LOGEX) */
   --font-primary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Curvas de aceleración suaves tipo Apple / LOGEX */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -53,9 +34,7 @@ SISTEMA DE DISEÑO - TALLER PAN SINAÍ
   --sidebar-collapsed: 60px;
 }
 
-/* ---- Tema CLARO (por defecto): fondo blanco/crema, marca en acentos ---- */
 :root {
-  /* Colores principales */
   --color-bg-primary: var(--brand-cream);
   --color-bg-secondary: #ffffff;
   --color-bg-card: #ffffff;
@@ -63,27 +42,22 @@ SISTEMA DE DISEÑO - TALLER PAN SINAÍ
   --color-bg-input: var(--brand-cream-dark);
   --color-bg-modal: rgba(43, 48, 30, 0.45);
 
-  /* Superficie con glassmorphism */
   --color-glass: rgba(255, 255, 255, 0.85);
   --color-glass-border: rgba(35, 40, 26, 0.08);
 
-  /* Acentos */
   --color-accent: var(--brand-green);
   --color-accent-hover: var(--brand-green-dark);
   --color-accent-light: rgba(134, 153, 46, 0.12);
   --color-accent-glow: rgba(134, 153, 46, 0.22);
 
-  /* Texto — mejor contraste bajo cualquier iluminación */
   --color-text-primary: #1E2514;
   --color-text-secondary: #374151;
   --color-text-muted: #6B7280;
   --color-text-accent: var(--brand-green-dark);
 
-  /* Bordes */
   --color-border: rgba(35, 40, 26, 0.1);
   --color-border-active: rgba(134, 153, 46, 0.55);
 
-  /* Estados */
   --color-ingresado: var(--brand-gold-dark);
   --color-ingresado-bg: rgba(237, 168, 60, 0.16);
   --color-en-proceso: #2f6fd0;
@@ -95,42 +69,34 @@ SISTEMA DE DISEÑO - TALLER PAN SINAÍ
   --color-entregado: #7c4dbd;
   --color-entregado-bg: rgba(124, 77, 189, 0.12);
 
-  /* Peligro / alertas (rojo vino de marca) */
   --color-danger: var(--brand-red);
   --color-danger-hover: var(--brand-red-dark);
   --color-warning: var(--brand-gold-dark);
 
-  /* Sombras */
   --shadow-sm: 0 1px 3px rgba(43, 48, 30, 0.08);
   --shadow-md: 0 4px 12px rgba(43, 48, 30, 0.1);
   --shadow-lg: 0 8px 30px rgba(43, 48, 30, 0.14);
   --shadow-glow: 0 0 20px rgba(134, 153, 46, 0.18);
 
-  /* Bordes redondeados */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-full: 9999px;
 
-  /* Tipografía */
   --font-primary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Transiciones */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Sidebar */
   --sidebar-width: 220px;
   --sidebar-collapsed: 60px;
 }
 
-/* ---- Tema OSCURO: pizarra profundo (sin matiz verde/marrón) ---- */
 :root[data-theme='dark'] {
-  /* Fondos en escala pizarra/carbón — elimina el tono "pantalla sucia" */
   --color-bg-primary: #181F26;
   --color-bg-secondary: #1E293B;
   --color-bg-card: #243040;
@@ -141,19 +107,16 @@ SISTEMA DE DISEÑO - TALLER PAN SINAÍ
   --color-glass: rgba(24, 31, 38, 0.80);
   --color-glass-border: rgba(255, 255, 255, 0.10);
 
-  /* El acento verde olivo sigue siendo la marca */
   --color-accent: var(--brand-green-soft);
   --color-accent-hover: #bccd68;
   --color-accent-light: rgba(167, 185, 88, 0.15);
   --color-accent-glow: rgba(167, 185, 88, 0.3);
 
-  /* Texto — mayor contraste sobre pizarra */
   --color-text-primary: #F1F5F9;
   --color-text-secondary: #CBD5E1;
   --color-text-muted: #94A3B8;
   --color-text-accent: var(--brand-green-soft);
 
-  /* Bordes más visibles: identifica inputs y tarjetas de inmediato */
   --color-border: rgba(255, 255, 255, 0.11);
   --color-border-active: rgba(167, 185, 88, 0.50);
 
@@ -172,14 +135,12 @@ SISTEMA DE DISEÑO - TALLER PAN SINAÍ
   --color-danger-hover: var(--brand-red-dark);
   --color-warning: var(--brand-gold);
 
-  /* Sombras más fuertes — el fondo más claro las necesita */
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.45);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.65);
   --shadow-glow: 0 0 20px rgba(167, 185, 88, 0.20);
 }
 
-/* ---- Reset ---- */
 *,
 *::before,
 *::after {
@@ -205,8 +166,6 @@ body {
   letter-spacing: -0.015em;
   min-height: 100vh;
   overflow-x: hidden;
-  /* Un solo criterio tipográfico en toda la interfaz: mayúsculas sostenidas.
-     La contraseña es la única excepción (ver .form-input[type='password']). */
   text-transform: uppercase;
 }
 
@@ -221,7 +180,6 @@ h6 {
   font-weight: 700;
 }
 
-/* Fondo con partículas/gradient animado */
 body::before {
   content: '';
   position: fixed;
@@ -271,7 +229,6 @@ img {
   display: block;
 }
 
-/* LAYOUT PRINCIPAL & RESPONSIVE COLLAPSIBLE */
 .app-layout {
   display: flex;
   min-height: 100vh;
@@ -280,8 +237,6 @@ img {
 
 .main-content {
   flex: 1;
-  /* Sin min-width:0 el contenido no puede encogerse por debajo de su ancho
-     mínimo y desborda a la derecha cuando el sidebar está visible. */
   min-width: 0;
   min-height: 100vh;
   display: flex;
@@ -290,7 +245,6 @@ img {
   will-change: margin-left;
 }
 
-/* En tablets, laptops y pantallas de escritorio (>= 768px): diseño ensamblado fluido */
 @media (min-width: 768px) {
   .main-content.sidebar-visible {
     margin-left: var(--sidebar-width);
@@ -305,14 +259,12 @@ img {
   }
 }
 
-/* Solo en pantallas móviles pequeñas (< 768px): el menú se despliega como cajón */
 @media (max-width: 767px) {
   .main-content {
     margin-left: 0 !important;
   }
 }
 
-/* SIDEBAR */
 .sidebar {
   position: fixed;
   top: 0;
@@ -329,11 +281,9 @@ img {
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s ease;
   overflow-y: auto;
   transform: translateX(-100%);
-  /* Oculto cuando no está open */
   will-change: transform;
 }
 
-/* Cuando está abierto en cualquier dispositivo */
 .sidebar.open {
   transform: translateX(0);
   box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
@@ -408,15 +358,10 @@ img {
   font-size: 10px;
   color: var(--color-text-muted);
   font-weight: 600;
-  /* Menú en caja normal: ocupa menos ancho y se lee mejor en celulares */
   text-transform: none;
   letter-spacing: 0;
 }
 
-/* EL MENÚ NO VA EN MAYÚSCULAS.
-   Las mayúsculas ensanchan cada etiqueta y fuerzan partidas de línea, lo que
-   alarga el menú en pantallas angostas. Aquí se anula la transformación global
-   de body únicamente dentro del lateral (etiquetas y títulos de sección). */
 .sidebar-nav,
 .sidebar-nav *,
 .sidebar-logo-text span {
@@ -452,17 +397,14 @@ img {
   background: var(--color-border);
 }
 
-/* Zona pública */
 .sidebar-section-title.zona-publica {
   color: #22c55e;
 }
 
-/* Zona operativa mecánicos — acento corporativo */
 .sidebar-section-title.zona-operativa {
   color: var(--color-accent);
 }
 
-/* Zona administración */
 .sidebar-section-title.zona-admin {
   color: var(--color-accent);
 }
@@ -476,8 +418,6 @@ img {
   font-family: var(--font-display);
   font-size: 13.5px;
   font-weight: 600;
-  /* Interlineado corto: varias etiquetas del menú se parten en dos
-     líneas y, con interlineado normal, el lateral pedía scroll. */
   line-height: 1.3;
   letter-spacing: -0.015em;
   color: var(--color-text-secondary);
@@ -486,7 +426,6 @@ img {
   animation: navLinkIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
-/* Stagger sidebar nav links */
 .nav-link:nth-child(1) {
   animation-delay: 0.04s;
 }
@@ -525,7 +464,6 @@ img {
   transform: translateX(2px);
 }
 
-/* Estilo de navegación activa: pastilla verde corporativo con texto blanco */
 .nav-link.active {
   background: var(--color-accent) !important;
   color: #ffffff !important;
@@ -543,7 +481,6 @@ img {
   display: none;
 }
 
-/* Variantes de color por área — todas usan el verde corporativo */
 .nav-link-publico.active {
   background: var(--color-accent) !important;
   color: #ffffff !important;
@@ -559,12 +496,6 @@ img {
   color: #ffffff !important;
 }
 
-/*
-ÍCONO DEL MENÚ LATERAL
-   Cápsula circular que enmarca los iconos descargados del taller
-   (aplicados como máscara, así heredan el color de cada enlace);
-   el estado activo los pone en blanco sobre el fondo translúcido.
-*/
 .nav-link-icon {
   font-size: 14px;
   flex-shrink: 0;
@@ -603,7 +534,6 @@ img {
   text-align: center;
 }
 
-/* Overlay para cerrar el menú ÚNICAMENTE en teléfonos móviles (< 768px) */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
@@ -625,10 +555,6 @@ img {
   }
 }
 
-/*
-BADGES & STATUS INDICATORS INDUSTRIALES
-   Sin emojis - Diseño de telemetría de última generación
-*/
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -675,7 +601,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   }
 }
 
-/* Variantes de estado */
 .status-badge.ingresado,
 .badge-ingresado {
   background: rgba(234, 179, 8, 0.1);
@@ -736,7 +661,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   background: #8b5cf6;
 }
 
-/* Tech tag / chip */
 .tech-tag {
   display: inline-flex;
   align-items: center;
@@ -750,7 +674,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   color: var(--color-text-secondary);
 }
 
-/* Barra superior de telemetría y reloj */
 .telemetry-bar {
   display: flex;
   align-items: center;
@@ -795,7 +718,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   margin-top: 2px;
 }
 
-/* TARJETAS */
 .card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -806,7 +728,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   overflow: hidden;
 }
 
-/* Shine hover effect on cards */
 .card::after {
   content: '';
   position: absolute;
@@ -848,7 +769,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   color: var(--color-text-primary);
 }
 
-/* ---- Tarjetas de estadísticas del dashboard ---- */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
@@ -867,7 +787,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   animation: staggerCardIn 0.5s var(--ease-spring) backwards;
 }
 
-/* Staggered entrance for stat cards */
 .stat-card:nth-child(1) {
   animation-delay: 0.05s;
 }
@@ -992,11 +911,8 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   font-weight: 500;
 }
 
-/* FORMULARIOS */
 .form-grid {
   display: grid;
-  /* min() evita el scroll horizontal en pantallas de 320px:
-     el mínimo del track nunca supera el ancho disponible. */
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 20px;
 }
@@ -1011,9 +927,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   grid-column: 1 / -1;
 }
 
-/* Barra de acciones de formulario (Guardar / Cancelar).
-   En móvil se vuelve "sticky" al pie para no tener que
-   hacer scroll hasta el final en formularios largos. */
 .form-actions-bar {
   display: flex;
   flex-wrap: wrap;
@@ -1045,9 +958,6 @@ BADGES & STATUS INDICATORS INDUSTRIALES
   width: 100%;
 }
 
-/* Jerarquía tipográfica: los títulos y subtítulos de cada módulo se leen en
-   tipo oración (más rápido de reconocer) y el resto —etiquetas, ayudas,
-   badges y botones— va en mayúsculas sostenidas. */
 h1,
 h2,
 h3,
@@ -1058,8 +968,6 @@ h6,
 .modal-title,
 .form-section-title,
 .page-header p,
-/* Los avisos y notificaciones también van en tipo oración: son frases
-   completas y en mayúsculas se ven desproporcionadas. */
 .confirm-modal-title,
 .confirm-modal-text,
 .toast-title,
@@ -1068,9 +976,6 @@ h6,
   text-transform: none;
 }
 
-/* Los controles de formulario no heredan la transformación del documento
-   (el navegador la neutraliza por defecto), así que se aplica explícitamente
-   para que botones, campos y listas sigan el mismo criterio. */
 button,
 input,
 select,
@@ -1078,8 +983,6 @@ textarea {
   text-transform: uppercase;
 }
 
-/* Estado deshabilitado: hasta ahora no existía ninguna regla, así que un botón
-   desactivado se veía exactamente igual que uno activo y resultaba engañoso. */
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -1091,18 +994,11 @@ button:disabled:hover {
   box-shadow: none;
 }
 
-/* Excepción a las mayúsculas globales: la contraseña debe verse y escribirse
-   exactamente como se guarda (distingue mayúsculas y minúsculas).
-   Se aplica por clase y no solo por type, porque el "ojo" visor cambia el
-   campo a type=text y sin esta regla se verría TODO EN MAYÚSCULAS. */
 input[type='password'],
 .password-field {
   text-transform: none;
 }
 
-/* Botón "ojo" del campo contraseña (inicio de sesión): muestra u oculta el
-   valor para que el usuario pueda revisar si escribió bien antes de enviar.
-   Se posiciona dentro del campo con área táctil de 36 px. */
 .password-toggle {
   position: absolute;
   right: 4px;
@@ -1146,10 +1042,8 @@ input[type='password'],
 .form-textarea::placeholder {
   color: var(--color-text-muted);
   opacity: 1;
-  /* Firefox normaliza la opacidad */
 }
 
-/* Bordes de inputs más definidos en modo oscuro */
 [data-theme='dark'] .form-input,
 [data-theme='dark'] .form-select,
 [data-theme='dark'] .form-textarea {
@@ -1174,7 +1068,6 @@ input[type='password'],
   min-height: 70px;
 }
 
-/* Estado de validación con retroalimentación visual clara */
 .form-input.is-invalid,
 .form-select.is-invalid,
 .form-textarea.is-invalid {
@@ -1205,10 +1098,6 @@ input[type='password'],
   flex-shrink: 0;
 }
 
-/* RESUMEN DE ERRORES AL INICIO DEL FORMULARIO
-   Aparece arriba del formulario (y la página sube hasta él) para que no haya
-   que bajar buscando qué campo falló. Los mensajes de error van en minúsculas,
-   igual que el resto de los avisos del sistema. */
 .form-error-summary {
   border: 1px solid rgba(239, 68, 68, 0.45);
   background: rgba(239, 68, 68, 0.10);
@@ -1281,7 +1170,6 @@ input[type='password'],
   font-size: 16px;
 }
 
-/* BOTONES */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -1300,7 +1188,6 @@ input[type='password'],
   overflow: hidden;
 }
 
-/* Ripple / press feedback */
 .btn:active {
   transform: scale(0.97);
   transition-duration: 0.1s;
@@ -1378,7 +1265,6 @@ input[type='password'],
   min-height: 34px;
 }
 
-/* Touch targets accesibles en móvil / taller (operación con guantes) */
 @media (max-width: 767px) {
   .btn {
     min-height: 44px;
@@ -1390,9 +1276,6 @@ input[type='password'],
   }
 }
 
-/* ---------------------------------------------
-   Tarjetas del hub de módulos (AdminHub)
-   --------------------------------------------- */
 .admin-modulo-card {
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
@@ -1407,7 +1290,6 @@ input[type='password'],
   outline-offset: 3px;
 }
 
-/* Teclas de atajo mencionadas en encabezados de módulos */
 .page-header kbd {
   display: inline-block;
   padding: 1px 6px;
@@ -1422,10 +1304,6 @@ input[type='password'],
   border-radius: var(--radius-sm);
 }
 
-/* ---------------------------------------------
-   Módulo Reportes — Tarjetas KPI de colores
-   Franja ejecutiva tipo panel de control
-   --------------------------------------------- */
 .kpi-color-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(215px, 100%), 1fr));
@@ -1471,7 +1349,6 @@ input[type='password'],
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.32);
 }
 
-/* Círculos decorativos de fondo */
 .kpi-color-card::before,
 .kpi-color-card::after {
   content: '';
@@ -1556,7 +1433,6 @@ input[type='password'],
   opacity: 0.8;
 }
 
-/* Variantes de color */
 .kpi-verde {
   background: linear-gradient(135deg, #15803d, #22c55e);
 }
@@ -1581,9 +1457,6 @@ input[type='password'],
   background: linear-gradient(135deg, #b91c1c, #ef4444);
 }
 
-/* ---------------------------------------------
-   Módulo Reportes — Gráfico de donut
-   --------------------------------------------- */
 .donut-wrap {
   display: flex;
   align-items: center;
@@ -1672,7 +1545,6 @@ input[type='password'],
   flex-wrap: wrap;
 }
 
-/* BADGES / ESTADOS */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -1720,7 +1592,6 @@ input[type='password'],
   border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
-/* Badges de Rol de Alto Contraste (ADMIN / MECÁNICO / USUARIO) */
 .badge-role-admin {
   background: #ecf2d4;
   color: #3d4912;
@@ -1763,7 +1634,6 @@ input[type='password'],
   border: 1px solid rgba(148, 163, 184, 0.30);
 }
 
-/* Tarjeta individual de usuario/mecánico con capas diferenciadas */
 .user-item-card {
   padding: 12px 14px;
   background: #ffffff;
@@ -1784,7 +1654,6 @@ input[type='password'],
 
 [data-theme='dark'] .user-item-card {
   background: #2b394a;
-  /* Capa más clara que el fondo general (#181F26) y que la tarjeta contenedora (#243040) */
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
@@ -1794,7 +1663,6 @@ input[type='password'],
   border-color: rgba(167, 185, 88, 0.45);
 }
 
-/* Botones de acción dentro de las tarjetas */
 .btn-card-action {
   font-size: 11.5px;
   font-weight: 600;
@@ -1866,7 +1734,6 @@ input[type='password'],
   }
 }
 
-/* TABLA */
 .table-container {
   overflow-x: auto;
   border-radius: var(--radius-lg);
@@ -1907,7 +1774,6 @@ input[type='password'],
   animation: tableRowIn 0.35s var(--ease-spring) backwards;
 }
 
-/* Staggered table row entrance */
 .table tbody tr:nth-child(1) {
   animation-delay: 0.03s;
 }
@@ -1968,7 +1834,6 @@ input[type='password'],
   gap: 6px;
 }
 
-/* FILTROS / BÚSQUEDA */
 .filters-bar {
   display: flex;
   gap: 12px;
@@ -1977,9 +1842,6 @@ input[type='password'],
   align-items: center;
 }
 
-/* Buscador de placa con "Limpiar" a la par de "Consultar Estado".
-   En pantallas angostas la placa ocupa su propia fila y los dos botones
-   se apilan a todo el ancho, para que el texto no se salga del botón. */
 .consulta-placa-bar {
   display: flex;
   gap: 8px;
@@ -2028,7 +1890,6 @@ input[type='password'],
   min-width: 160px;
 }
 
-/* MODAL */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -2129,7 +1990,6 @@ input[type='password'],
   flex: 1 1 auto;
 }
 
-/* Visor del escáner de placas: alto proporcional para pantallas de laptop y celular */
 .scanner-video-frame {
   height: 200px;
   max-height: 35vh;
@@ -2146,7 +2006,6 @@ input[type='password'],
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
-/* Backdrop oscuro centrado para modales de taller / finalización */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -2184,8 +2043,6 @@ input[type='password'],
   animation: modalFadeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Elevación de stacking context para evitar que cualquier barra superior o lateral
-   se monte sobre los modales cuando están abiertos dentro de una página */
 .main-content:has(.modal-backdrop),
 .main-content:has(.modal-overlay),
 .page-body-container:has(.modal-backdrop),
@@ -2196,7 +2053,6 @@ input[type='password'],
   position: relative;
 }
 
-/* UPLOAD / FOTOS */
 .photo-upload-zone {
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-lg);
@@ -2265,7 +2121,6 @@ input[type='password'],
   opacity: 1;
 }
 
-/* TIMER / CRONÓMETRO */
 .timer-display {
   display: flex;
   align-items: center;
@@ -2327,16 +2182,10 @@ input[type='password'],
   background: rgba(239, 68, 68, 0.25);
 }
 
-/* TOAST NOTIFICATIONS & MODAL ALERTS (ENTERPRISE GRADE) */
 .toast-container {
   position: fixed;
   top: 24px;
   right: 24px;
-  /* Los toasts van POR ENCIMA de todo: los modales de formulario usan
-     z-index 99999 !important y el de confirmación 3600; con 2500 los
-     mensajes quedaban ocultos detrás del modal (p. ej. los errores de
-     validación al guardar un gasto, que se disparan con el modal abierto).
-     1000000 queda por encima de cualquier capa del sistema. */
   z-index: 1000000;
   display: flex;
   flex-direction: column;
@@ -2374,10 +2223,6 @@ input[type='password'],
   box-shadow: 0 20px 42px -6px rgba(0, 0, 0, 0.6);
 }
 
-/* Entrada de la notificación: la clase la aplica ToastContext
-   (animate-slide-left). Sólo desplaza (sin animar opacity): si el navegador
-   congela la animación por pestaña en segundo plano, el mensaje tiene que
-   seguir siendo visible — con opacity en la keyframe quedaba en 0. */
 .animate-slide-left {
   animation: slideToastIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -2392,7 +2237,6 @@ input[type='password'],
   }
 }
 
-/* Indicador lateral luminoso según severidad */
 .toast-accent-bar {
   position: absolute;
   top: 0;
@@ -2512,7 +2356,6 @@ input[type='password'],
   color: var(--color-text-primary);
 }
 
-/* Barra de progreso de auto-cierre */
 .toast-progress-track {
   position: absolute;
   bottom: 0;
@@ -2554,7 +2397,6 @@ input[type='password'],
   }
 }
 
-/* Soporte de compatibilidad legacy para clase .toast antigua */
 .toast {
   background: var(--color-bg-card);
   border: 1px solid var(--color-glass-border);
@@ -2567,15 +2409,9 @@ input[type='password'],
   box-shadow: var(--shadow-lg);
 }
 
-/* MODAL DE CONFIRMACIÓN PROFESIONAL */
 .confirm-modal-backdrop {
   position: fixed;
   inset: 0;
-  /* Por encima de los modales de formulario (99999): la confirmación debe
-     verse siempre, incluso cuando se abre desde dentro de un modal. Con
-     3600 quedaba DETRÁS del formulario y sólo se veía al cerrarlo
-     ("debo cerrar para poder ver la advertencia de guardado").
-     Los toasts (1000000) siguen por encima de todo. */
   z-index: 999999;
   background: rgba(6, 8, 14, 0.78);
   backdrop-filter: blur(8px);
@@ -2701,7 +2537,6 @@ input[type='password'],
   background: var(--color-accent-hover);
 }
 
-/* EMPTY STATE */
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -2726,7 +2561,6 @@ input[type='password'],
   font-size: 14px;
 }
 
-/* LOADING SPINNER — Clean, elegant single-ring */
 .loading-spinner {
   display: flex;
   align-items: center;
@@ -2748,7 +2582,6 @@ input[type='password'],
   flex-shrink: 0;
 }
 
-/* DETAIL VIEW / FICHA VEHÍCULO */
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
@@ -2777,7 +2610,6 @@ input[type='password'],
   color: var(--color-text-primary);
 }
 
-/* TIMELINE / HISTORIAL */
 .timeline {
   position: relative;
   padding-left: 28px;
@@ -2832,7 +2664,6 @@ input[type='password'],
   color: var(--color-text-secondary);
 }
 
-/* ANIMACIONES */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -2873,7 +2704,6 @@ input[type='password'],
   }
 }
 
-/* Icono girando mientras se recarga un panel (consola de auditoría) */
 .girando {
   animation: spin 0.9s linear infinite;
 }
@@ -2890,7 +2720,6 @@ input[type='password'],
   }
 }
 
-/* Page route transition — silky entrance sin transformar contenedor para no secuestrar modales position:fixed */
 @keyframes routeEnter {
   from {
     opacity: 0;
@@ -2901,7 +2730,6 @@ input[type='password'],
   }
 }
 
-/* Card stagger entrance */
 @keyframes staggerCardIn {
   from {
     opacity: 0;
@@ -2914,7 +2742,6 @@ input[type='password'],
   }
 }
 
-/* Table row reveal */
 @keyframes tableRowIn {
   from {
     opacity: 0;
@@ -2927,7 +2754,6 @@ input[type='password'],
   }
 }
 
-/* KPI card entrance */
 @keyframes kpiSlideUp {
   from {
     opacity: 0;
@@ -2940,7 +2766,6 @@ input[type='password'],
   }
 }
 
-/* Skeleton shimmer loading */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -2951,7 +2776,6 @@ input[type='password'],
   }
 }
 
-/* Nav link entrance */
 @keyframes navLinkIn {
   from {
     opacity: 0;
@@ -2972,9 +2796,6 @@ input[type='password'],
   animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Route transition wrapper for page changes */
-/* Nada debe quedar debajo de la topbar pegajosa (52px): los títulos y
-   botones reservan espacio cuando el navegador o el teclado hacen scroll. */
 h1,
 h2,
 h3,
@@ -2988,9 +2809,6 @@ h3,
   will-change: opacity;
 }
 
-/* Barrita de apartados del módulo Reportes: salta a cada sección con
-   desplazamiento suave y marca la que está en pantalla. Pegajosa justo
-   debajo de la topbar (52px) para navegar en cualquier momento. */
 .reportes-nav {
   position: sticky;
   top: 52px;
@@ -3031,13 +2849,10 @@ h3,
   border-color: rgba(134, 153, 46, 0.45);
 }
 
-/* El destino de la barrita no queda tapado por la topbar ni por la barrita */
 [id^='rep-'] {
   scroll-margin-top: 108px;
 }
 
-/* Bloques que aparecen al llenar un formulario (motivos, áreas, tareas,
-   avisos): entran con un desplazamiento suave en vez de aparecer de golpe. */
 .form-bloque {
   animation: formBloqueIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -3054,8 +2869,6 @@ h3,
   }
 }
 
-/* Tarjetas de opción seleccionables: el cambio de selección se resalta
-   con una transición en vez de saltar de golpe. */
 .option-card {
   transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
@@ -3064,7 +2877,6 @@ h3,
   transform: translateY(-1px);
 }
 
-/* Skeleton placeholder */
 .skeleton {
   background: linear-gradient(90deg,
       var(--color-bg-card-hover) 25%,
@@ -3095,7 +2907,6 @@ h3,
   border-radius: var(--radius-lg);
 }
 
-/* SCROLLBAR CUSTOM */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -3114,7 +2925,6 @@ h3,
   background: var(--color-text-secondary);
 }
 
-/* RESPONSIVE UTILITIES */
 @media (max-width: 640px) {
   .form-grid {
     grid-template-columns: 1fr;
@@ -3132,7 +2942,6 @@ h3,
     box-sizing: border-box;
   }
 
-  /* Ningún hijo de la barra de filtros puede exigir más ancho que la pantalla */
   .filters-bar>* {
     min-width: 0 !important;
     max-width: 100%;
@@ -3153,7 +2962,6 @@ h3,
     max-width: 100%;
   }
 
-  /* Acta de Taller: menos aire lateral para que la hoja quepa en el celular */
   .cert-sheet {
     padding: 18px 14px !important;
   }
@@ -3175,7 +2983,6 @@ h3,
   }
 }
 
-/* CHART WRAPPER (Dashboard) */
 .chart-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
@@ -3197,7 +3004,6 @@ h3,
   color: var(--color-text-primary);
 }
 
-/* Simple bar chart CSS */
 .bar-chart {
   display: flex;
   align-items: flex-end;
@@ -3264,7 +3070,6 @@ h3,
   letter-spacing: 0.5px;
 }
 
-/* Donut chart */
 .donut-container {
   display: flex;
   align-items: center;
@@ -3299,14 +3104,12 @@ h3,
   flex-shrink: 0;
 }
 
-/* ORDER CARDS (Kanban-like view) */
 .order-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
   gap: 16px;
 }
 
-/* Celular: una columna completa para que la tarjeta y sus actividades quepan sin scroll horizontal */
 @media (max-width: 640px) {
   .order-cards-grid {
     grid-template-columns: 1fr !important;
@@ -3326,7 +3129,6 @@ h3,
   animation: staggerCardIn 0.45s var(--ease-spring) backwards;
 }
 
-/* Staggered order card entrance */
 .order-card:nth-child(1) {
   animation-delay: 0.04s;
 }
@@ -3401,7 +3203,6 @@ h3,
   margin-bottom: 12px;
 }
 
-/* La placa y el estado nunca deben salirse de la tarjeta */
 .order-card-header .status-badge,
 .order-card-header>* {
   min-width: 0;
@@ -3446,7 +3247,6 @@ h3,
   border-top: 1px solid var(--color-border);
 }
 
-/* TABS */
 .tabs {
   display: flex;
   gap: 4px;
@@ -3476,10 +3276,6 @@ h3,
   font-weight: 600;
 }
 
-/*
-ESTACIONES Y TERMINALES INDUSTRIALES (ENTERPRISE)
-   Diseño de última generación para acceso a módulos
-*/
 .station-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
@@ -3627,7 +3423,6 @@ ESTACIONES Y TERMINALES INDUSTRIALES (ENTERPRISE)
   box-shadow: 0 0 8px #22c55e;
 }
 
-/* Selector de roles / filtros tipo pill */
 .role-pills {
   display: flex;
   flex-wrap: wrap;
@@ -3663,7 +3458,6 @@ ESTACIONES Y TERMINALES INDUSTRIALES (ENTERPRISE)
   box-shadow: 0 2px 10px var(--color-accent-glow);
 }
 
-/* Credenciales y Badges de acceso */
 .security-pass {
   background: var(--color-bg-input);
   border: 1px solid var(--color-border);
@@ -3717,7 +3511,6 @@ ESTACIONES Y TERMINALES INDUSTRIALES (ENTERPRISE)
   margin-top: 1px;
 }
 
-/* Login Split Screen Container */
 .login-split-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3754,12 +3547,7 @@ ESTACIONES Y TERMINALES INDUSTRIALES (ENTERPRISE)
   }
 }
 
-/*
-MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
-   Topbar Enterprise, Spotlight Omnibox, Consola de Diagnóstico
-*/
 
-/* ---- Topbar Enterprise ---- */
 .enterprise-topbar {
   display: flex;
   align-items: center;
@@ -3834,7 +3622,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   border-radius: var(--radius-md);
 }
 
-/* Botón icono del topbar (tema, telemetría) */
 .topbar-icon-btn {
   width: 36px;
   height: 36px;
@@ -3940,8 +3727,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   .topbar-right .hide-mobile,
   .topbar-areas-nav.hide-mobile,
   .enterprise-topbar .hide-mobile {
-    /* !important: varios de estos elementos llevan display:flex en
-       estilo en línea (heredado del template) y deben ocultarse. */
     display: none !important;
   }
 }
@@ -3957,7 +3742,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   }
 }
 
-/* ---- Command Palette (Spotlight Omnibox) ---- */
 .command-palette-overlay {
   background: rgba(3, 7, 18, 0.75);
   backdrop-filter: blur(8px);
@@ -4128,7 +3912,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   color: var(--color-text-secondary);
 }
 
-/* ---- Consola de Diagnóstico OBD-II ---- */
 .diag-terminal-modal {
   background: #090e1a !important;
   border: 1px solid rgba(56, 189, 248, 0.25) !important;
@@ -4253,7 +4036,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   background: rgba(56, 189, 248, 0.05);
 }
 
-/* DTC Cards */
 .diag-dtc-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--color-border);
@@ -4322,7 +4104,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   border-radius: var(--radius-md);
 }
 
-/* Blueprint 360 */
 .diag-blueprint-container {
   display: flex;
   flex-direction: column;
@@ -4405,7 +4186,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   padding: 16px;
 }
 
-/* Data box */
 .diag-data-box {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--color-border);
@@ -4450,7 +4230,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* HUD Banner on Dashboard */
 .diag-dashboard-hud {
   display: flex;
   align-items: center;
@@ -4520,7 +4299,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   font-family: var(--font-mono);
 }
 
-/* Strip in DetalleOrden */
 .order-telemetry-strip {
   display: flex;
   align-items: center;
@@ -4551,7 +4329,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   font-family: var(--font-mono);
 }
 
-/* ---- Printable Certificate Sheet ---- */
 .cert-sheet {
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
@@ -4616,7 +4393,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   min-width: 0;
 }
 
-/* El texto del checklist se parte en vez de salirse de la casilla */
 .cert-check-item svg {
   flex-shrink: 0;
 }
@@ -4632,7 +4408,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   width: 140px;
 }
 
-/* Impresión Limpia de Primer Mundo (window.print) */
 @media print {
   body * {
     visibility: hidden;
@@ -4653,10 +4428,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
     visibility: visible !important;
   }
 
-  /* ---- ETIQUETA QR DEL VEHÍCULO ----
-     Este modal también usa .modal-overlay, que la regla de arriba oculta por
-     completo: al imprimir salía una hoja en blanco. Aquí solo se deja visible
-     el bloque del código, sin cabecera ni botones. */
   .modal-overlay.qr-print-parent,
   .modal-overlay.qr-print-parent * {
     visibility: visible !important;
@@ -4731,7 +4502,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   }
 }
 
-/* INSPECCIÓN PERIMETRAL FOTOGRÁFICA 360° (4 LADOS DEL VEHÍCULO) */
 .side-photos-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -4851,8 +4621,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   color: var(--color-text-muted);
 }
 
-/* Cada foto ofrece SIEMPRE las dos opciones: tomar desde la cámara
-   (capture="environment" abre la cámara en móviles) o subir un archivo. */
 .side-photo-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -4931,7 +4699,6 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   z-index: 2;
 }
 
-/* Zona de fotos adicionales */
 .photo-upload-zone {
   border: 2px dashed rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
@@ -4987,14 +4754,7 @@ MÓDULO DE DIAGNÓSTICO Y CONSOLA OBD-II
   font-size: 12px;
 }
 
-/*
-RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
-   Objetivo: formularios de ingreso grandes, legibles y
-   fáciles de llenar con el dedo en pantallas pequeñas.
-*/
 
-/* Evita el "auto-zoom" de iOS/Safari al enfocar cualquier campo:
-   Safari amplía la página si el texto del input es menor a 16px. */
 @media (max-width: 768px) {
 
   .form-input,
@@ -5006,21 +4766,17 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
   }
 }
 
-/* --- Bloque principal de móvil (teléfonos) --- */
 @media (max-width: 640px) {
 
-  /* Tipografía base más grande y legible */
   body {
     font-size: 15px;
     -webkit-text-size-adjust: 100%;
   }
 
-  /* Tarjetas: menos padding interno para ganar ancho útil */
   .card {
     padding: 14px;
   }
 
-  /* Títulos de página */
   .page-header h1 {
     font-size: 21px;
   }
@@ -5029,13 +4785,10 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     font-size: 13.5px;
   }
 
-  /* La acción principal del encabezado (p. ej. Escanear) pasa a
-     ocupar todo el ancho: target táctil grande y evidente. */
   .page-header .btn {
     width: 100%;
   }
 
-  /* ---- FORMULARIOS ---- */
   .form-grid {
     gap: 16px;
   }
@@ -5044,7 +4797,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     gap: 8px;
   }
 
-  /* Etiquetas más grandes para lectura cómoda en el teléfono. */
   .form-label {
     font-size: 14px;
     letter-spacing: 0.5px;
@@ -5053,7 +4805,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     margin-bottom: 2px;
   }
 
-  /* Campos altos: dedo cómodo, sin zoom de iOS y targets táctiles grandes */
   .form-input,
   .form-select,
   .form-textarea {
@@ -5063,7 +4814,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     border-radius: var(--radius-md);
     line-height: 1.4;
     scroll-margin-top: 76px;
-    /* no quedar tapado por la topbar pegajosa */
   }
 
   .form-textarea {
@@ -5074,28 +4824,23 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     padding-right: 40px;
   }
 
-  /* El botón de escanear junto a la placa debe medir lo mismo que el input */
   .form-group .btn-icon {
     min-height: 50px;
     min-width: 50px;
   }
 
-  /* Textos de ayuda (spans con estilo en línea fontSize:11 heredado del
-     template): se agrandan aquí para que sean legibles en el teléfono. */
   .form-group>span:not([class]) {
     font-size: 13px !important;
     line-height: 1.5 !important;
     color: var(--color-text-secondary);
   }
 
-  /* Títulos de sección del formulario */
   .form-section-title {
     font-size: 16px;
     margin-top: 18px;
     padding-bottom: 10px;
   }
 
-  /* ---- BOTONES: objetivos táctiles de 48px ---- */
   .btn {
     min-height: 48px;
     font-size: 15px;
@@ -5103,8 +4848,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     border-radius: var(--radius-md);
     gap: 8px;
     touch-action: manipulation;
-    /* sin retardo de doble-tap */
-    /* En celular el texto de un botón largo se parte en vez de salirse */
     white-space: normal;
     text-align: center;
   }
@@ -5129,8 +4872,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     gap: 10px;
   }
 
-  /* Las opciones de selección (Tipo de Atención / Tipo de Trabajo) son
-     botones tipo "tarjeta": en móvil ocupan todo el ancho y son altos. */
   .option-card {
     width: 100%;
     min-height: 60px;
@@ -5146,9 +4887,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     font-size: 13.5px !important;
   }
 
-  /* ---- BARRA DE ACCIÓN FIJA AL PIE DEL FORMULARIO ----
-     "Guardar" queda siempre visible mientras se llena el formulario;
-     al llegar al final se asienta en su posición normal. */
   .form-actions-bar {
     position: sticky;
     bottom: 0;
@@ -5169,13 +4907,10 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     flex: none;
   }
 
-  /* Que el navegador pueda desplazar el campo enfocado por encima
-     de la barra fija y de la barra de navegación del teléfono. */
   html {
     scroll-padding-bottom: 150px;
   }
 
-  /* ---- TABLAS ---- */
   .table-container {
     border-radius: var(--radius-md);
     -webkit-overflow-scrolling: touch;
@@ -5188,7 +4923,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     white-space: nowrap;
   }
 
-  /* ---- MODALES a pantalla casi completa en móvil ---- */
   .modal-overlay,
   .modal-backdrop {
     padding: 10px 8px;
@@ -5224,13 +4958,10 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     padding: 16px 18px;
   }
 
-  /* El escáner cabe completo en el teléfono: visor más bajo para que la
-     digitación manual quede a la vista sin desplazarse dentro del modal. */
   .scanner-video-frame {
     height: 160px;
   }
 
-  /* ---- CHECKBOX / RADIO más grandes ---- */
   input[type="checkbox"],
   input[type="radio"] {
     width: 22px;
@@ -5238,7 +4969,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     accent-color: var(--color-accent);
   }
 
-  /* ---- ÁREAS DE TOQUE EN LA BARRA SUPERIOR ---- */
   .topbar-icon-btn,
   .topbar-action-btn,
   .topbar-sidebar-toggle-btn {
@@ -5246,9 +4976,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     min-height: 44px;
   }
 
-  /* ---- TOPBAR sin desborde horizontal ----
-     El grupo izquierdo solo contiene el botón de menú; se encoge
-     (min-width:0) en ventanas angostas sin empujar el resto de la barra. */
   .hide-on-phone {
     display: none !important;
   }
@@ -5275,12 +5002,10 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
     gap: 0;
   }
 
-  /* Espacio inferior para la barra de navegación del teléfono (home bar) */
   .page-body-container {
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
-  /* ---- SIDEBAR como overlay: targets táctiles grandes ---- */
   .nav-link {
     min-height: 48px;
     font-size: 15px;
@@ -5292,10 +5017,6 @@ RESPONSIVE MÓVIL — EXPERIENCIA PARA MECÁNICOS EN TELÉFONO
   }
 }
 
-/*
-CHECKLIST DE TAREAS (recepción de vehículos)
-   Filas tocables grandes para mecánicos en móvil.
-*/
 .task-checklist {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -5317,7 +5038,6 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   flex-wrap: wrap;
 }
 
-/* Botones de conveniencia del header: mínimo táctil 44px */
 .task-checklist-header .btn {
   min-height: 44px;
   padding: 8px 14px;
@@ -5347,7 +5067,6 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   background: var(--color-accent-light);
 }
 
-/* Checkbox grande y tocable */
 .task-check-item input[type="checkbox"] {
   width: 24px;
   height: 24px;
@@ -5397,10 +5116,8 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   white-space: nowrap;
 }
 
-/* Motivo al desmarcar una tarea de mantenimiento pre-marcada */
 .task-omission {
   padding: 6px 12px 12px 46px;
-  /* alineado con la descripción (checkbox + gap) */
   background: var(--color-bg-input);
   border-bottom: 1px solid var(--color-border);
 }
@@ -5416,10 +5133,8 @@ CHECKLIST DE TAREAS (recepción de vehículos)
 .task-omission .form-input {
   width: 100%;
   font-size: 16px;
-  /* evita zoom en iOS */
 }
 
-/* En móvil: meta debajo para no apretar la descripción */
 @media (max-width: 560px) {
   .task-check-item {
     flex-wrap: wrap;
@@ -5436,7 +5151,6 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   }
 }
 
-/* ADMIN HUB — Tarjetas de módulo mejoradas */
 .admin-modulo-card {
   cursor: pointer;
   position: relative;
@@ -5457,7 +5171,6 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   opacity: 1;
 }
 
-/* EMPTY STATES — Estados vacíos reutilizables */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -5489,7 +5202,6 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   margin: 0;
 }
 
-/* LOGOUT CONFIRMATION — Animación de entrada */
 @keyframes slideInConfirm {
   from {
     opacity: 0;
@@ -5502,7 +5214,6 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   }
 }
 
-/* MICRO-ANIMACIONES adicionales */
 @keyframes pulseGlow {
 
   0%,
@@ -5519,14 +5230,12 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   animation: pulseGlow 2.5s ease-in-out infinite;
 }
 
-/* Focus visible mejorado para accesibilidad */
 :focus-visible {
   outline: 2px solid var(--color-border-active);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* Scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -5545,12 +5254,10 @@ CHECKLIST DE TAREAS (recepción de vehículos)
   background: var(--color-text-muted);
 }
 
-/* VEHICLE STATUS — Mejoras adicionales */
 .vehicle-status-page .page-header {
   margin-bottom: 16px;
 }
 
-/* Badge "USO INTERNO" y similares */
 .badge-internal {
   display: inline-flex;
   align-items: center;

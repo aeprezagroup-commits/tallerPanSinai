@@ -34,7 +34,6 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
           style={{ maxWidth: 840, width: '95vw', maxHeight: '94vh', display: 'flex', flexDirection: 'column' }}
           onClick={e => e.stopPropagation()}
         >
-          {/* Modal Top Bar */}
           <div className="modal-header no-print">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <TbShieldCheck style={{ color: 'var(--color-accent)', fontSize: 20 }} />
@@ -50,9 +49,7 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
             </div>
           </div>
 
-          {/* Printable Certificate Sheet */}
           <div className="modal-body cert-sheet" ref={printAreaRef} style={{ overflowY: 'auto', padding: '32px 40px', background: 'var(--color-bg-card)' }}>
-            {/* Watermark header */}
             <div className="cert-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div className="cert-logo-seal">
@@ -83,7 +80,6 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
 
             <hr style={{ border: 'none', borderTop: '2px solid var(--color-border)', margin: '20px 0' }} />
 
-            {/* Grid datos con columnas responsivas */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 14, marginBottom: 20 }}>
               <div className="cert-data-box">
                 <span className="label">PLACA OFICIAL</span>
@@ -131,7 +127,6 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
               </div>
             </div>
 
-            {/* Diagnóstico y Trabajo Realizado */}
             <div style={{ marginBottom: 20, padding: 16, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--color-border)' }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <TbClipboardList /> DIAGNÓSTICO Y TRABAJO REALIZADO
@@ -146,7 +141,6 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
               )}
             </div>
 
-            {/* Security & 360 Checklist */}
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-text-secondary)', textTransform: 'uppercase', marginBottom: 10 }}>
                 VERIFICACIÓN DE SEGURIDAD OPERACIONAL (CHECKLIST 360°)
@@ -164,7 +158,6 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
               </div>
             </div>
 
-            {/* Signatures & Seal Block */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 24, marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--color-border)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div className="signature-line" />
@@ -191,7 +184,6 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
               </div>
             </div>
 
-            {/* Pie de acta oficial */}
             <div style={{ marginTop: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)', paddingTop: 14, borderTop: '1px dashed var(--color-border)', flexWrap: 'wrap', gap: 8 }}>
               <div>
                 ACTA OFICIAL DE TALLER: <strong>{cert.codigoCertificado}</strong>

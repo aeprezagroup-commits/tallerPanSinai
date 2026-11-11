@@ -1,35 +1,9 @@
-// REPOSITORIO CON FUENTE DE VERDAD ÚNICA
-//
-// Firestore     → fuente de verdad (todos los equipos ven lo mismo)
-// localStorage  → espejo de respaldo (sigue funcionando sin red y
-//                  sobrevive a reinicios del navegador)
-// memoria       → caché para las lecturas SÍNCRONAS, de modo que no hay
-//                  que reescribir las ~29 llamadas existentes a
-//                  obtenerUsuarios() / obtenerFlotaVehiculos()
-//
-// Flujo:
-//   1. Al arrancar, hidratar() trae Firestore → memoria → espejo.
-//   2. Si Firestore está vacío, siembra desde el espejo (migración).
-//   3. Si Firestore no responde, se queda con el espejo y sigue andando.
-//   4. Toda escritura actualiza memoria + espejo al instante y manda a
-//      Firestore sin bloquear la interfaz.
 import { db, isFirebaseConfigured } from './config';
 import {
   collection, getDocs, doc, setDoc, deleteDoc,
 } from 'firebase/firestore';
 import { contarLectura, contarEscritura, aproximarBytes } from '../services/metricasService';
 
-/**
- * @param {object}   opciones
- * @param {string}   opciones.coleccion  Colección en Firestore
- * @param {string}   opciones.claveLocal Clave del espejo en localStorage
- * @param {Array}    opciones.semilla    Datos iniciales si no hay nada
- * @param {Function} opciones.idDe       (registro) => valor del id (ej. u => u.id)
- * @param {string}   opciones.campoId    Nombre del campo donde va el id
- *                                       (ej. 'id', 'placa')
- * @param {string}   opciones.evento     Evento de ventana al cambiar
- * @param {string}   opciones.nombre     Etiqueta para mensajes de consola
- */
 export function crearRepositorio({
   coleccion,
   claveLocal,
@@ -39,18 +13,12 @@ export function crearRepositorio({
   evento,
   nombre = coleccion,
 }) {
-  /** @type {Array|null} */
   let cache = null;
 
-  // Ventana de hidratación: mientras llega Firestore, la caché puede estar
-  // mostrando los datos sembrados. Si en ese lapso alguien escribe algo,
-  // la llegada de la base NO debe pisar ese cambio.
   let hidratando = false;
   let modificadoMientrasHidrata = false;
-  /** @type {Promise|null} */
   let promesaHidratacion = null;
 
-  // Espejo local
   function leerLocal() {
     try {
       const crudo = localStorage.getItem(claveLocal);
@@ -67,7 +35,6 @@ export function crearRepositorio({
     try {
       localStorage.setItem(claveLocal, JSON.stringify(lista));
     } catch (e) {
-      // Cuota llena o modo privado: la app sigue viva, solo se pierde el espejo
       console.warn(`[${nombre}] no se pudo escribir el espejo local:`, e);
     }
   }
@@ -76,19 +43,15 @@ export function crearRepositorio({
     try {
       window.dispatchEvent(new CustomEvent(evento));
     } catch {
-      // sin ventana (tests/node) → no hay a quién avisar
     }
   }
 
-  // LECTURA SÍNCRONA — la que ya usan todas las pantallas
   function obtener() {
     if (!cache) {
       const local = leerLocal();
       if (local && local.length > 0) {
         cache = local;
       } else {
-        // Primera ejecución en este navegador: se siembra desde los datos
-        // iniciales para que SIEMPRE se pueda entrar al sistema.
         cache = semilla.map((x) => ({ ...x }));
         escribirLocal(cache);
       }
@@ -96,7 +59,6 @@ export function crearRepositorio({
     return cache;
   }
 
-  /** Reemplaza la caché, refleja en local y avisa a las pantallas. Síncrono. */
   function reemplazar(lista) {
     cache = Array.isArray(lista) ? lista : [];
     escribirLocal(cache);
@@ -104,12 +66,10 @@ export function crearRepositorio({
     avisar();
   }
 
-  // ESCRITURA EN FIRESTORE
   function firebaseListo() {
     return Boolean(isFirebaseConfigured && db);
   }
 
-  /** Escribe un registro (crea o sobrescribe). Nunca lanza. */
   async function persistirUno(registro) {
     if (!firebaseListo()) return false;
     const id = idDe(registro);
@@ -127,7 +87,6 @@ export function crearRepositorio({
     }
   }
 
-  /** Borra un documento. Nunca lanza. */
   async function borrarUno(id) {
     if (!firebaseListo()) return false;
     try {
@@ -140,7 +99,6 @@ export function crearRepositorio({
     }
   }
 
-  /** Escribe una colección completa en lotes controlados con setDoc (evita :batchWrite bloqueado con 403). */
   async function escribirTodos(lista) {
     if (!firebaseListo() || !lista.length) return 0;
     let guardados = 0;
@@ -165,7 +123,6 @@ export function crearRepositorio({
     return guardados;
   }
 
-  // HIDRATACIÓN — Firestore manda; si está vacío, se siembra
   async function ejecutarHidratacion() {
     const local = obtener();
 
@@ -187,23 +144,18 @@ export function crearRepositorio({
         return { origen: 'local', total: obtener().length, error: e?.message || String(e) };
       }
 
-      // Si mientras llegaba la base alguien guardó algo en este navegador,
-      // se respeta lo local: la base se reescribe desde aquí en la próxima
-      // operación en lugar de perder lo recién escrito.
       if (modificadoMientrasHidrata) {
         console.info(`[${nombre}] hidratación: hubo escrituras locales simultáneas, se conservan`);
         return { origen: 'local-modificado', total: cache ? cache.length : local.length };
       }
 
       if (remotos.length > 0) {
-        // FIRESTORE ES LA VERDAD: manda sobre lo local
         cache = remotos;
         escribirLocal(cache);
         avisar();
         return { origen: 'firestore', total: cache.length };
       }
 
-      // Firestore vacío → migrar lo que haya en este navegador
       if (local.length > 0) {
         const guardados = await escribirTodos(local);
         if (guardados > 0) {
@@ -216,11 +168,6 @@ export function crearRepositorio({
     }
   }
 
-  /**
-   * Lanza la hidratación y guarda la promesa para que quien necesite los
-   * datos REALES (el login) pueda esperar a que termine.
-   * Nunca rechaza.
-   */
   function hidratar() {
     promesaHidratacion = ejecutarHidratacion().catch((e) => ({
       origen: 'error',
@@ -230,7 +177,6 @@ export function crearRepositorio({
     return promesaHidratacion;
   }
 
-  /** Resuelve cuando la última hidratación terminó (o ya no hay ninguna). */
   function esperarHidratacion() {
     return promesaHidratacion
       ? promesaHidratacion.catch(() => null)

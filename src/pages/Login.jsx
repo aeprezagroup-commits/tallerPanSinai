@@ -21,8 +21,6 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [recordarme, setRecordarme] = useState(true);
-  // Ojo visor de la contraseña: arranca oculto y solo se revela si el usuario
-  // lo pide explícitamente (nunca muestra el valor por defecto).
   const [verPassword, setVerPassword] = useState(false);
 
   const { login, loading, currentUser } = useAuth();
@@ -30,16 +28,12 @@ export default function Login() {
   const { addToast } = useToast();
   const navigate = useNavigate();
 
-  // Todos los roles entran por la misma pantalla de inicio: desde ahí el
-  // menú lateral lleva a cada módulo que el rol tenga habilitado.
   const DESTINO_INICIO = '/inicio';
 
-  // Si ya hay sesión iniciada, entrar directo a la pantalla de inicio
   if (currentUser) {
     return <Navigate to={DESTINO_INICIO} replace />;
   }
 
-  // login() es asíncrono: espera a que la base responda antes de validar.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -62,7 +56,6 @@ export default function Login() {
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Animated floating orbs background */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', width: 320, height: 320, borderRadius: '50%',
@@ -100,7 +93,6 @@ export default function Login() {
         `}</style>
       </div>
 
-      {/* Barra superior de autenticación */}
       <header style={{
         padding: '14px 24px',
         display: 'flex',
@@ -147,7 +139,6 @@ export default function Login() {
         </button>
       </header>
 
-      {/* Contenido principal centrado */}
       <main style={{
         flex: 1,
         display: 'flex',
@@ -161,7 +152,6 @@ export default function Login() {
           maxWidth: 440,
           animation: 'slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1)'
         }}>
-          {/* Tarjeta de autenticación empresarial con glassmorphism */}
           <div style={{
             padding: '36px 30px 32px',
             borderRadius: 'var(--radius-xl)',
@@ -173,7 +163,6 @@ export default function Login() {
             position: 'relative',
             overflow: 'hidden'
           }}>
-            {/* Subtle top accent line */}
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: 3,
               background: 'linear-gradient(90deg, var(--brand-green), var(--brand-gold), var(--brand-red))',

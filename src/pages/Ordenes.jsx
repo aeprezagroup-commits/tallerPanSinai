@@ -14,7 +14,6 @@ import OrdenOperativa from '../components/OrdenOperativa';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import { AREAS_TRABAJO_CON_TODAS as AREAS } from '../constants/areas';
 
-// Convierte marcas de tiempo de Firestore / ISO / Date a objeto Date
 const aFecha = (ts) => {
   if (!ts) return null;
   if (typeof ts.toDate === 'function') return ts.toDate();
@@ -28,7 +27,6 @@ export default function Ordenes() {
   const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
-  // El mecánico trabaja con sus órdenes activas; los demás ven el registro completo
   const [filtroEstado, setFiltroEstado] = useState(isMecanico ? 'activos' : 'todos');
   const [filtroArea, setFiltroArea] = useState('Todas');
   const [filtroMecanico, setFiltroMecanico] = useState('Todos');
@@ -36,9 +34,7 @@ export default function Ordenes() {
   const [fechaHasta, setFechaHasta] = useState('');
   const [mecanicos] = useState(() => obtenerMecanicosActivos());
   const [ordenCertificado, setOrdenCertificado] = useState(null);
-  // En celular se arranca con la vista de tarjetas (no cabe una tabla)
   const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'tabla');
-  // Orden tocada: despliega su panel operativo (actividades y estados) en línea
   const [ordenAbierta, setOrdenAbierta] = useState(null);
 
   useEffect(() => {
@@ -50,7 +46,6 @@ export default function Ordenes() {
   }, []);
 
   const ordenesFiltradas = useMemo(() => {
-    // Visibilidad por rol: el mecánico ve sus órdenes + cola de recepción (su trabajo activo)
     const visibles = isMecanico ? visiblesParaTaller(ordenes, currentUser) : filtrarOrdenesPorUsuario(ordenes, currentUser);
     return visibles.filter(o => {
       const busquedaNorm = busqueda.trim().toLowerCase();
@@ -64,7 +59,6 @@ export default function Ordenes() {
         o.ruta?.toLowerCase().includes(busquedaNorm) ||
         o.mecanicoAsignado?.toLowerCase().includes(busquedaNorm) ||
         o.conductorEntrega?.toLowerCase().includes(busquedaNorm) ||
-        // Búsqueda por contador de orden (OT-0001, 1, 15...)
         formatoOT(o).toLowerCase().includes(busquedaNorm) ||
         (busquedaDigitos && String(o.numeroOrden || '') === busquedaDigitos);
 
@@ -79,7 +73,6 @@ export default function Ordenes() {
         || apoyosDeOrden(o).includes(filtroMecanico)
         || (o.actividades || []).some(a => a.mecanicoAsignado === filtroMecanico);
 
-      // Filtro por rango de fechas de ingreso al taller
       const fechaIng = aFecha(o.fechaIngreso);
       const desde = fechaDesde ? new Date(`${fechaDesde}T00:00:00`) : null;
       const hasta = fechaHasta ? new Date(`${fechaHasta}T23:59:59`) : null;
@@ -140,7 +133,6 @@ export default function Ordenes() {
         </Link>
       </div>
 
-      {/* Filtros */}
       <div className="filters-bar">
         <div className="search-input-wrapper">
           <TbSearch className="search-icon" />
@@ -189,7 +181,6 @@ export default function Ordenes() {
           ))}
         </select>
 
-        {/* Rango de fechas de ingreso */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <TbCalendar style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
           <input
@@ -220,7 +211,6 @@ export default function Ordenes() {
           <TbFilter /> Limpiar
         </button>
 
-        {/* Toggle vista */}
         <div className="btn-group">
           <button
             className={`btn btn-sm ${vista === 'tabla' ? 'btn-primary' : 'btn-secondary'}`}
@@ -244,7 +234,6 @@ export default function Ordenes() {
           <p>Ajusta los filtros de búsqueda o registra una nueva orden de servicio.</p>
         </div>
       ) : vista === 'tabla' ? (
-        /* VISTA: Tabla Corporativa — toca la fila para desplegar actividades y controles */
         <div className="table-container">
           <table className="table">
             <thead>
@@ -350,7 +339,6 @@ export default function Ordenes() {
           </table>
         </div>
       ) : (
-        /* VISTA: Tarjetas — toca la tarjeta para desplegar actividades y controles */
         <div className="order-cards-grid">
           {ordenesFiltradas.map(orden => (
             <div
@@ -371,7 +359,6 @@ export default function Ordenes() {
                     {ordenAbierta === orden.id ? <TbChevronDown style={{ color: 'var(--color-accent)' }} /> : <TbChevronRight />}
                     {ordenAbierta === orden.id ? 'Tocar para cerrar' : 'Toca para ver actividades'}
                   </div>
-                  {/* El mecánico sabe por qué le aparece esta unidad (asignada o cola de recepción) */}
                   {isMecanico && (
                     <span style={{
                       display: 'inline-block',
@@ -407,7 +394,6 @@ export default function Ordenes() {
                 </div>
               </div>
 
-              {/* Panel operativo desplegado: actividades con estados, cronómetro y cierre */}
               {ordenAbierta === orden.id && (
                 <div
                   onClick={(e) => e.stopPropagation()}
@@ -446,7 +432,6 @@ export default function Ordenes() {
           ))}
         </div>
       )}
-      {/* Modal Acta de Taller e Inspección de Entrega */}
       <InspectionCertificateModal
         isOpen={Boolean(ordenCertificado)}
         orden={ordenCertificado}

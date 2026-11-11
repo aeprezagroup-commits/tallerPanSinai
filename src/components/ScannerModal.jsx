@@ -3,11 +3,6 @@ import { normalizarPlaca } from '../utils/placas';
 import { TbCamera, TbX, TbCheck, TbAlertCircle, TbHash, TbBarcode } from '../icons';
 import ModalPortal from './ModalPortal';
 
-/**
- * Modal "Obtener Placa":
- * Prioridad 1 (Principal): Digitar la placa manualmente (rápido, infalible y enfocado).
- * Prioridad 2 (Secundaria): Escanear código QR de la unidad con la cámara.
- */
 export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
   const [error, setError] = useState('');
   const [placaManual, setPlacaManual] = useState('');
@@ -65,7 +60,6 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
                 handleDetection(barcodes[0].rawValue);
               }
             } catch {
-              // lectura en curso
             }
           }
         }, 300);
@@ -77,7 +71,6 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
     }
   }, [handleDetection]);
 
-  // Al abrir: prioridad 1 = escribir placa (autofocus)
   useEffect(() => {
     if (isOpen) {
       setMostrarQR(false);
@@ -123,7 +116,6 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
           </div>
 
           <div className="modal-body" style={{ padding: '20px 20px 24px' }}>
-            {/* PRIORIDAD 1: ESCRIBIR LA PLACA */}
             <div style={{
               border: '1.5px solid var(--color-accent)',
               borderRadius: 'var(--radius-lg)',
@@ -175,7 +167,6 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
               </div>
             </div>
 
-            {/* PRIORIDAD 2: ESCANEAR QR (OPCIONAL) */}
             <div style={{ marginTop: 14, textAlign: 'center' }}>
               <button
                 type="button"

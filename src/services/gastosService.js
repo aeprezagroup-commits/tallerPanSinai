@@ -1,6 +1,3 @@
-// SERVICIO DE GASTOS POR VEHÍCULO
-// Registro estilo hoja de cálculo (FECHA, CCF, PROVEEDOR, GASTOS,
-// CANTIDAD, DESCUENTO, MONTO CON DESCUENTO, CENTRO DE COSTO, ESTADO, UNIDAD)
 import {
   collection,
   query,
@@ -19,11 +16,6 @@ import { registrarBitacora, TIPOS_BITACORA } from './bitacoraService';
 const GASTOS_COLLECTION = 'gastos_vehiculo';
 const LOCAL_KEY = 'pan_sinai_gastos_v1';
 
-// Centros de costo de la empresa: hoja "centros de costos" del archivo
-// "base de datos para plataforma sinai.xlsx" (lista oficial, sin los
-// nombres operativos de la hoja de placas). El usuario puede escribir
-// otro centro nuevo; los centros que ya aparezcan en gastos guardados
-// —departamentos incluidos— siguen apareciendo en el desplegable.
 export const CENTROS_COSTO = [
   'ADMINISTRATIVO',
   'AUDITORIA',
@@ -43,8 +35,6 @@ export const CENTROS_COSTO = [
   'SONSONATE',
   'TALLER AUTOMOTRIZ',
   'TERCEROS POR ACCIDENTES',
-  // Respaldo del sistema: Gastos.jsx guarda los gastos de almacén con
-  // este centro cuando no se elige otro, así que debe seguir ofertado.
   'TALLER'
 ];
 
@@ -61,14 +51,12 @@ function saveLocalGastos(lista) {
   window.dispatchEvent(new Event('pan_sinai_gastos_updated'));
 }
 
-// Monto con descuento = monto - descuento
 export function montoConDescuento(g) {
   const base = Number(g?.monto) || 0;
   const desc = Number(g?.descuento) || 0;
   return Math.max(0, base - desc);
 }
 
-// Escucha en vivo de todos los gastos (admin)
 export function escucharGastos(callback) {
   if (isFirebaseConfigured && db) {
     const q = query(collection(db, GASTOS_COLLECTION), orderBy('fecha', 'desc'));
@@ -84,7 +72,6 @@ export function escucharGastos(callback) {
   return () => window.removeEventListener('pan_sinai_gastos_updated', handler);
 }
 
-// Registrar un gasto nuevo
 export async function guardarGasto(gasto) {
   const limpio = { ...gasto };
   if (isFirebaseConfigured && db) {
@@ -103,7 +90,6 @@ export async function guardarGasto(gasto) {
   }
 }
 
-// Actualizar un gasto existente
 export async function actualizarGasto(id, cambios) {
   if (isFirebaseConfigured && db) {
     await updateDoc(doc(db, GASTOS_COLLECTION, id), { ...cambios, actualizadoEn: serverTimestamp() });
@@ -120,7 +106,6 @@ export async function actualizarGasto(id, cambios) {
   }
 }
 
-// Eliminar un gasto
 export async function eliminarGasto(id) {
   if (isFirebaseConfigured && db) {
     await deleteDoc(doc(db, GASTOS_COLLECTION, id));

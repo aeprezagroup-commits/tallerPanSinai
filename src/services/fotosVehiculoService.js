@@ -1,8 +1,3 @@
-// BASE FOTOGRÁFICA DEL VEHÍCULO (estado ACTUAL)
-// Fotos de los 4 costados guardadas POR PLACA (no por orden).
-// - Al actualizar una foto, la anterior se elimina de Storage.
-// - Un vehículo ACTIVO debe tener sus 4 fotos completas.
-// - Al dar de BAJA un vehículo se eliminan todas sus fotos.
 import { normalizarPlaca } from '../utils/placas';
 import { subirFoto, eliminarFoto, eliminarCarpeta } from '../firebase/storageService';
 import { buscarPorPlaca, actualizarOrden } from '../firebase/ordenesService';
@@ -63,7 +58,6 @@ function borrarLocal(placa) {
   }
 }
 
-// Obtiene la base fotográfica actual del vehículo (4 costados)
 export async function obtenerFotosBase(placa) {
   if (!placa) return registroVacio('');
   const key = normalizarPlaca(placa);
@@ -81,10 +75,6 @@ export async function obtenerFotosBase(placa) {
   return leerLocal(key);
 }
 
-/**
- * Estado fotográfico de un vehículo (para exigir fotos a los ACTIVOS).
- * @returns {{total:number, completas:number, faltantes:string[], completo:boolean}}
- */
 export async function estadoFotosVehiculo(placa) {
   const reg = await obtenerFotosBase(placa);
   const faltantes = LADOS_VEHICULO.filter((lado) => !reg[lado]);
@@ -106,10 +96,6 @@ function estadoDesdeRegistro(registro) {
   };
 }
 
-/**
- * Mapa { PLACA: estado } con el estado fotográfico de TODA la flota.
- * Se usa en Administración para exigir fotos a los vehículos ACTIVOS.
- */
 export async function mapaEstadoFotos() {
   const mapa = {};
 
@@ -122,7 +108,7 @@ export async function mapaEstadoFotos() {
         crudos.push(dato);
         mapa[d.id] = estadoDesdeRegistro({ ...dato, placa: d.id });
       });
-      contarLectura(aproximarBytes(crudos)); // bytes reales: incluyen las fotos
+      contarLectura(aproximarBytes(crudos)); 
       return mapa;
     } catch (e) {
       console.warn('Error leyendo estado fotográfico de la flota:', e);
@@ -141,18 +127,6 @@ export async function mapaEstadoFotos() {
   return mapa;
 }
 
-/**
- * Guarda cambios en la base del vehículo.
- * cambios: { frontal: File | '' | 'url', ... }
- * - File  → se sube a Storage (comprimida) y la foto ANTERIOR se elimina
- * - ''    → limpia la foto del costado y también la borra de Storage
- * - string→ se toma como URL ya existente
- *
- * Si una subida falla, se conserva la foto anterior (nunca se pierde
- * la evidencia ni se guarda base64 dentro de Firestore).
- *
- * @returns {Promise<{registro:object, errores:string[]}>}
- */
 export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
   const key = normalizarPlaca(placa);
   if (!key) throw new Error('Se requiere la placa para actualizar la base fotográfica');
@@ -165,7 +139,6 @@ export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
     const val = cambios[lado];
     if (val === undefined || val === null) continue;
 
-    // Limpieza explícita del costado
     if (val === '') {
       if (actual[lado] && actual[lado].startsWith('http')) {
         await eliminarFoto(actual[lado]);
@@ -174,13 +147,11 @@ export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
       continue;
     }
 
-    // URL existente
     if (typeof val === 'string') {
       nuevo[lado] = val;
       continue;
     }
 
-    // Archivo nuevo → subir (nombre fijo por placa/lado) y borrar el anterior
     try {
       const url = await subirFoto(val, key, lado, {
         carpeta: 'vehiculos',
@@ -191,7 +162,7 @@ export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
     } catch (err) {
       console.error(`Error subiendo foto ${lado} de ${key}:`, err);
       errores.push(lado);
-      nuevo[lado] = actual[lado] || ''; // se conserva la anterior
+      nuevo[lado] = actual[lado] || ''; 
     }
   }
 
@@ -229,18 +200,6 @@ export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
   return { registro: nuevo, errores };
 }
 
-/**
- * ELIMINA TODAS LAS FOTOS de un vehículo (se usa al dar de BAJA).
- * Borra:
- *  - Las 4 fotos de estado (Firestore o Storage, según el modo)
- *  - Las fotos guardadas en SUS ÓRDENES (ingreso y salida), que es donde
- *    más espacio se acumula con el tiempo
- *  - El documento en Firestore → vehiculos_fotos_base/{placa}
- *  - El registro local (demo/local)
- *
- * @returns {Promise<{archivosBorrados:number, registroEliminado:boolean,
- *                    ordenesLimpiadas:number, bytesLiberados:number}>}
- */
 export async function eliminarFotosVehiculo(placa) {
   const key = normalizarPlaca(placa);
   if (!key) {
@@ -252,14 +211,10 @@ export async function eliminarFotosVehiculo(placa) {
   let bytesLiberados = 0;
 
   if (isFirebaseConfigured) {
-    // 1. Fotos de estado en Storage (solo aplica en modo 'storage')
     archivosBorrados += await eliminarCarpeta(`vehiculos/${key}`);
-    // 2. Fotos históricas de órdenes en Storage (incluye legados base_*)
     archivosBorrados += await eliminarCarpeta(`ordenes/${key}`);
   }
 
-  // 3. Fotos guardadas DENTRO de los documentos de las órdenes de esa placa.
-  //    Es la mayor fuente de crecimiento: cada orden guarda sus propias fotos.
   if (isFirebaseConfigured && db) {
     try {
       const ordenes = await buscarPorPlaca(key);
@@ -283,7 +238,6 @@ export async function eliminarFotosVehiculo(placa) {
     }
   }
 
-  // 4. Documento en Firestore (base de las 4 fotos)
   let registroEliminado = false;
   if (isFirebaseConfigured && db) {
     try {
@@ -295,7 +249,6 @@ export async function eliminarFotosVehiculo(placa) {
     }
   }
 
-  // 5. Registro local
   borrarLocal(key);
 
   registrarBitacora({

@@ -1,11 +1,4 @@
-// ICONOGRAFÍA OFICIAL DEL SISTEMA - PAN SINAÍ
-// Librería: Lucide Icons (ISC, trazo uniforme de 2px, lenguaje visual
-// corporativo y sobrio usado en paneles empresariales).
-// Todo componente del sistema importa sus iconos desde este módulo:
-// los nombres TbX que ya usa el código apuntan a Lucide, así el cambio
-// de set no requiere tocar ninguna pantalla.
 export {
-  // --- Navegación y acciones generales ---
   LuLayoutDashboard as TbLayoutDashboard,
   LuMenu as TbMenu,
   LuChevronLeft as TbChevronLeft,
@@ -37,7 +30,6 @@ export {
   LuListChecks as TbChecklist,
   LuRefreshCw as TbRefresh,
 
-  // --- Estados, alertas y feedback ---
   LuInfo as TbInfoCircle,
   LuCircleAlert as TbAlertCircle,
   LuTriangleAlert as TbAlertTriangle,
@@ -50,7 +42,6 @@ export {
   LuSun as TbSun,
   LuMoon as TbMoon,
 
-  // --- Métricas y analítica ---
   LuChartBar as TbChartBar,
   LuChartNoAxesColumnIncreasing as TbChartHistogram,
   LuChartPie as TbChartPie,
@@ -61,7 +52,6 @@ export {
   LuCpu as TbCpu,
   LuLightbulb as TbBulb,
 
-  // --- Vehículos y taller ---
   LuTruck as TbTruck,
   LuTruck as TbTruckLoading,
   LuCar as TbCar,
@@ -79,7 +69,6 @@ export {
   LuCamera as TbCamera,
   LuCamera as TbCameraPlus,
 
-  // --- Órdenes y documentación ---
   LuClipboardList as TbClipboardList,
   LuClipboard as TbClipboardText,
   LuClipboardList as TbClipboardData,
@@ -93,7 +82,6 @@ export {
   LuBarcode as TbBarcode,
   LuTicket as TbTicket,
 
-  // --- Administración y recursos ---
   LuUsers as TbUsers,
   LuUsersRound as TbUsersGroup,
   LuUser as TbUser,
@@ -123,7 +111,6 @@ export {
   LuStar as TbStar,
   LuGlobe as TbWorld,
 
-  // --- Nuevos: sustituyen los iconos sólidos de Font Awesome ---
   LuHouse as TbHome,
   LuImages as TbImages,
   LuServer as TbServer,

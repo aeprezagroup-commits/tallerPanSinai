@@ -25,8 +25,6 @@ import { useToast } from '../components/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import IconoMascara from '../components/IconoMascara';
 
-// Las 4 fotos de la unidad: mismos costados que el resto de la aplicación.
-// Esta es la FUENTE ÚNICA de verdad — ninguna orden guarda copia.
 const LADOS_FICHA = [
   { key: 'frontal', num: '1', label: 'Frontal' },
   { key: 'lateralIzquierdo', num: '2', label: 'Lateral Izquierdo' },
@@ -49,9 +47,6 @@ const FORM_VACIO = {
   observaciones: '',
 };
 
-/* Dato y Campo se declaran FUERA del componente a propósito: si se crean en
-   cada render, React desmonta y vuelve a montar el subárbol en cada tecla y el
-   <input> pierde foco y selección, lo que obligaba a borrar carácter a carácter. */
 const Dato = ({ label, valor, ancho }) => (
   <div style={{ minWidth: ancho || 0 }}>
     <div style={{ fontSize: 10.5, letterSpacing: 1.1, fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
@@ -93,10 +88,8 @@ export default function VehiculoDetalle() {
   const [actualizandoLado, setActualizandoLado] = useState('');
   const fotoInputRef = useRef(null);
   const ladoPendienteRef = useRef('');
-  // Visor con zoom de la foto frontal (cabecera de la ficha)
   const [zoomFrontal, setZoomFrontal] = useState(false);
 
-  // Carga la unidad desde el catálogo de flota
   useEffect(() => {
     const flota = obtenerFlotaVehiculos();
     const v = flota.find(
@@ -111,7 +104,6 @@ export default function VehiculoDetalle() {
     setNoExiste(false);
   }, [placa]);
 
-  // Carga la base fotográfica (4 costados)
   useEffect(() => {
     let vivo = true;
     (async () => {
@@ -125,7 +117,6 @@ export default function VehiculoDetalle() {
     return () => { vivo = false; };
   }, [placa]);
 
-  // El visor de la foto frontal se cierra con la tecla Esc
   useEffect(() => {
     if (!zoomFrontal) return undefined;
     const alPresionar = e => {
@@ -138,7 +129,6 @@ export default function VehiculoDetalle() {
   const setCampo = (campo, valor) => {
     setForm(prev => {
       const sig = { ...prev, [campo]: valor };
-      // El centro de costo se deriva del departamento mientras no se haya elegido a mano
       if (campo === 'departamento' && !prev.centroCosto) {
         sig.centroCosto = centroCostoPorDepartamento(valor) || '';
       }
@@ -146,8 +136,6 @@ export default function VehiculoDetalle() {
     });
   };
 
-  // Estado fotográfico calculado sobre el registro de la base
-  // (mismas claves que usa el resto de la aplicación).
   const fotosLlenas = LADOS_FICHA.filter(l => Boolean(fotos[l.key])).length;
   const faltantesFotos = LADOS_FICHA.filter(l => !fotos[l.key]).map(l => l.label);
   const estadoFotos = {
@@ -157,7 +145,6 @@ export default function VehiculoDetalle() {
     completo: fotosLlenas === 4,
   };
 
-  // Guardar cambios de la ficha
   const handleGuardar = async e => {
     e.preventDefault();
     const err = {};
@@ -176,7 +163,6 @@ export default function VehiculoDetalle() {
       return;
     }
 
-    // Confirmación previa: la ficha se actualiza en el catálogo del taller.
     const confirmado = await confirm({
       title: '¿Guardar cambios de la ficha?',
       message: `Se actualizarán los datos técnicos de la placa "${vehiculo.placa}" en el catálogo.`,
@@ -202,9 +188,6 @@ export default function VehiculoDetalle() {
     }
   };
 
-  // Reemplazar un costado de la base fotográfica.
-  // desdeCamara=true fuerza la cámara (capture="environment" en móviles);
-  // sin esa opción se abre el selector de archivos para subir una foto.
   const pedirFoto = (lado, desdeCamara = false) => {
     ladoPendienteRef.current = lado;
     if (fotoInputRef.current) {
@@ -223,7 +206,6 @@ export default function VehiculoDetalle() {
 
     const etiqueta = LADOS_FICHA.find(l => l.key === lado)?.label || lado;
 
-    // Reemplazar una foto borra la anterior: es la misma foto de siempre.
     if (fotos[lado]) {
       const ok = await confirm({
         title: `¿Reemplazar ${etiqueta.toLowerCase()}?`,
@@ -237,8 +219,6 @@ export default function VehiculoDetalle() {
 
     setActualizandoLado(lado);
     try {
-      // guardarFotosBase devuelve { registro, errores }: si un costado falla
-      // se conserva la foto anterior (nunca se pierde la evidencia).
       const res = await guardarFotosBase(vehiculo.placa, { [lado]: archivo }, currentUser);
       setFotos(res?.registro || {});
       if (res?.errores?.length) {
@@ -255,7 +235,6 @@ export default function VehiculoDetalle() {
     }
   };
 
-  // Dar de baja la unidad (ciclo de vida: también se borran sus fotos)
   const handleBaja = async () => {
     const ok = await confirm({
       title: '¿Dar de baja esta unidad?',
@@ -270,14 +249,12 @@ export default function VehiculoDetalle() {
     try {
       await eliminarFotosVehiculo(vehiculo.placa);
     } catch {
-      // si falla la limpieza de fotos, igual se retira del catálogo
     }
     eliminarVehiculoCatalogo(vehiculo.placa);
     addToast(`Unidad ${vehiculo.placa} dada de baja y sus fotos eliminadas.`, 'success');
     navigate('/admin/vehiculos');
   };
 
-  // No encontrada
   if (noExiste) {
     return (
       <div className="content-wrapper">
@@ -309,7 +286,6 @@ export default function VehiculoDetalle() {
         onChange={handleFotoCargada}
       />
 
-      {/* CABECERA */}
       <div style={{
         display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start',
         justifyContent: 'space-between', marginBottom: 20,
@@ -322,9 +298,6 @@ export default function VehiculoDetalle() {
             <TbArrowLeft size={15} /> Volver al listado
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            {/* FOTO FRONTAL DE LA UNIDAD — al tener base fotográfica reemplaza
-                el distintivo genérico; al hacer clic se abre el visor con zoom.
-                Mientras no exista la foto, queda el distintivo de camión. */}
             {fotos.frontal ? (
               <button
                 type="button"
@@ -368,7 +341,6 @@ export default function VehiculoDetalle() {
         </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Estado fotográfico: informativo; se completa al ingresar al taller */}
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             padding: '7px 13px', borderRadius: 20, fontSize: 12, fontWeight: 800,
@@ -401,7 +373,6 @@ export default function VehiculoDetalle() {
         </div>
       </div>
 
-      {/* DATOS */}
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-section-title" style={{ marginTop: 0 }}>
           <IconoMascara className="icon" src="/iconos/taller-reparacion.png" size={16} /> Datos de la Unidad
@@ -494,7 +465,6 @@ export default function VehiculoDetalle() {
         )}
       </div>
 
-      {/* MOTORISTA */}
       <div className="card" style={{
         marginBottom: 20,
         background: 'linear-gradient(135deg, rgba(16,148,68,0.07), var(--color-bg-card))',
@@ -524,7 +494,6 @@ export default function VehiculoDetalle() {
                 className="form-input"
                 value={form.conductorHabitual}
                 onChange={e => setCampo('conductorHabitual',
-                  // Restricción de entrada: solo letras y espacios.
                   e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, ''))}
                 placeholder="Nombre del motorista"
                 style={{ marginTop: 5, maxWidth: 340 }}
@@ -541,7 +510,6 @@ export default function VehiculoDetalle() {
         </div>
       </div>
 
-      {/* BASE FOTOGRÁFICA */}
       <div className="card">
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
@@ -592,7 +560,6 @@ export default function VehiculoDetalle() {
                   <div style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--color-text)' }}>
                     {lado.label}
                   </div>
-                  {/* Siempre las DOS opciones: tomar desde cámara o subir */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                     <button type="button"
                       className={foto ? 'btn btn-secondary' : 'btn btn-primary'}
@@ -638,7 +605,6 @@ export default function VehiculoDetalle() {
         )}
       </div>
 
-      {/* BAJA */}
       <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-secondary" onClick={handleBaja}
           style={{ color: '#e05a5a', borderColor: 'rgba(224,90,90,0.45)' }}>
@@ -646,8 +612,6 @@ export default function VehiculoDetalle() {
         </button>
       </div>
 
-      {/* VISOR CON ZOOM — foto frontal (clic en la miniatura de la cabecera;
-          se cierra con la X, con Esc o haciendo clic fuera de la imagen) */}
       {zoomFrontal && fotos.frontal && (
         <div
           className="modal-overlay"

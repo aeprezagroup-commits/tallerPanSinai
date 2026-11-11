@@ -2,14 +2,6 @@ import {  } from '../icons';
 import { useAuth } from '../context/AuthContext';
 import IconoMascara from '../components/IconoMascara';
 
-/**
- * Pantalla de inicio del sistema.
- *
- * Es el punto de partida después de iniciar sesión y a donde regresan los
- * accesos directos: no muestra módulos propios, solo indica que la navegación
- * se hace desde el menú lateral (o con Ctrl + K), que es donde están todos
- * los accesos del rol.
- */
 export default function Inicio() {
   const { currentUser, isAdmin, isEncargado, isMecanico } = useAuth();
 
