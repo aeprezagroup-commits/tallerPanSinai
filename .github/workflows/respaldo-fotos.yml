@@ -7,9 +7,10 @@ name: Respaldo de fotos a GitHub
 #
 # Origen: FIRESTORE (fotos comprimidas como DataURL dentro de
 # vehiculos_fotos_base y de las órdenes). Se leen con la API key
-# pública del proyecto: NO requiere tarjeta, Blaze ni cuenta de
-# servicio (verificado: ambas colecciones responden 200 con la
-# API key sola).
+# pública del proyecto y, desde la Fase 2 (reglas con request.auth),
+# con la sesión de la cuenta de respaldo que viven en los secretos
+# FIREBASE_AUTH_EMAIL / FIREBASE_AUTH_PASSWORD. Sin secretos se
+# usa la API key sola, válido sólo con reglas abiertas.
 # ============================================
 
 on:
@@ -46,6 +47,8 @@ jobs:
           RESPALDO_ORIGEN: firestore
           FIREBASE_PROJECT_ID: tallerpansinaisv
           FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_EMAIL: ${{ secrets.FIREBASE_AUTH_EMAIL }}
+          FIREBASE_AUTH_PASSWORD: ${{ secrets.FIREBASE_AUTH_PASSWORD }}
         run: node scripts/respaldo-github.mjs
 
       - name: Guardar el respaldo en el repositorio

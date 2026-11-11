@@ -8,9 +8,11 @@
 // sus fotos se eliminan, también desaparecen aquí.
 //
 // ORIGEN 'firestore' (por defecto):
-//   Lee Firestore por REST con la API key del cliente. NO requiere
-//   cuenta de servicio ni credenciales, porque las reglas de lectura
-//   están abiertas (la app las necesita para funcionar).
+//   Lee Firestore por REST. Con FIREBASE_AUTH_EMAIL y
+//   FIREBASE_AUTH_PASSWORD (cuenta de respaldo) inicia sesión y
+//   manda el token: así funciona con las reglas de la Fase 2,
+//   donde leer exige sesión abierta. Sin esas variables usa sólo
+//   la API key, que sirve mientras las reglas estén abiertas.
 //
 // ORIGEN 'storage':
 //   Refleja el bucket de Firebase Storage (para cuando el proyecto
@@ -37,8 +39,36 @@ const COLECCION_BASE = 'vehiculos_fotos_base';
 const COLECCION_ORDENES = 'ordenes_trabajo';
 
 // ---------------------------------------------
-// 1. Firestore REST (sin credenciales)
+// 1. Firestore REST (con sesión de respaldo)
 // ---------------------------------------------
+// Las reglas de la Fase 2 exigen sesión abierta para leer. La cuenta
+// de respaldo llega desde FIREBASE_AUTH_EMAIL / FIREBASE_AUTH_PASSWORD
+// (secretos del repositorio en CI) y su token se pide una sola vez.
+let tokenRespaldo = null;
+async function obtenerTokenRespaldo() {
+  if (tokenRespaldo) return tokenRespaldo;
+  const email = process.env.FIREBASE_AUTH_EMAIL;
+  const password = process.env.FIREBASE_AUTH_PASSWORD;
+  if (!email || !password) return null;
+
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
+    }
+  );
+  if (!res.ok) {
+    throw new Error(
+      `Firebase Auth respondió ${res.status} al abrir la sesión de respaldo: ${await res.text()}`
+    );
+  }
+  const cuerpo = await res.json();
+  tokenRespaldo = cuerpo.idToken;
+  return tokenRespaldo;
+}
+
 function decodificarValor(v) {
   if (v === null || v === undefined) return null;
   if ('stringValue' in v) return v.stringValue;
@@ -71,7 +101,11 @@ async function listarDocumentos(coleccion) {
 
   do {
     const url = `${base}?pageSize=300${pageToken ? `&pageToken=${pageToken}` : ''}&key=${API_KEY}`;
-    const res = await fetch(url);
+    const token = await obtenerTokenRespaldo();
+    const res = await fetch(
+      url,
+      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+    );
     if (!res.ok) {
       throw new Error(`Firestore respondió ${res.status} al leer "${coleccion}": ${await res.text()}`);
     }

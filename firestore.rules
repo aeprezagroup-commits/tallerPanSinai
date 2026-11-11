@@ -9,9 +9,13 @@ rules_version = '2';
 // SI AGREGAS UN ESTADO / ROL / TIPO NUEVO EN EL CÓDIGO, agrégalo también
 // aquí: la lista de valores permitidos está espejada en los servicios de src.
 //
+// FASE 2 — FIREBASE AUTH: toda operación exige sesión abierta. Cualquier
+// sesión (incluida la anónima que abre la aplicación antes del login) puede
+// LEER: eso sostiene la pantalla de login y la página pública /vehiculo.
+// ESCRIBIR exige cuenta real de email y contraseña: la sesión anónima no
+// modifica nada.
+//
 // Las contraseñas se guardan como hash bcrypt ($2b$…) y así se exigen abajo.
-// La validación de identidad con request.auth queda para cuando se active
-// Firebase Authentication en la aplicación.
 // ============================================================================
 
 service cloud.firestore {
@@ -47,6 +51,18 @@ service cloud.firestore {
       return v is list && v.size() <= max;
     }
 
+    // Sesión abierta en Firebase Auth (real o anónima): mínimo para leer.
+    function enSesion() {
+      return request.auth != null;
+    }
+
+    // Cuenta real: abrió sesión con email y contraseña. La sesión anónima
+    // sólo lee; con ella no se crea, edita ni borra nada.
+    function cuentaReal() {
+      return request.auth != null
+          && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
     // Estado operacional de una orden. Espejo de TRANSICIONES_VALIDAS en
     // src/firebase/ordenesService.js — si cambia uno, cambia acá.
     function estadoOrdenValido(e) {
@@ -63,9 +79,9 @@ service cloud.firestore {
     //    y zonas, y baja. Siempre se manda el registro completo.
     // ------------------------------------------------------------------
     match /usuarios/{uid} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create, update: if
+      allow create, update: if cuentaReal() &&
           request.resource.data.keys().hasAll([
             'id', 'nombre', 'password', 'rol', 'activo',
             'departamento', 'rutas'
@@ -78,7 +94,7 @@ service cloud.firestore {
           && texto(request.resource.data.departamento, 80)
           && lista(request.resource.data.rutas, 60);
 
-      allow delete: if true;
+      allow delete: if cuentaReal();
     }
 
     // ------------------------------------------------------------------
@@ -87,16 +103,16 @@ service cloud.firestore {
     //    migración inicial. La placa es la llave del documento.
     // ------------------------------------------------------------------
     match /vehiculos_catalogo/{placaId} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create, update: if
+      allow create, update: if cuentaReal() &&
           request.resource.data.keys().hasAll(['placa', 'marca', 'modelo'])
           && placaValida(request.resource.data.placa)
           && request.resource.data.placa == placaId
           && textoNoVacio(request.resource.data.marca, 80)
           && textoNoVacio(request.resource.data.modelo, 120);
 
-      allow delete: if true;
+      allow delete: if cuentaReal();
     }
 
     // ------------------------------------------------------------------
@@ -105,9 +121,9 @@ service cloud.firestore {
     //    resultante) y eliminar desde la ficha con confirmación.
     // ------------------------------------------------------------------
     match /ordenes_trabajo/{ordenId} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create, update: if
+      allow create, update: if cuentaReal() &&
           request.resource.data.keys().hasAll(['placa', 'estado', 'fechaIngreso'])
           && placaValida(request.resource.data.placa)
           && estadoOrdenValido(request.resource.data.estado)
@@ -123,7 +139,7 @@ service cloud.firestore {
           && (!request.resource.data.keys().hasAny(['fotosLados'])
               || request.resource.data.fotosLados is map);
 
-      allow delete: if true;
+      allow delete: if cuentaReal();
     }
 
     // ------------------------------------------------------------------
@@ -132,9 +148,9 @@ service cloud.firestore {
     //    confirmación, esté o no pagado.
     // ------------------------------------------------------------------
     match /gastos_vehiculo/{gastoId} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create, update: if
+      allow create, update: if cuentaReal() &&
           request.resource.data.keys().hasAll([
             'fecha', 'monto', 'tipo', 'estado', 'centroCosto', 'unidad'
           ])
@@ -147,7 +163,7 @@ service cloud.firestore {
           && (!request.resource.data.keys().hasAny(['descuento'])
               || numeroNoNegativo(request.resource.data.descuento));
 
-      allow delete: if true;
+      allow delete: if cuentaReal();
     }
 
     // ------------------------------------------------------------------
@@ -155,9 +171,9 @@ service cloud.firestore {
     //    Se sobrescribe entera al guardar y se borra al dar de BAJA.
     // ------------------------------------------------------------------
     match /vehiculos_fotos_base/{placaId} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create, update: if
+      allow create, update: if cuentaReal() &&
           request.resource.data.keys().hasAll([
             'placa', 'frontal', 'lateralIzquierdo', 'lateralDerecho', 'trasera'
           ])
@@ -173,7 +189,7 @@ service cloud.firestore {
             + request.resource.data.lateralDerecho.size()
             + request.resource.data.trasera.size()) <= 1000000;
 
-      allow delete: if true;
+      allow delete: if cuentaReal();
     }
 
     // ------------------------------------------------------------------
@@ -182,9 +198,9 @@ service cloud.firestore {
     //    Se poda sola al pasar de 4 000 registros (borrado por lotes).
     // ------------------------------------------------------------------
     match /bitacora/{eventoId} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create: if
+      allow create: if cuentaReal() &&
           request.resource.data.keys().hasAll([
             'fechaMs', 'fecha', 'tipo', 'accion', 'detalle',
             'usuario', 'rol', 'datos'
@@ -198,7 +214,7 @@ service cloud.firestore {
           && texto(request.resource.data.rol, 40)
           && request.resource.data.datos is map;
 
-      allow delete: if true;
+      allow delete: if cuentaReal();
     }
 
     // ------------------------------------------------------------------
@@ -207,9 +223,9 @@ service cloud.firestore {
     //    Borrarlo haría que la numeración de OT volviera a empezar.
     // ------------------------------------------------------------------
     match /contadores/{contadorId} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create, update: if
+      allow create, update: if cuentaReal() &&
           request.resource.data.keys().hasAll(['valor'])
           && request.resource.data.keys().hasOnly(['valor'])
           && numeroNoNegativo(request.resource.data.valor);
@@ -223,9 +239,9 @@ service cloud.firestore {
     //    transformación y no como número plano: aquí solo se validan claves.
     // ------------------------------------------------------------------
     match /metricas/{metricaId} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create, update: if request.resource.data.keys().hasOnly([
+      allow create, update: if cuentaReal() && request.resource.data.keys().hasOnly([
         'lecturas', 'escrituras', 'bytesLeidos', 'bytesEscritos',
         'sesiones', 'actualizadoMs'
       ])
@@ -253,9 +269,9 @@ service cloud.firestore {
     //    documento mal formado nunca rompe la aplicación.
     // ------------------------------------------------------------------
     match /catalogos/{catalogoId} {
-      allow read: if true;
+      allow read: if enSesion();
 
-      allow create, update: if
+      allow create, update: if cuentaReal() &&
           catalogoId in ['rutas', 'areas', 'tareas']
           && request.resource.data is map
           && (!request.resource.data.keys().hasAny(['actualizadoEn'])

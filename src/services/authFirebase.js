@@ -2,6 +2,7 @@ import { auth, db, isFirebaseConfigured } from '../firebase/config';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInAnonymously,
   signOut,
   updatePassword,
 } from 'firebase/auth';
@@ -78,6 +79,27 @@ export async function abrirSesionFirebase(usuario, password) {
       const codigo = e?.code || '';
       console.warn('[auth] no se pudo crear la cuenta:', codigo || e?.message || e);
       return { uid: null, email, origen: 'sin-migrar', error: codigo || String(e?.message) };
+    }
+  });
+}
+
+// Sesión anónima: sirve para LEER antes del login (pantalla de login y la
+// página pública /vehiculo). No permite escribir: las reglas de Firestore
+// exigen una cuenta real para eso.
+export function asegurarSesionAnonima() {
+  if (!isFirebaseConfigured || !auth) return Promise.resolve(false);
+  if (auth.currentUser) return Promise.resolve(true);
+  return enCola(async () => {
+    if (auth.currentUser) return true;
+    try {
+      await signInAnonymously(auth);
+      return true;
+    } catch (e) {
+      console.warn(
+        '[auth] no se pudo abrir la sesión anónima (revisar Authentication → Método de acceso → Anónimo):',
+        e?.code || e?.message || e
+      );
+      return false;
     }
   });
 }
