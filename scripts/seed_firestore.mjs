@@ -6,6 +6,11 @@
 // Uso:  node scripts/seed_firestore.mjs
 // Lee la config de las variables VITE_ del .env (vía process.env tras cargar .env).
 // Reproducible: extrae DATOS_DEMO_INICIALES desde el código fuente (no del navegador).
+//
+// NOTA (Fase 2 — Firebase Auth): con las reglas actuales este script falla
+// con permission-denied porque escribe sin sesión. Si vuelve a necesitarse,
+// autenticar primero con una cuenta real (patrón en scripts/respaldo-github.mjs,
+// variables FIREBASE_AUTH_EMAIL / FIREBASE_AUTH_PASSWORD).
 // ============================================
 import { readFileSync } from 'node:fs';
 import { initializeApp } from 'firebase/app';

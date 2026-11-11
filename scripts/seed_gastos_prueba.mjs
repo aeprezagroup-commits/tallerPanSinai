@@ -8,6 +8,11 @@
 //
 // Es idempotente: usa IDs fijos (gasto-prueba-##) y los SOBRESCRIBE,
 // así que se puede correr las veces que se quiera sin duplicar nada.
+//
+// NOTA (Fase 2 — Firebase Auth): con las reglas actuales este script falla
+// con permission-denied porque escribe sin sesión. Si vuelve a necesitarse,
+// autenticar primero con una cuenta real (patrón en scripts/respaldo-github.mjs,
+// variables FIREBASE_AUTH_EMAIL / FIREBASE_AUTH_PASSWORD).
 // ============================================
 
 const PROJECT_ID = 'tallerpansinaisv';
