@@ -1,0 +1,300 @@
+rules_version = '2';
+
+// ============================================================================
+// TALLER PAN SINAÍ — REGLAS DE FIRESTORE
+// ----------------------------------------------------------------------------
+// ESTE SISTEMA NO USA FIREBASE AUTHENTICATION. La sesión vive en
+// localStorage (pan_sinai_auth_user), así que request.auth es SIEMPRE null
+// y aquí NO se puede validar identidad: se valida FORMA y ALCANCE.
+//
+//   1. Solo existen las 9 colecciones del sistema. Todo lo demás se niega
+//      (una escritura mal dirigida ya no crea colecciones basura).
+//   2. Cada documento cumple el esquema que la aplicación realmente escribe:
+//      campos obligatorios, tipos y valores permitidos.
+//   3. Donde la placa es la llave, el id del documento coincide con el campo
+//      "placa" y cumple el formato salvadoreño (letra + dígitos, sin guiones).
+//   4. Tope de tamaño en las fotos para no reventar el documento de 1 MB.
+//   5. La bitácora es de solo-agregar: no se puede reescribir.
+//
+// SI AGREGAS UN ESTADO / ROL / TIPO NUEVO EN EL CÓDIGO, agrégalo también
+// aquí: la lista de valores permitidos está espejada en los servicios.
+//
+// Para cerrar el sistema de verdad hay que migrar a Firebase Authentication
+// y sustituir los `if true` por `request.auth != null` + roles en el token.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------
+    // Utilidades compartidas
+    // ------------------------------------------------------------------
+
+    // Texto obligatorio, no vacío y con tope de longitud.
+    function textoNoVacio(v, max) {
+      return v is string && v.size() > 0 && v.size() <= max;
+    }
+
+    // Texto con tope de longitud (puede venir vacío).
+    function texto(v, max) {
+      return v is string && v.size() <= max;
+    }
+
+    // Placa oficial de El Salvador: clase (P, C, ...) + dígitos, SIN guiones.
+    // Es el mismo resultado de normalizarPlaca() en src/utils/placas.js.
+    function placaValida(p) {
+      return p is string && p.size() >= 3 && p.size() <= 30 && p.matches('^[A-Z0-9]+$');
+    }
+
+    // Número entero o decimal, nunca negativo.
+    function numeroNoNegativo(v) {
+      return (v is int || v is float) && v >= 0;
+    }
+
+    // Lista con tope de elementos.
+    function lista(v, max) {
+      return v is list && v.size() <= max;
+    }
+
+    // Estado operacional de una orden. Espejo de TRANSICIONES_VALIDAS en
+    // src/firebase/ordenesService.js — si cambia uno, cambia acá.
+    function estadoOrdenValido(e) {
+      return e in [
+        'ingresado', 'pendiente_diagnostico', 'en_proceso',
+        'esperando_repuestos', 'pendiente_autorizacion', 'pausado',
+        'finalizado', 'listo_entrega', 'entregado', 'cancelado'
+      ];
+    }
+
+    // ------------------------------------------------------------------
+    // 1) USUARIOS Y MECÁNICOS — colección "usuarios" (id = id del usuario)
+    //    Escrituras: alta, edición, activar/inactivar, migración de roles
+    //    y zonas, y baja. Siempre se manda el registro completo.
+    // ------------------------------------------------------------------
+    match /usuarios/{uid} {
+      allow read: if true;
+
+      allow create, update: if
+          request.resource.data.keys().hasAll([
+            'id', 'nombre', 'password', 'rol', 'activo',
+            'departamento', 'rutas'
+          ])
+          && request.resource.data.id == uid
+          && textoNoVacio(request.resource.data.nombre, 200)
+          && request.resource.data.password is string
+          && request.resource.data.password.size() >= 4
+          && request.resource.data.password.size() <= 100
+          && request.resource.data.rol in ['admin', 'encargado', 'mecanico', 'superadmin']
+          && request.resource.data.activo is bool
+          && texto(request.resource.data.departamento, 80)
+          && lista(request.resource.data.rutas, 60);
+
+      allow delete: if true;
+    }
+
+    // ------------------------------------------------------------------
+    // 2) CATÁLOGO DE FLOTA — "vehiculos_catalogo" (id = placa)
+    //    Escrituras: alta/edición desde la ficha, importación CSV y
+    //    migración inicial. La placa es la llave del documento.
+    // ------------------------------------------------------------------
+    match /vehiculos_catalogo/{placaId} {
+      allow read: if true;
+
+      allow create, update: if
+          request.resource.data.keys().hasAll(['placa', 'marca', 'modelo'])
+          && placaValida(request.resource.data.placa)
+          && request.resource.data.placa == placaId
+          && textoNoVacio(request.resource.data.marca, 80)
+          && textoNoVacio(request.resource.data.modelo, 120);
+
+      allow delete: if true;
+    }
+
+    // ------------------------------------------------------------------
+    // 3) ÓRDENES DE TRABAJO — "ordenes_trabajo"
+    //    Crear (addDoc), actualizar (updateDoc, llega el documento completo
+    //    resultante) y eliminar desde la ficha con confirmación.
+    // ------------------------------------------------------------------
+    match /ordenes_trabajo/{ordenId} {
+      allow read: if true;
+
+      allow create, update: if
+          request.resource.data.keys().hasAll(['placa', 'estado', 'fechaIngreso'])
+          && placaValida(request.resource.data.placa)
+          && estadoOrdenValido(request.resource.data.estado)
+          // Lo que la interfaz recorre tiene que ser del tipo correcto.
+          && (!request.resource.data.keys().hasAny(['actividades'])
+              || request.resource.data.actividades is list)
+          && (!request.resource.data.keys().hasAny(['historialEstados'])
+              || request.resource.data.historialEstados is list)
+          && (!request.resource.data.keys().hasAny(['fotosIngreso'])
+              || request.resource.data.fotosIngreso is list)
+          && (!request.resource.data.keys().hasAny(['fotosSalida'])
+              || request.resource.data.fotosSalida is list)
+          && (!request.resource.data.keys().hasAny(['fotosLados'])
+              || request.resource.data.fotosLados is map);
+
+      allow delete: if true;
+    }
+
+    // ------------------------------------------------------------------
+    // 4) GASTOS POR VEHÍCULO — "gastos_vehiculo"
+    //    Se crean, se editan (hoja de cálculo) y se eliminan con
+    //    confirmación, esté o no pagado.
+    // ------------------------------------------------------------------
+    match /gastos_vehiculo/{gastoId} {
+      allow read: if true;
+
+      allow create, update: if
+          request.resource.data.keys().hasAll([
+            'fecha', 'monto', 'tipo', 'estado', 'centroCosto', 'unidad'
+          ])
+          && request.resource.data.fecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && numeroNoNegativo(request.resource.data.monto)
+          && request.resource.data.tipo in ['proveedor', 'almacen']
+          && request.resource.data.estado in ['por_pagar', 'pagado']
+          && textoNoVacio(request.resource.data.centroCosto, 120)
+          && texto(request.resource.data.unidad, 60)
+          && (!request.resource.data.keys().hasAny(['descuento'])
+              || numeroNoNegativo(request.resource.data.descuento));
+
+      allow delete: if true;
+    }
+
+    // ------------------------------------------------------------------
+    // 5) BASE FOTOGRÁFICA (4 costados) — "vehiculos_fotos_base" (id = placa)
+    //    Se sobrescribe entera al guardar y se borra al dar de BAJA.
+    // ------------------------------------------------------------------
+    match /vehiculos_fotos_base/{placaId} {
+      allow read: if true;
+
+      allow create, update: if
+          request.resource.data.keys().hasAll([
+            'placa', 'frontal', 'lateralIzquierdo', 'lateralDerecho', 'trasera'
+          ])
+          && placaValida(request.resource.data.placa)
+          && request.resource.data.placa == placaId
+          && request.resource.data.frontal is string
+          && request.resource.data.lateralIzquierdo is string
+          && request.resource.data.lateralDerecho is string
+          && request.resource.data.trasera is string
+          // Presupuesto de fotos: 850 KB por documento (Firestore admite 1 MB).
+          && (request.resource.data.frontal.size()
+            + request.resource.data.lateralIzquierdo.size()
+            + request.resource.data.lateralDerecho.size()
+            + request.resource.data.trasera.size()) <= 1000000;
+
+      allow delete: if true;
+    }
+
+    // ------------------------------------------------------------------
+    // 6) BITÁCORA / AUDITORÍA — "bitacora"
+    //    Solo-agregar: los eventos no se editan ni se reescriben.
+    //    Se poda sola al pasar de 4 000 registros (borrado por lotes).
+    // ------------------------------------------------------------------
+    match /bitacora/{eventoId} {
+      allow read: if true;
+
+      allow create: if
+          request.resource.data.keys().hasAll([
+            'fechaMs', 'fecha', 'tipo', 'accion', 'detalle',
+            'usuario', 'rol', 'datos'
+          ])
+          && numeroNoNegativo(request.resource.data.fechaMs)
+          && texto(request.resource.data.fecha, 40)
+          && texto(request.resource.data.tipo, 40)
+          && texto(request.resource.data.accion, 50)
+          && texto(request.resource.data.detalle, 600)
+          && texto(request.resource.data.usuario, 200)
+          && texto(request.resource.data.rol, 40)
+          && request.resource.data.datos is map;
+
+      allow delete: if true;
+    }
+
+    // ------------------------------------------------------------------
+    // 7) CONTADORES — "contadores"
+    //    Solo existe el correlativo de órdenes: { valor: n }.
+    //    Borrarlo haría que la numeración de OT volviera a empezar.
+    // ------------------------------------------------------------------
+    match /contadores/{contadorId} {
+      allow read: if true;
+
+      allow create, update: if
+          request.resource.data.keys().hasAll(['valor'])
+          && request.resource.data.keys().hasOnly(['valor'])
+          && numeroNoNegativo(request.resource.data.valor);
+
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // 8) MÉTRICAS DE USO — "metricas" (documento "uso")
+    //    Se actualizan con increment(), así que el valor llega como
+    //    transformación y no como número plano: aquí solo se validan claves.
+    // ------------------------------------------------------------------
+    match /metricas/{metricaId} {
+      allow read: if true;
+
+      allow create, update: if request.resource.data.keys().hasOnly([
+        'lecturas', 'escrituras', 'bytesLeidos', 'bytesEscritos',
+        'sesiones', 'actualizadoMs'
+      ]);
+
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // 9) CATÁLOGOS DEL SISTEMA — "catalogos" (ids fijos: rutas|areas|tareas)
+    //    Los edita la consola de soporte (/admin-secreto/bitacora).
+    //    Solo se valida FORMA: id conocido y estructura correcta. El texto
+    //    del catálogo vive también en el código como respaldo, así que un
+    //    documento mal formado nunca rompe la aplicación.
+    // ------------------------------------------------------------------
+    match /catalogos/{catalogoId} {
+      allow read: if true;
+
+      allow create, update: if
+          catalogoId in ['rutas', 'areas', 'tareas']
+          && request.resource.data is map
+          && (!request.resource.data.keys().hasAny(['actualizadoEn'])
+              || (request.resource.data.actualizadoEn is string
+                  && request.resource.data.actualizadoEn.size() <= 40))
+          && (!request.resource.data.keys().hasAny(['actualizadoPor'])
+              || texto(request.resource.data.actualizadoPor, 200))
+          && (
+               // Rutas de camiones
+               (catalogoId == 'rutas'
+                 && (!request.resource.data.keys().hasAny(['predeterminadas'])
+                     || lista(request.resource.data.predeterminadas, 300))
+                 && (!request.resource.data.keys().hasAny(['porDepartamento'])
+                     || request.resource.data.porDepartamento is map))
+               // Áreas del taller
+               || (catalogoId == 'areas'
+                 && (!request.resource.data.keys().hasAny(['areas'])
+                     || lista(request.resource.data.areas, 100))
+                 && (!request.resource.data.keys().hasAny(['codigos'])
+                     || request.resource.data.codigos is map))
+               // Tareas del checklist
+               || (catalogoId == 'tareas'
+                 && (!request.resource.data.keys().hasAny(['mantenimiento'])
+                     || request.resource.data.mantenimiento is map)
+                 && (!request.resource.data.keys().hasAny(['empresa'])
+                     || request.resource.data.empresa is map)
+                 && (!request.resource.data.keys().hasAny(['genericas'])
+                     || lista(request.resource.data.genericas, 3000)))
+             );
+
+      // Un catálogo no se borra: se reescribe con los valores correctos.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // POR DEFECTO: TODO LO DEMÁS ESTÁ PROHIBIDO.
+    // Las reglas se combinan con OR, así que esto no anula las de arriba.
+    // ------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

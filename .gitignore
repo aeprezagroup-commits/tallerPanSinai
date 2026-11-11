@@ -1,0 +1,40 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Variables de entorno (contienen la config del proyecto Firebase)
+.env
+.env.*
+!.env.example
+
+# Caché y logs de Firebase CLI
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Respaldo de fotos: solo se versiona en el repo de respaldo dedicado
+fotos/
+.sa-*.json
+.respaldomanifiesto.json
+MANIFIESTO.csv

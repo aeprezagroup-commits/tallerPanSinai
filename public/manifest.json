@@ -1,0 +1,19 @@
+{
+  "short_name": "Pan Sinaí",
+  "name": "Sistema de Control y Registro - Taller Mecánico Pan Sinaí",
+  "description": "Plataforma integral de control de taller, trazabilidad de flotas y órdenes de trabajo.",
+  "icons": [
+    {
+      "src": "/logo-sinai.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#fbf8f1",
+  "theme_color": "#86992e",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "lang": "es-SV"
+}

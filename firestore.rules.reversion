@@ -1,0 +1,12 @@
+rules_version = '2';
+// REVERSIÓN DE EMERGENCIA — acceso abierto (estado previo a las reglas
+// estrictas). Usar SOLO si la app deja de funcionar tras un deploy de
+// firestore.rules:  firebase deploy --only firestore:rules --project tallerpansinaisv
+// (renombrar a firestore.rules antes de desplegar)
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

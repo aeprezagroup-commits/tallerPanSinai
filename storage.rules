@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// ============================================
+// REGLAS DE FIREBASE STORAGE — Taller Pan Sinaí
+// Rige las fotos de órdenes (ingreso/salida) y la base
+// fotográfica de los vehículos (4 costados por placa).
+//
+// La app no usa Firebase Auth (roles por localStorage),
+// por lo que las reglas son abiertas como en Firestore,
+// pero se limitan a IMÁGENES de hasta 10 MB para evitar
+// subidas masivas al bucket.
+// ============================================
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{ruta=**} {
+      // Las fotos siempre se pueden leer (se muestran en la app)
+      allow read: if true;
+
+      // Solo se permiten imágenes de hasta 10 MB
+      allow write: if request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

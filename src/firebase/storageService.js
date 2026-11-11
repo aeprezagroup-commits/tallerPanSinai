@@ -1,0 +1,284 @@
+// SERVICIO DE FOTOS (Storage o Firestore según fotosConfig.js)
+// - Siempre comprime antes de guardar (ver imageCompressionService)
+// - Reemplazo limpio: al actualizar, se elimina la foto anterior
+// - MODO 'storage': sube a Firebase Storage y borra el archivo viejo
+// - MODO 'firestore': guarda la foto comprimida dentro de Firestore
+//   (sin plan Blaze / sin tarjeta) respetando el presupuesto por documento
+//   para no acercarse al límite duro de 1 MB
+import { ref, uploadBytes, getDownloadURL, deleteObject, listAll } from 'firebase/storage';
+import { storage, isFirebaseConfigured } from './config';
+import { comprimirImagen } from '../services/imageCompressionService';
+import {
+  MODO_ALMACEN_FOTOS, esModoStorage, perfilActivo, PRESUPUESTO_DOC_FOTOS,
+} from './fotosConfig';
+
+/**
+ * Convierte un archivo File a DataURL (Base64).
+ * Es el formato en que viven las fotos en el modo 'firestore'
+ * y también en el modo local/demo sin Firebase.
+ */
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Comprime y convierte a DataURL respetando el cupo que le toca a cada foto.
+ * Si la foto sale más grande que su cupo, se vuelve a comprimir con un perfil
+ * de emergencia para que nunca se acerque al límite de 1 MB de Firestore.
+ *
+ * @param {File} file
+ * @param {boolean} comprimir
+ * @param {number} cupoPorFoto  máximo en bytes que puede ocupar esta foto
+ *                              dentro de su documento
+ */
+async function aDataURLComprimida(file, comprimir, cupoPorFoto = PRESUPUESTO_DOC_FOTOS) {
+  if (!comprimir) return await fileToDataUrl(file);
+
+  const perfil = perfilActivo();
+  let archivo = file;
+  try {
+    archivo = await comprimirImagen(file, perfil);
+  } catch (e) {
+    console.warn('Compresión omitida, se usa el archivo original:', e);
+    archivo = file;
+  }
+
+  let dataUrl = await fileToDataUrl(archivo);
+
+  // ---- Red de seguridad: si pesa más que su cupo, se reduce de nuevo ----
+  if (dataUrl.length > cupoPorFoto) {
+    const escalas = [0.75, 0.6];
+    for (const escala of escalas) {
+      if (dataUrl.length <= cupoPorFoto) break;
+      try {
+        const ajustado = await comprimirImagen(file, {
+          ...perfil,
+          maxWidth: Math.round(perfil.maxWidth * escala),
+          maxHeight: Math.round(perfil.maxHeight * escala),
+          quality: escala <= 0.6 ? 0.45 : 0.5,
+        });
+        const urlAjustada = await fileToDataUrl(ajustado);
+        if (urlAjustada.length < dataUrl.length) dataUrl = urlAjustada;
+      } catch (e) {
+        console.warn('No se pudo reducir más la imagen:', e);
+        break;
+      }
+    }
+    console.warn(
+      `Foto "${file.name}" pesa ${Math.round(dataUrl.length / 1024)} KB y su cupo es de ` +
+      `${Math.round(cupoPorFoto / 1024)} KB. Se usó el perfil más ligero para no ` +
+      'rebasar el documento en Firestore.'
+    );
+  }
+  return dataUrl;
+}
+
+/**
+ * Extrae la ruta interna (clave) de una URL de descarga de Storage.
+ * Ej: https://firebasestorage.googleapis.com/v0/b/bucket/o/vehiculos%2FCAM1%2Ffrontal.webp?token=...
+ *   → vehiculos/CAM1/frontal.webp
+ */
+function rutaDesdeURL(url) {
+  if (!url || typeof url !== 'string' || !url.startsWith('http')) return '';
+  try {
+    const u = new URL(url);
+    const inicio = u.pathname.indexOf('/o/');
+    if (inicio < 0) return '';
+    return decodeURIComponent(u.pathname.slice(inicio + 3));
+  } catch (e) {
+    return '';
+  }
+}
+
+function extensionDe(file) {
+  const nombre = String(file?.name || '');
+  const ext = nombre.includes('.') ? nombre.split('.').pop() : '';
+  return (ext || 'webp').toLowerCase().replace(/[^a-z0-9]/g, '') || 'webp';
+}
+
+/**
+ * Prepara una foto para guardado (siempre comprimida).
+ *
+ * MODO 'firestore' → devuelve una DataURL lista para guardarse en el
+ *   documento correspondiente. Al reemplazarla, la cadena anterior se
+ *   sobrescribe: no queda nada viejo ocupando espacio.
+ *
+ * MODO 'storage' → sube a Firebase Storage y borra el archivo anterior.
+ *
+ * @param {File} file
+ * @param {string} clave      carpeta contenedora (id de orden o placa)
+ * @param {string} tipo       nombre del archivo/etiqueta
+ * @param {object} [opciones]
+ * @param {string} [opciones.urlAnterior]  foto anterior (en modo storage se elimina)
+ * @param {boolean} [opciones.nombreFijo]  nombre determinista en Storage
+ * @param {boolean} [opciones.comprimir]   comprimir antes de guardar (por defecto true)
+ * @param {string} [opciones.carpeta]      raíz de Storage ('ordenes' | 'vehiculos')
+ * @returns {Promise<string>} URL de descarga o DataURL
+ */
+export async function subirFoto(file, clave, tipo = 'ingreso', opciones = {}) {
+  const {
+    urlAnterior = '',
+    nombreFijo = false,
+    comprimir = true,
+    carpeta = 'ordenes',
+  } = opciones;
+
+  if (!file) throw new Error('No se recibió ningún archivo de imagen');
+
+  // Cupo que le toca a cada foto según el documento donde vivirá:
+  //  - Base fotográfica: 4 fotos por vehículo.
+  //  - Orden: hasta 8 fotos (4 de ingreso + 4 de salida).
+  const cupo = Math.round(
+    carpeta === 'vehiculos' ? PRESUPUESTO_DOC_FOTOS / 4 : PRESUPUESTO_DOC_FOTOS / 8
+  );
+
+  // ---- MODO FIRESTORE: sin plan Blaze, sin tarjeta, sin bucket ----
+  if (!esModoStorage()) {
+    return await aDataURLComprimida(file, comprimir, cupo);
+  }
+
+  // ---- MODO LOCAL / DEMO (sin Firebase): también comprime ----
+  if (!isFirebaseConfigured || !storage) {
+    return await aDataURLComprimida(file, comprimir, cupo);
+  }
+
+  // ---- Compresión ----
+  let archivo = file;
+  if (comprimir) {
+    try {
+      archivo = await comprimirImagen(file, perfilActivo());
+    } catch (e) {
+      console.warn('Compresión omitida, se sube el archivo original:', e);
+      archivo = file;
+    }
+  }
+
+  const extension = extensionDe(archivo);
+  const nombreArchivo = nombreFijo
+    ? `${tipo}.${extension}`
+    : `${Date.now()}.${extension}`;
+  const ruta = `${carpeta}/${String(clave).trim()}/${nombreArchivo}`;
+  const rutaNueva = nombreFijo
+    ? `${carpeta}/${String(clave).trim()}/${tipo}.${extension}`
+    : ruta;
+
+  // ---- Subida ----
+  try {
+    const storageRef = ref(storage, ruta);
+    await uploadBytes(storageRef, archivo, { contentType: archivo.type || 'image/webp' });
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // ---- Limpieza: si había una foto anterior, se elimina ----
+    if (urlAnterior && urlAnterior.startsWith('http')) {
+      const rutaVieja = rutaDesdeURL(urlAnterior);
+      // Solo si es otro archivo (evita borrar el recién subido si es el mismo path)
+      if (!rutaVieja || rutaVieja !== rutaNueva) {
+        await eliminarFoto(urlAnterior);
+      }
+    }
+
+    return downloadURL;
+  } catch (error) {
+    console.error('Error al subir foto a Firebase Storage:', error);
+    throw new Error(
+      'No se pudo subir la foto a Firebase Storage. ' +
+      'Revisa que el proyecto tenga Storage habilitado (plan Blaze) y sus reglas desplegadas.'
+    );
+  }
+}
+
+/**
+ * Sube múltiples fotos. Lanza un error agregado si alguna falla,
+ * para que la UI avise en lugar de perder las fotos en silencio.
+ */
+export async function subirMultiplesFotos(files, ordenId, tipo = 'ingreso', opciones = {}) {
+  const urls = [];
+  const fallidas = [];
+
+  for (const file of files) {
+    try {
+      const url = await subirFoto(file, ordenId, tipo, {
+        ...opciones,
+        urlAnterior: '',
+        nombreFijo: false,
+      });
+      urls.push(url);
+    } catch (err) {
+      console.error('Fallo al subir foto:', file?.name, err);
+      fallidas.push(file?.name || 'foto');
+    }
+  }
+
+  if (fallidas.length > 0) {
+    throw new Error(
+      `${fallidas.length} foto(s) no se pudieron subir a Storage: ${fallidas.join(', ')}`
+    );
+  }
+  return urls;
+}
+
+/**
+ * Elimina una foto de Storage. Devuelve true si se eliminó.
+ * Ignora "object not found" (ya no existía) y las DataURL (base64).
+ */
+export async function eliminarFoto(url) {
+  if (!esModoStorage()) return false; // en modo firestore la foto vieja se sobrescribe
+  if (!isFirebaseConfigured || !storage) return false;
+  if (!url || typeof url !== 'string' || !url.startsWith('http')) return false;
+
+  try {
+    const storageRef = ref(storage, url);
+    await deleteObject(storageRef);
+    return true;
+  } catch (error) {
+    if (error?.code === 'storage/object-not-found') return true; // ya no estaba
+    console.warn('No se pudo eliminar la foto de Storage:', error);
+    return false;
+  }
+}
+
+/**
+ * Elimina TODOS los archivos bajo una carpeta de Storage.
+ * Se usa al dar de baja un vehículo (borra sus 4 fotos).
+ * @param {string} ruta  ej: 'vehiculos/CAM1'
+ * @returns {Promise<number>} cantidad de archivos eliminados
+ */
+export async function eliminarCarpeta(ruta) {
+  if (!esModoStorage()) return 0;
+  if (!isFirebaseConfigured || !storage) return 0;
+  if (!ruta) return 0;
+
+  try {
+    const listRef = ref(storage, ruta);
+    const res = await listAll(listRef);
+    let borrados = 0;
+
+    // Archivos directos
+    for (const item of res.items) {
+      try {
+        await deleteObject(item);
+        borrados += 1;
+      } catch (e) {
+        if (e?.code !== 'storage/object-not-found') {
+          console.warn('No se pudo eliminar', item.fullPath, e);
+        }
+      }
+    }
+
+    // Subcarpetas (cascada)
+    for (const prefijo of res.prefixes) {
+      borrados += await eliminarCarpeta(prefijo.fullPath);
+    }
+
+    return borrados;
+  } catch (error) {
+    if (error?.code === 'storage/object-not-found') return 0;
+    console.warn('No se pudo recorrer la carpeta de Storage:', error);
+    return 0;
+  }
+}
