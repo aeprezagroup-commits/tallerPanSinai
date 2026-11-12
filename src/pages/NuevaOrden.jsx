@@ -11,8 +11,10 @@ import {
   TbCheck,
   TbPlus,
   TbLock,
+  TbAlertTriangle,
 } from '../icons';
-import { crearOrden, buscarPorPlaca } from '../firebase/ordenesService';
+import { crearOrden, buscarPorPlaca, formatoOT } from '../firebase/ordenesService';
+import { ESTADOS_CONFIG } from '../components/StatusBadge';
 import { useToast } from '../components/ToastContext';
 import { buscarVehiculoCatalogo } from '../services/vehiculosService';
 import { AREAS_SELECT } from '../constants/areas';
@@ -43,6 +45,17 @@ function construirActividades(tareas, mecanico = '', areaDefault = 'General') {
   }));
 }
 
+// Estados en los que la unidad sigue con una orden abierta en el taller.
+// Mientras exista una orden así para la placa, no se permite dar de alta
+// un nuevo ingreso (evita duplicados por error).
+const ESTADOS_EN_TALLER = [
+  'ingresado', 'pendiente_diagnostico', 'en_proceso', 'esperando_repuestos',
+  'pendiente_autorizacion', 'pausado', 'finalizado', 'listo_entrega'
+];
+
+const etiquetaEstadoOrden = (estado) =>
+  ESTADOS_CONFIG[estado]?.label || String(estado || '').replace('_', ' ');
+
 export default function NuevaOrden() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,6 +79,7 @@ export default function NuevaOrden() {
   }, []);
 
   const [vehiculoDetectado, setVehiculoDetectado] = useState(null);
+  const [ordenActiva, setOrdenActiva] = useState(null);
   const [historialPrevio, setHistorialPrevio] = useState([]);
   const [mecanicos] = useState(() => obtenerMecanicosActivos());
   const [fechaIngresoTexto] = useState(() => new Date().toLocaleString('es-SV'));
@@ -190,6 +204,7 @@ export default function NuevaOrden() {
 
 
   const aplicarAutocompletado = async (placaABuscar) => {
+    setOrdenActiva(null);
     cargarBaseFotos(placaABuscar);
     const vehiculo = buscarVehiculoCatalogo(placaABuscar);
     if (vehiculo) {
@@ -219,8 +234,15 @@ export default function NuevaOrden() {
       const previas = await buscarPorPlaca(placaABuscar);
       if (previas && previas.length > 0) {
         setHistorialPrevio(previas);
-        const ultima = previas[0];
-        if (ultima.kilometraje) {
+        const abierta = previas.find(o => ESTADOS_EN_TALLER.includes(o.estado));
+        if (abierta) {
+          setOrdenActiva(abierta);
+          addToast(
+            `La placa ${placaABuscar} ya está en el taller con la orden ${formatoOT(abierta)} (${etiquetaEstadoOrden(abierta.estado)}). No puede ingresar la unidad de nuevo.`,
+            'error',
+            9000
+          );
+        } else if (previas[0].kilometraje) {
           addToast(`Se encontraron ${previas.length} ingresos previos de esta unidad en taller.`, 'info');
         }
       } else {
@@ -406,6 +428,10 @@ export default function NuevaOrden() {
       addToast('La unidad no está registrada en la flota. Registre el vehículo para poder continuar.', 'error');
       return;
     }
+    if (ordenActiva) {
+      addToast(`Esta unidad ya tiene una orden abierta en el taller (${formatoOT(ordenActiva)}). No es posible ingresarla de nuevo.`, 'error');
+      return;
+    }
     if (modoAtencion === 'taller') {
       if (!form.conductorEntrega.trim()) {
         addToast('El nombre del conductor es obligatorio', 'warning');
@@ -476,6 +502,20 @@ export default function NuevaOrden() {
         );
         return;
       }
+    }
+
+    // Revalidación al momento de guardar: la orden pudo abrirse en otra
+    // pestaña mientras se llenaba el formulario.
+    try {
+      const previasFrescas = await buscarPorPlaca(form.placa);
+      const abiertaFresca = previasFrescas?.find(o => ESTADOS_EN_TALLER.includes(o.estado));
+      if (abiertaFresca) {
+        setOrdenActiva(abiertaFresca);
+        addToast(`Esta unidad ya tiene una orden abierta en el taller (${formatoOT(abiertaFresca)}). No es posible ingresarla de nuevo.`, 'error');
+        return;
+      }
+    } catch (err) {
+      console.warn('No se pudo revalidar órdenes abiertas:', err);
     }
 
     const placaPreview = normalizarPlaca(form.placa) || 'sin placa';
@@ -686,6 +726,31 @@ export default function NuevaOrden() {
           <div className="form-section-title" style={{ marginTop: 0 }}>
             <IconoMascara className="icon" src="/iconos/taller-reparacion.png" size={16} /> Datos del Vehículo
           </div>
+
+          {ordenActiva && (
+            <div role="alert" style={{
+              background: 'rgba(239,68,68,0.10)',
+              border: '1px solid rgba(239,68,68,0.4)',
+              color: '#ef4444',
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+              fontSize: 13
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
+                <TbAlertTriangle style={{ fontSize: 16, flexShrink: 0 }} />
+                <span>Vehículo ya ingresado al taller: no puede darse de alta de nuevo</span>
+              </div>
+              <div style={{ color: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 400 }}>
+                La unidad mantiene la orden <strong>{formatoOT(ordenActiva)}</strong> en
+                estado <strong>{etiquetaEstadoOrden(ordenActiva.estado)}</strong>. Entregue o cierre esa
+                orden antes de registrar un nuevo ingreso.
+              </div>
+            </div>
+          )}
 
           {historialPrevio && historialPrevio.length > 0 && (
             <div className="form-bloque" style={{
@@ -1545,8 +1610,14 @@ export default function NuevaOrden() {
           <button
             type="submit"
             className="btn btn-primary btn-lg"
-            disabled={loading || camposBloqueados}
-            title={camposBloqueados ? 'Debe registrar o escanear una placa registrada en la flota para ingresar la orden' : ''}
+            disabled={loading || camposBloqueados || Boolean(ordenActiva)}
+            title={
+              ordenActiva
+                ? 'Esta unidad ya tiene una orden abierta en el taller: no puede ingresar de nuevo'
+                : camposBloqueados
+                  ? 'Debe registrar o escanear una placa registrada en la flota para ingresar la orden'
+                  : ''
+            }
           >
             {loading ? (
               <>

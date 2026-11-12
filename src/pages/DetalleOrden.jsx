@@ -13,8 +13,9 @@ import {
   TbMapPin,
   TbLock,
   TbX,
+  TbPlus,
 } from '../icons';
-import { obtenerOrden, actualizarOrden, eliminarOrden, cambiarEstado, finalizarTrabajo, reactivarOrden, TRANSICIONES_VALIDAS, formatoOT } from '../firebase/ordenesService';
+import { obtenerOrden, actualizarOrden, eliminarOrden, cambiarEstado, finalizarTrabajo, reactivarOrden, agregarActividad, actualizarActividad, TRANSICIONES_VALIDAS, formatoOT } from '../firebase/ordenesService';
 import { obtenerFotosBase, guardarFotosBase } from '../services/fotosVehiculoService';
 import { useToast } from '../components/ToastContext';
 import { useAuth } from '../context/AuthContext';
@@ -59,6 +60,14 @@ const docsDesdeLegacy = (f) => {
   return docs;
 };
 
+// Estados posibles de una actividad (tarea) dentro de una orden.
+const ESTADOS_ACTIVIDAD = [
+  { val: 'pendiente', label: 'Pendiente' },
+  { val: 'en_proceso', label: 'En proceso' },
+  { val: 'pausado', label: 'Pausada' },
+  { val: 'finalizado', label: 'Finalizada' }
+];
+
 export default function DetalleOrden() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -81,6 +90,18 @@ export default function DetalleOrden() {
     nuevoEstado: '',
     etiqueta: '',
     motivo: '',
+    guardando: false
+  });
+  const [modalActividad, setModalActividad] = useState({
+    abierto: false,
+    modo: 'nueva',
+    actividadId: null,
+    descripcion: '',
+    area: '',
+    mecanicoAsignado: '',
+    tiempoEstimadoMinutos: 60,
+    estado: 'pendiente',
+    observaciones: '',
     guardando: false
   });
   const [fotosBase, setFotosBase] = useState(null);
@@ -395,11 +416,101 @@ export default function DetalleOrden() {
     return new Date(timestamp.toDate()).toLocaleString('es-SV');
   };
 
+  const abrirNuevaActividad = () => {
+    setModalActividad({
+      abierto: true,
+      modo: 'nueva',
+      actividadId: null,
+      descripcion: '',
+      area: orden?.areaPrincipal || 'General',
+      mecanicoAsignado: orden?.mecanicoAsignado || '',
+      tiempoEstimadoMinutos: 60,
+      estado: 'pendiente',
+      observaciones: '',
+      guardando: false
+    });
+  };
+
+  const abrirEditarActividad = (act) => {
+    setModalActividad({
+      abierto: true,
+      modo: 'editar',
+      actividadId: act.id,
+      descripcion: act.descripcion || '',
+      area: act.area || orden?.areaPrincipal || 'General',
+      mecanicoAsignado: act.mecanicoAsignado || '',
+      tiempoEstimadoMinutos: act.tiempoEstimadoMinutos || 60,
+      estado: act.estado || 'pendiente',
+      observaciones: act.observaciones || '',
+      guardando: false
+    });
+  };
+
+  const guardarActividad = async (e) => {
+    e.preventDefault();
+    const descripcion = modalActividad.descripcion.trim();
+    if (!descripcion) {
+      addToast('La descripción de la actividad es requerida', 'warning');
+      return;
+    }
+    const mins = Number(modalActividad.tiempoEstimadoMinutos);
+    if (isNaN(mins) || mins <= 0 || mins > 10000) {
+      addToast('El tiempo estimado debe ser un número entero de minutos mayor a cero.', 'warning');
+      return;
+    }
+
+    const esNueva = modalActividad.modo === 'nueva';
+    const confirmado = await confirm({
+      title: esNueva ? '¿Añadir actividad a la orden?' : '¿Guardar cambios de la actividad?',
+      message: esNueva
+        ? `Se agregará "${descripcion}" a la orden (${mins} min estimados).`
+        : `Se actualizará la actividad "${descripcion}" en la orden.`,
+      confirmText: esNueva ? 'Sí, añadir actividad' : 'Sí, guardar cambios',
+      cancelText: 'Cancelar',
+      danger: false
+    });
+    if (!confirmado) return;
+
+    setModalActividad(prev => ({ ...prev, guardando: true }));
+    try {
+      if (esNueva) {
+        await agregarActividad(id, {
+          descripcion,
+          area: modalActividad.area,
+          mecanicoAsignado: modalActividad.mecanicoAsignado,
+          tiempoEstimadoMinutos: mins,
+          observaciones: modalActividad.observaciones.trim()
+        });
+        addToast(`Actividad "${descripcion}" añadida a la orden`, 'success');
+      } else {
+        await actualizarActividad(id, modalActividad.actividadId, {
+          descripcion,
+          area: modalActividad.area,
+          mecanicoAsignado: modalActividad.mecanicoAsignado,
+          tiempoEstimadoMinutos: mins,
+          estado: modalActividad.estado,
+          observaciones: modalActividad.observaciones.trim()
+        });
+        addToast('Actividad actualizada correctamente', 'success');
+      }
+      setModalActividad(prev => ({ ...prev, abierto: false, guardando: false }));
+      cargarOrden();
+    } catch (err) {
+      console.error(err);
+      addToast('Error al guardar la actividad: ' + err.message, 'error');
+      setModalActividad(prev => ({ ...prev, guardando: false }));
+    }
+  };
+
   if (loading) {
     return <div className="loading-spinner"><div className="spinner" /></div>;
   }
 
   if (!orden) return null;
+
+  // Sólo administración y encargado pueden modificar tareas, y sólo mientras
+  // la unidad siga en el taller (una orden entregada o cancelada queda cerrada).
+  const ordenModificable = puedeModificar && !['entregado', 'cancelado'].includes(orden.estado);
 
   if (!puedeVerOrden(orden, currentUser)) {
     return (
@@ -1133,11 +1244,25 @@ export default function DetalleOrden() {
       </div>
 
       <div className="card" style={{ marginTop: 20 }}>
-        <div className="form-section-title" style={{ marginTop: 0 }}>
-          <IconoMascara className="icon" src="/iconos/llave-inglesa.png" size={16} /> Actividades Técnicas de Reparación ({orden.actividades?.length || 0})
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div className="form-section-title" style={{ marginTop: 0 }}>
+            <IconoMascara className="icon" src="/iconos/llave-inglesa.png" size={16} /> Actividades Técnicas de Reparación ({orden.actividades?.length || 0})
+          </div>
+          {ordenModificable && (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={abrirNuevaActividad}
+              title="Añadir una tarea extra o pendiente a esta orden"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <TbPlus size={14} /> Agregar tarea
+            </button>
+          )}
         </div>
         <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 16 }}>
           Tareas por especialidad y horas hombre.
+          {ordenModificable ? ' Administración y encargado pueden añadir o editar tareas.' : ''}
         </p>
 
         {(!orden.actividades || orden.actividades.length === 0) ? (
@@ -1156,6 +1281,7 @@ export default function DetalleOrden() {
                   <th style={{ padding: '10px 12px' }}>T. Real</th>
                   <th style={{ padding: '10px 12px' }}>Estado</th>
                   <th style={{ padding: '10px 12px' }}>Observaciones</th>
+                  {ordenModificable && <th style={{ padding: '10px 12px' }}>Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -1184,6 +1310,19 @@ export default function DetalleOrden() {
                     <td style={{ padding: '12px', fontSize: 12, color: 'var(--color-text-muted)', maxWidth: 200 }}>
                       {act.observaciones || (act.motivoPausa ? `Pausado: ${act.motivoPausa}` : '—')}
                     </td>
+                    {ordenModificable && (
+                      <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => abrirEditarActividad(act)}
+                          title="Editar esta actividad (descripción, área, responsable, tiempo, estado u observaciones)"
+                          style={{ padding: '4px 8px', fontSize: 11 }}
+                        >
+                          <TbPencil size={13} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -1492,6 +1631,145 @@ export default function DetalleOrden() {
                     disabled={modalTransicion.guardando}
                   >
                     {modalTransicion.guardando ? 'Actualizando...' : 'Confirmar Transición'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {modalActividad.abierto && (
+        <ModalPortal>
+          <div className="modal-backdrop" onClick={() => !modalActividad.guardando && setModalActividad(prev => ({ ...prev, abierto: false }))}>
+            <div className="modal-content" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, fontSize: 16 }}>
+                  <TbPlus style={{ color: 'var(--color-accent)' }} />
+                  {modalActividad.modo === 'nueva'
+                    ? `Nueva actividad para ${orden.placa || ''}`
+                    : 'Editar actividad'}
+                </h3>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  disabled={modalActividad.guardando}
+                  onClick={() => setModalActividad(prev => ({ ...prev, abierto: false }))}
+                >
+                  <TbX />
+                </button>
+              </div>
+              <form onSubmit={guardarActividad}>
+                <div className="modal-body" style={{ padding: '20px 24px' }}>
+                  <div className="form-group" style={{ marginBottom: 16 }}>
+                    <label className="form-label" style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
+                      Descripción de la Actividad *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      required
+                      placeholder="Descripción técnica de la tarea a realizar..."
+                      value={modalActividad.descripcion}
+                      onChange={(e) => setModalActividad(prev => ({ ...prev, descripcion: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
+                        Área Mecánica
+                      </label>
+                      <select
+                        className="form-select"
+                        value={modalActividad.area}
+                        onChange={(e) => setModalActividad(prev => ({ ...prev, area: e.target.value }))}
+                      >
+                        {opcionesArea(modalActividad.area).map(a => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
+                        Minutos Estimados
+                      </label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        min="10"
+                        step="5"
+                        value={modalActividad.tiempoEstimadoMinutos}
+                        onChange={(e) => setModalActividad(prev => ({ ...prev, tiempoEstimadoMinutos: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
+                        Mecánico Responsable
+                      </label>
+                      <select
+                        className="form-select"
+                        value={modalActividad.mecanicoAsignado}
+                        onChange={(e) => setModalActividad(prev => ({ ...prev, mecanicoAsignado: e.target.value }))}
+                      >
+                        <option value="">Seleccionar técnico...</option>
+                        {mecanicos.map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {modalActividad.modo === 'editar' && (
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label" style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
+                          Estado de la Tarea
+                        </label>
+                        <select
+                          className="form-select"
+                          value={modalActividad.estado}
+                          onChange={(e) => setModalActividad(prev => ({ ...prev, estado: e.target.value }))}
+                        >
+                          {ESTADOS_ACTIVIDAD.map(s => (
+                            <option key={s.val} value={s.val}>{s.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
+                      Observaciones
+                    </label>
+                    <textarea
+                      className="form-textarea"
+                      rows={3}
+                      placeholder="Notas, pendientes o detalles relevantes para esta tarea..."
+                      value={modalActividad.observaciones}
+                      onChange={(e) => setModalActividad(prev => ({ ...prev, observaciones: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '14px 24px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    disabled={modalActividad.guardando}
+                    onClick={() => setModalActividad(prev => ({ ...prev, abierto: false }))}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={modalActividad.guardando}>
+                    {modalActividad.guardando
+                      ? 'Guardando...'
+                      : modalActividad.modo === 'nueva'
+                        ? 'Añadir Actividad'
+                        : 'Guardar Cambios'}
                   </button>
                 </div>
               </form>

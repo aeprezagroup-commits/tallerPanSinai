@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../components/ToastContext';
+import { VERSION_TEXT } from '../version';
 
 const ANIO_ACTUAL = new Date().getFullYear();
 
@@ -340,7 +341,7 @@ export default function Login() {
             color: 'var(--color-text-muted)',
             letterSpacing: 0.3
           }}>
-            Pan Sinaí &copy; {ANIO_ACTUAL} • AE PREZA GROUP
+            Pan Sinaí &copy; {ANIO_ACTUAL} • AE PREZA GROUP • {VERSION_TEXT}
           </div>
         </div>
       </main>

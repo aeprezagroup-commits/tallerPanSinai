@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from './ToastContext';
+import { VERSION_TEXT } from '../version';
 import CommandPalette from './CommandPalette';
 import Sidebar from './Sidebar';
 
@@ -222,6 +223,18 @@ export default function Layout() {
             <Outlet />
           </div>
         </div>
+
+        <footer style={{
+          marginTop: 'auto',
+          padding: '12px 24px',
+          borderTop: '1px solid var(--color-border)',
+          textAlign: 'center',
+          fontSize: 11,
+          color: 'var(--color-text-muted)',
+          letterSpacing: 0.4
+        }}>
+          Pan Sinaí &copy; {new Date().getFullYear()} • AE PREZA GROUP • {VERSION_TEXT}
+        </footer>
       </main>
 
       <CommandPalette

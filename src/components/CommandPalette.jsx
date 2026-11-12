@@ -10,6 +10,7 @@ import { escucharOrdenes, formatoOT } from '../firebase/ordenesService';
 import { filtrarOrdenesPorUsuario, visiblesParaTaller } from '../services/permisosService';
 import { useAuth } from '../context/AuthContext';
 import ModalPortal from './ModalPortal';
+import { VERSION } from '../version';
 
 export default function CommandPalette({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
@@ -203,7 +204,7 @@ export default function CommandPalette({ isOpen, onClose }) {
               <span><kbd>ESC</kbd> Cerrar</span>
             </div>
             <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
-              PAN SINAÍ TELEMATICS V4.2
+              PAN SINAÍ TELEMATICS v{VERSION}
             </span>
           </div>
         </div>

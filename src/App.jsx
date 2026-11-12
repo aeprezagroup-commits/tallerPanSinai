@@ -7,6 +7,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import CambioPasswordObligatorio from './components/CambioPasswordObligatorio';
 import RutaConsolaSoporte from './components/RutaConsolaSoporte';
+import ControlSesion from './components/ControlSesion';
+import GuardiaSalida from './components/GuardiaSalida';
 
 import Login from './pages/Login';
 import Inicio from './pages/Inicio';
@@ -31,6 +33,8 @@ export default function App() {
         <ToastProvider>
           <PuertaDeSeguridad>
             <Router>
+              <ControlSesion />
+              <GuardiaSalida />
               <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
