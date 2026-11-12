@@ -18,7 +18,6 @@ import {
   TbAlertCircle,
   TbRefresh,
   TbLock,
-  TbCamera,
 } from '../icons';
 import {
   obtenerPersonalVisible, agregarUsuario, eliminarUsuario, alternarEstadoUsuario,
@@ -1103,7 +1102,7 @@ export default function Admin({ seccion = 'personal' }) {
                             style={{ fontSize: 9, padding: '2px 6px' }}
                             title="Base fotográfica: los 4 costados. Se completa cuando la unidad ingresa al taller."
                           >
-                            <TbCamera size={11} style={{ verticalAlign: '-1.5px', marginRight: 4 }} />
+                            <IconoMascara src="/iconos/camara-fotografica.png" size={11} estilo={{ verticalAlign: '-1.5px', marginRight: 4 }} />
                             {estFotos.completas}/{estFotos.total} fotos
                           </span>
                         </div>

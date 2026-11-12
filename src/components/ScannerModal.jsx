@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { normalizarPlaca } from '../utils/placas';
-import { TbCamera, TbX, TbCheck, TbAlertCircle, TbHash, TbBarcode } from '../icons';
+import { TbX, TbCheck, TbAlertCircle, TbHash, TbBarcode } from '../icons';
 import ModalPortal from './ModalPortal';
+import IconoMascara from './IconoMascara';
 
 export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
   const [error, setError] = useState('');
@@ -107,7 +108,7 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
         <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
           <div className="modal-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <TbCamera style={{ color: 'var(--color-accent)', fontSize: 20 }} />
+              <IconoMascara src="/iconos/camara-de-video.png" size={20} estilo={{ color: 'var(--color-accent)' }} />
               <h3 className="modal-title">Obtener Placa</h3>
             </div>
             <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">

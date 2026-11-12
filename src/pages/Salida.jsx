@@ -6,7 +6,6 @@ import {
   TbPrinter,
   TbCheck,
   TbCircle,
-  TbCamera,
   TbUpload,
   TbAlertCircle,
 } from '../icons';
@@ -533,7 +532,7 @@ export default function Salida() {
                           borderBottom: '1px solid var(--color-border)'
                         }}>
                           <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
-                            <TbCamera size={12} style={{ verticalAlign: -1, marginRight: 3 }} />
+                            <IconoMascara src="/iconos/camara-fotografica.png" size={12} estilo={{ verticalAlign: -1, marginRight: 3 }} />
                             {lado.num}. {lado.label}
                           </span>
                         </div>
@@ -553,7 +552,7 @@ export default function Salida() {
                             fontSize: 12,
                             color: 'var(--color-text-muted)'
                           }}>
-                            <TbCamera size={16} /> {lado.vacio}
+                            <IconoMascara src="/iconos/camara-fotografica.png" size={16} /> {lado.vacio}
                           </div>
                         )}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 8 }}>
@@ -567,7 +566,7 @@ export default function Salida() {
                               justifyContent: 'center', fontSize: 11, padding: '5px 6px'
                             }}
                           >
-                            <TbCamera size={12} /> {ocupado ? 'Procesando…' : 'Cámara'}
+                            <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> {ocupado ? 'Procesando…' : 'Cámara'}
                           </button>
                           {!ocupado && (
                             <button

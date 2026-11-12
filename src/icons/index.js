@@ -66,8 +66,6 @@ export {
   LuRuler as TbRulerMeasure,
   LuImage as TbPhoto,
   LuImagePlus as TbPhotoPlus,
-  LuCamera as TbCamera,
-  LuCamera as TbCameraPlus,
 
   LuClipboardList as TbClipboardList,
   LuClipboard as TbClipboardText,

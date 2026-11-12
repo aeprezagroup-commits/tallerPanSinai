@@ -4,7 +4,6 @@ import { normalizarPlaca } from '../utils/placas';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   TbClipboardList,
-  TbCamera,
   TbUpload,
   TbDeviceFloppy,
   TbX,
@@ -557,7 +556,7 @@ export default function NuevaOrden() {
           onClick={() => setIsScannerOpen(true)}
           style={{ gap: 8, boxShadow: 'var(--shadow-glow)' }}
         >
-          <TbCamera style={{ fontSize: 20 }} /> Obtener Placa
+          <IconoMascara src="/iconos/camara-de-video.png" size={20} /> Obtener Placa
         </button>
       </div>
 
@@ -700,7 +699,7 @@ export default function NuevaOrden() {
                 letterSpacing: 1,
                 color: form.placa ? 'var(--color-text-primary)' : 'var(--color-text-muted)'
               }}>
-                <TbCamera style={{ color: 'var(--color-accent)', fontSize: 17, flexShrink: 0 }} />
+                <IconoMascara src="/iconos/camara-de-video.png" size={17} estilo={{ color: 'var(--color-accent)', flexShrink: 0 }} />
                 {form.placa || 'Sin placa'}
               </div>
               <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
@@ -1290,7 +1289,7 @@ export default function NuevaOrden() {
             </div>
 
             <div className="form-section-title" ref={seccionFotosRef}>
-              <TbCamera className="icon" /> Inspección Perimetral 360° (Estado Actual de la Unidad)
+              <IconoMascara className="icon" src="/iconos/camara-fotografica.png" size={16} /> Inspección Perimetral 360° (Estado Actual de la Unidad)
               <span
                 className={`badge ${fotosCompletas === LADOS_VEHICULO.length ? 'badge-finalizado' : 'badge-pausado'}`}
                 style={{ marginLeft: 8, fontSize: 10.5, padding: '2px 8px' }}
@@ -1305,7 +1304,7 @@ export default function NuevaOrden() {
             <div className="side-photos-grid">
               <div className="side-photo-card">
                 <div className="side-photo-header">
-                  <span className="side-photo-label"><TbCamera /> 1. Frontal</span>
+                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> 1. Frontal</span>
                   <span className="side-photo-angle-tag">Frente</span>
                 </div>
                 {fotosLados.frontal ? (
@@ -1324,13 +1323,13 @@ export default function NuevaOrden() {
                 ) : (
                   <div className="side-photo-upload">
                     <div className="upload-icon-circle">
-                      <TbCamera />
+                      <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
                     </div>
                     <span className="side-photo-upload-text">Foto Frontal</span>
                     <span className="side-photo-upload-hint">Frente y parrilla</span>
                     <div className="side-photo-actions">
                       <label className="btn btn-primary btn-sm side-photo-option">
-                        <TbCamera /> Cámara
+                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
                         <input
                           type="file"
                           accept="image/*"
@@ -1355,7 +1354,7 @@ export default function NuevaOrden() {
 
               <div className="side-photo-card">
                 <div className="side-photo-header">
-                  <span className="side-photo-label"><TbCamera /> 2. Lateral Izquierdo</span>
+                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> 2. Lateral Izquierdo</span>
                   <span className="side-photo-angle-tag">Conductor</span>
                 </div>
                 {fotosLados.lateralIzquierdo ? (
@@ -1374,13 +1373,13 @@ export default function NuevaOrden() {
                 ) : (
                   <div className="side-photo-upload">
                     <div className="upload-icon-circle">
-                      <TbCamera />
+                      <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
                     </div>
                     <span className="side-photo-upload-text">Costado Izq.</span>
                     <span className="side-photo-upload-hint">Lado del motorista</span>
                     <div className="side-photo-actions">
                       <label className="btn btn-primary btn-sm side-photo-option">
-                        <TbCamera /> Cámara
+                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
                         <input
                           type="file"
                           accept="image/*"
@@ -1405,7 +1404,7 @@ export default function NuevaOrden() {
 
               <div className="side-photo-card">
                 <div className="side-photo-header">
-                  <span className="side-photo-label"><TbCamera /> 3. Lateral Derecho</span>
+                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> 3. Lateral Derecho</span>
                   <span className="side-photo-angle-tag">Acompañante</span>
                 </div>
                 {fotosLados.lateralDerecho ? (
@@ -1424,13 +1423,13 @@ export default function NuevaOrden() {
                 ) : (
                   <div className="side-photo-upload">
                     <div className="upload-icon-circle">
-                      <TbCamera />
+                      <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
                     </div>
                     <span className="side-photo-upload-text">Costado Der.</span>
                     <span className="side-photo-upload-hint">Lado del copiloto</span>
                     <div className="side-photo-actions">
                       <label className="btn btn-primary btn-sm side-photo-option">
-                        <TbCamera /> Cámara
+                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
                         <input
                           type="file"
                           accept="image/*"
@@ -1455,7 +1454,7 @@ export default function NuevaOrden() {
 
               <div className="side-photo-card">
                 <div className="side-photo-header">
-                  <span className="side-photo-label"><TbCamera /> 4. Vista Trasera</span>
+                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> 4. Vista Trasera</span>
                   <span className="side-photo-angle-tag">Posterior</span>
                 </div>
                 {fotosLados.trasera ? (
@@ -1474,13 +1473,13 @@ export default function NuevaOrden() {
                 ) : (
                   <div className="side-photo-upload">
                     <div className="upload-icon-circle">
-                      <TbCamera />
+                      <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
                     </div>
                     <span className="side-photo-upload-text">Foto Trasera</span>
                     <span className="side-photo-upload-hint">Compuerta / Baúl</span>
                     <div className="side-photo-actions">
                       <label className="btn btn-primary btn-sm side-photo-option">
-                        <TbCamera /> Cámara
+                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
                         <input
                           type="file"
                           accept="image/*"

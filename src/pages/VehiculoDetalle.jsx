@@ -8,7 +8,6 @@ import {
   TbX,
   TbTrash,
   TbAlertCircle,
-  TbCamera,
   TbUpload,
   TbTruck,
 } from '../icons';
@@ -348,7 +347,7 @@ export default function VehiculoDetalle() {
             color: estadoFotos.completo ? 'var(--color-finalizado)' : 'var(--color-accent)',
             border: `1px solid ${estadoFotos.completo ? 'rgba(20,148,68,0.4)' : 'rgba(134,153,46,0.35)'}`,
           }}>
-            <TbCamera size={14} />
+            <IconoMascara src="/iconos/camara-fotografica.png" size={14} />
             {estadoFotos.completas}/4 fotos
           </span>
 
@@ -516,7 +515,7 @@ export default function VehiculoDetalle() {
           gap: 10, flexWrap: 'wrap',
         }}>
           <div className="form-section-title" style={{ marginTop: 0, marginBottom: 0 }}>
-            <TbCamera className="icon" /> Base Fotográfica ({fotosLlenas}/4)
+            <IconoMascara className="icon" src="/iconos/camara-fotografica.png" size={16} /> Base Fotográfica ({fotosLlenas}/4)
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--color-text-secondary)', maxWidth: 420, textAlign: 'right' }}>
             Se completa al ingresar la unidad al taller.
@@ -569,7 +568,7 @@ export default function VehiculoDetalle() {
                         width: '100%', justifyContent: 'center', padding: '6px 6px', fontSize: 12,
                         gridColumn: ocupado ? '1 / -1' : 'auto',
                       }}>
-                      <TbCamera />
+                      <IconoMascara src="/iconos/camara-fotografica.png" size={12} />
                       {ocupado ? 'Procesando…' : 'Cámara'}
                     </button>
                     {!ocupado && (

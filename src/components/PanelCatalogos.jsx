@@ -28,12 +28,10 @@ function copiaAreas() {
 
 function filasDeGrupo(grupo, area, editor) {
   if (grupo === 'mtto5000') {
-    return editor.mantenimiento.base5000.map((t, idx) => ({ ...t, origen: 'base', idx }));
+    return editor.mantenimiento.lista5000.map((t, idx) => ({ ...t, origen: 'lista5000', idx }));
   }
   if (grupo === 'mtto20000') {
-    const base = editor.mantenimiento.base5000.map((t, idx) => ({ ...t, origen: 'base', idx }));
-    const extra = editor.mantenimiento.extendidas20000.map((t, idx) => ({ ...t, origen: 'extra', idx }));
-    return [...base, ...extra];
+    return editor.mantenimiento.lista20000.map((t, idx) => ({ ...t, origen: 'lista20000', idx }));
   }
   const empresa = (editor.empresa[area] || []).map((texto, idx) => ({
     clave: `empresa:${idx}`,
@@ -196,15 +194,15 @@ export default function PanelCatalogos() {
   const cambiarTarea = (fila, campo, valor) => {
     setTareas(prev => {
       const siguiente = { ...prev };
-      if (fila.origen === 'base') {
+      if (fila.origen === 'lista5000') {
         siguiente.mantenimiento = {
           ...prev.mantenimiento,
-          base5000: prev.mantenimiento.base5000.map((t, j) => (j === fila.idx ? { ...t, [campo]: valor } : t)),
+          lista5000: prev.mantenimiento.lista5000.map((t, j) => (j === fila.idx ? { ...t, [campo]: valor } : t)),
         };
-      } else if (fila.origen === 'extra') {
+      } else if (fila.origen === 'lista20000') {
         siguiente.mantenimiento = {
           ...prev.mantenimiento,
-          extendidas20000: prev.mantenimiento.extendidas20000.map((t, j) => (j === fila.idx ? { ...t, [campo]: valor } : t)),
+          lista20000: prev.mantenimiento.lista20000.map((t, j) => (j === fila.idx ? { ...t, [campo]: valor } : t)),
         };
       } else if (fila.origen === 'empresa') {
         const lista = [...(prev.empresa[areaGrupo] || [])];
@@ -229,15 +227,15 @@ export default function PanelCatalogos() {
     if (!confirmado) return;
     setTareas(prev => {
       const siguiente = { ...prev };
-      if (fila.origen === 'base') {
+      if (fila.origen === 'lista5000') {
         siguiente.mantenimiento = {
           ...prev.mantenimiento,
-          base5000: prev.mantenimiento.base5000.filter((_, j) => j !== fila.idx),
+          lista5000: prev.mantenimiento.lista5000.filter((_, j) => j !== fila.idx),
         };
-      } else if (fila.origen === 'extra') {
+      } else if (fila.origen === 'lista20000') {
         siguiente.mantenimiento = {
           ...prev.mantenimiento,
-          extendidas20000: prev.mantenimiento.extendidas20000.filter((_, j) => j !== fila.idx),
+          lista20000: prev.mantenimiento.lista20000.filter((_, j) => j !== fila.idx),
         };
       } else if (fila.origen === 'empresa') {
         const lista = (prev.empresa[areaGrupo] || []).filter((_, j) => j !== fila.idx);
@@ -268,9 +266,9 @@ export default function PanelCatalogos() {
         tiempoEstimadoMinutos: 60,
       };
       if (grupoActual === 'mtto5000') {
-        return { ...prev, mantenimiento: { ...prev.mantenimiento, base5000: [...prev.mantenimiento.base5000, tarea] } };
+        return { ...prev, mantenimiento: { ...prev.mantenimiento, lista5000: [...prev.mantenimiento.lista5000, tarea] } };
       }
-      return { ...prev, mantenimiento: { ...prev.mantenimiento, extendidas20000: [...prev.mantenimiento.extendidas20000, tarea] } };
+      return { ...prev, mantenimiento: { ...prev.mantenimiento, lista20000: [...prev.mantenimiento.lista20000, tarea] } };
     });
     setNuevaTarea('');
     marcar('tareas');
@@ -515,7 +513,7 @@ export default function PanelCatalogos() {
           <div style={{ fontSize: 11.5, opacity: 0.65, marginBottom: 8 }}>
             {esReparacion
               ? `Tareas precargadas para el área ${areaGrupo}. Se cargan al elegir "Fallas o daños" en una orden.`
-              : 'Tareas del servicio preventivo. El de 20,000 km siempre incluye las del de 5,000 km.'}
+              : `Lista oficial del servicio de ${grupoActual === 'mtto5000' ? '5,000' : '20,000'} km. Se cargan al elegir "Mantenimiento programado" en una orden.`}
             {' '}Total: {filas.length}.
           </div>
 

@@ -2,8 +2,8 @@
 import { AREAS_SELECT } from '../constants/areas';
 
 export const GRUPOS_MANTENIMIENTO = [
-  { id: 'mantenimiento_5000', nombre: 'Servicio 5,000 km', km: 5000, resumen: 'Preventivo menor: fluidos, filtros y revisión de rutina.' },
-  { id: 'mantenimiento_20000', nombre: 'Servicio 20,000 km', km: 20000, resumen: 'Preventivo mayor: incluye el de 5,000 km y servicios extendidos.' }
+  { id: 'mantenimiento_5000', nombre: 'Servicio 5,000 km', km: 5000, resumen: 'Preventivo menor: lista oficial del taller (21 tareas).' },
+  { id: 'mantenimiento_20000', nombre: 'Servicio 20,000 km', km: 20000, resumen: 'Preventivo mayor: lista oficial del taller (29 actividades).' }
 ];
 
 export const MOTIVOS_INGRESO = [
@@ -11,35 +11,68 @@ export const MOTIVOS_INGRESO = [
   { id: 'falla', label: 'Fallas o daños', modo: 'reparacion' }
 ];
 
+// ============================================================
+// Listas OFICIALES de mantenimiento (documentos del cliente):
+//   - "MANTTO 5000 KM.docx" → 21 tareas
+//   - "Mantenimiento Preventivo 20,000 km.docx" → 29 actividades
+// Cada servicio carga exactamente SU lista, sin mezclarla con la
+// del otro. Los textos se transcriben tal cual del formulario.
+// ============================================================
 const TAREAS_5000 = [
-  { clave: 'mtto5k-aceite', descripcion: 'Cambiar aceite de motor y filtro de aceite', area: 'Motor', tiempoEstimadoMinutos: 40 },
-  { clave: 'mtto5k-filtro-aire', descripcion: 'Revisar y limpiar filtro de aire', area: 'Motor', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto5k-niveles', descripcion: 'Verificar niveles (aceite, refrigerante, frenos, dirección, limpiaparabrisas)', area: 'General', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto5k-neumaticos', descripcion: 'Revisar presión y estado de neumáticos', area: 'Suspensión', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto5k-rotacion', descripcion: 'Rotación de neumáticos', area: 'Suspensión', tiempoEstimadoMinutos: 30 },
-  { clave: 'mtto5k-frenos', descripcion: 'Revisar frenos (pastillas, discos y nivel de líquido)', area: 'Frenos', tiempoEstimadoMinutos: 30 },
-  { clave: 'mtto5k-luces', descripcion: 'Revisar funcionamiento de luces e impermeables', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 15 },
-  { clave: 'mtto5k-correas', descripcion: 'Revisar estado de correas y mangueras', area: 'Motor', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto5k-bateria', descripcion: 'Revisar batería, bornes y carga del alternador', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto5k-lubricacion', descripcion: 'Lubricar bisagras, cerraduras y puntos de lubricación', area: 'General', tiempoEstimadoMinutos: 15 },
-  { clave: 'mtto5k-prueba', descripcion: 'Prueba de ruta y verificación final', area: 'General', tiempoEstimadoMinutos: 20 }
+  { clave: 'mtto5k-aceite', descripcion: 'Cambio de Aceite (Motor)', area: 'Motor', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto5k-filtro-aceite', descripcion: 'Cambio de Filtro de Aceite (Motor)', area: 'Motor', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto5k-fugas-aceite', descripcion: 'Fugas de Aceite en Motor (Revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto5k-filtro-aire', descripcion: 'Filtro de Aire (Cambio o Revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto5k-filtro-combustible', descripcion: 'Filtro de Combustible (Cambio o Revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto5k-niveles', descripcion: 'Nivel de Liquido Power Steering y Freno (Revisión)', area: 'General', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto5k-agua', descripcion: 'Revisión de Agua', area: 'Motor', tiempoEstimadoMinutos: 10 },
+  { clave: 'mtto5k-fajas', descripcion: 'Fajas (Revisión)(Apretar)', area: 'Motor', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto5k-luces-principales', descripcion: 'Luces principales (Revisión)', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 10 },
+  { clave: 'mtto5k-luces-direccionales', descripcion: 'Luces Direccionales (vías) – (Revisión)', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 10 },
+  { clave: 'mtto5k-luces-freno', descripcion: 'Luces de Freno (Revisión)', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 10 },
+  { clave: 'mtto5k-bateria', descripcion: 'Batería (Revisión)', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto5k-frenos-limpieza', descripcion: 'Limpieza y Revisión de frenos (desmontar tambor para lijar fricciones y pastillas)', area: 'Frenos', tiempoEstimadoMinutos: 60 },
+  { clave: 'mtto5k-frenos-regulacion', descripcion: 'Regulación general de frenos', area: 'Frenos', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto5k-freno-mano', descripcion: 'Revisión de Freno de Mano', area: 'Frenos', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto5k-engrase', descripcion: 'Engrase General', area: 'General', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto5k-reaprieto-chasis', descripcion: 'Reaprieto de Tuercas y Tornillos de Chasis', area: 'General', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto5k-soporte-cardan', descripcion: 'Revisión de Soporte de Cardan', area: 'Transmisión', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto5k-tapones-hule', descripcion: 'Revisión de Tapones de Hule (cambiar)', area: 'Motor', tiempoEstimadoMinutos: 10 },
+  { clave: 'mtto5k-crucetas-cardan', descripcion: 'Revisión de crucetas de Cardan', area: 'Transmisión', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto5k-cambio-eje', descripcion: 'Cambio de EJE', area: 'Transmisión', tiempoEstimadoMinutos: 40 }
 ];
 
-const TAREAS_EXTENDIDAS_20000 = [
-  { clave: 'mtto20k-filtro-combustible', descripcion: 'Cambiar filtro de combustible', area: 'Motor', tiempoEstimadoMinutos: 40 },
-  { clave: 'mtto20k-filtro-habitaculo', descripcion: 'Cambiar filtro de habitáculo (cabina)', area: 'General', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto20k-liquido-frenos', descripcion: 'Cambiar líquido de frenos y purgar el sistema', area: 'Frenos', tiempoEstimadoMinutos: 45 },
-  { clave: 'mtto20k-direccion', descripcion: 'Revisar y ajustar sistema de dirección', area: 'Dirección', tiempoEstimadoMinutos: 40 },
-  { clave: 'mtto20k-amortiguadores', descripcion: 'Revisar amortiguadores y elementos de suspensión', area: 'Suspensión', tiempoEstimadoMinutos: 40 },
-  { clave: 'mtto20k-correa-distribucion', descripcion: 'Revisar/cambiar correa de distribución (según aplique)', area: 'Motor', tiempoEstimadoMinutos: 90 },
-  { clave: 'mtto20k-transmision', descripcion: 'Servicio de transmisión (cambio de aceite de caja)', area: 'Transmisión', tiempoEstimadoMinutos: 60 },
-  { clave: 'mtto20k-enfriamiento', descripcion: 'Revisar sistema de enfriamiento (termostato, mangueras, radiador)', area: 'Motor', tiempoEstimadoMinutos: 45 },
-  { clave: 'mtto20k-aire-acondicionado', descripcion: 'Revisar sistema de aire acondicionado', area: 'Aire Acondicionado', tiempoEstimadoMinutos: 30 },
-  { clave: 'mtto20k-escaner', descripcion: 'Diagnóstico por escáner / revisión electrónica', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 30 },
-  { clave: 'mtto20k-valvulas', descripcion: 'Ajuste de válvulas (según aplique)', area: 'Motor', tiempoEstimadoMinutos: 60 },
+const TAREAS_20000 = [
+  { clave: 'mtto20k-fricciones', descripcion: 'Fricciones desmontar tambores para lijar fricciones y pastillas', area: 'Frenos', tiempoEstimadoMinutos: 60 },
+  { clave: 'mtto20k-baleros-ruedas', descripcion: 'Revisión de baleros de ruedas', area: 'Suspensión', tiempoEstimadoMinutos: 45 },
+  { clave: 'mtto20k-engrase', descripcion: 'Engrase general', area: 'General', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-reapriete-chasis', descripcion: 'Reapreté de tuercas y tornillos de chasis', area: 'General', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto20k-manecillas', descripcion: 'Revisión de manecillas de puertas', area: 'Carrocería', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto20k-sube-vidrios', descripcion: 'Revisión de sistema sube vidrios', area: 'Carrocería', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-soporte-cardan', descripcion: 'Revisión de soporte de cardan', area: 'Transmisión', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-soportes-caja', descripcion: 'Soportes caja de velocidades (revisión)', area: 'Transmisión', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto20k-soportes-motor', descripcion: 'Soportes de motor (revisión)', area: 'Motor', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto20k-bomba-combustible', descripcion: 'Bomba de Combustible (revisión)', area: 'Motor', tiempoEstimadoMinutos: 40 },
+  { clave: 'mtto20k-filtro-aire', descripcion: 'Filtro de Aire (cambio)', area: 'Motor', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-filtro-combustible', descripcion: 'Filtro de Combustible (revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-tuberias', descripcion: 'Revisión tuberías de combustible y escape', area: 'Motor', tiempoEstimadoMinutos: 25 },
+  { clave: 'mtto20k-amortiguadores', descripcion: 'Amortiguadores (revisión)', area: 'Suspensión', tiempoEstimadoMinutos: 40 },
+  { clave: 'mtto20k-faja-ps', descripcion: 'Faja de Power Steeting (revisión)', area: 'Motor', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto20k-direccion', descripcion: 'Revisión de dirección, terminales y barra tensora', area: 'Dirección', tiempoEstimadoMinutos: 45 },
+  { clave: 'mtto20k-hojas-resorte', descripcion: 'Revisión de hojas de resortes', area: 'Suspensión', tiempoEstimadoMinutos: 40 },
+  { clave: 'mtto20k-bomba-agua', descripcion: 'Bomba de agua (revisión)', area: 'Motor', tiempoEstimadoMinutos: 35 },
+  { clave: 'mtto20k-mangueras-agua', descripcion: 'Mangueras de agua (revisión)', area: 'Motor', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto20k-ventiladores', descripcion: 'Ventiladores de radiador (revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-pastillas-zapatas', descripcion: 'Pastillas y Zapatas de Frenos', area: 'Frenos', tiempoEstimadoMinutos: 60 },
+  { clave: 'mtto20k-aceite', descripcion: 'Aceite (cambio)', area: 'Motor', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto20k-fajas-tiempo', descripcion: 'Fajas de tiempo (revisión)', area: 'Motor', tiempoEstimadoMinutos: 45 },
+  { clave: 'mtto20k-filtro-aceite', descripcion: 'Filtro de aceite (cambio)', area: 'Motor', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto20k-fugas-aceite', descripcion: 'Fugas de aceite en motor (revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-fugas-hidraulico', descripcion: 'Fugas en sistema hidráulico (revisión)', area: 'Dirección', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-lavado-motor', descripcion: 'Lavado de motor', area: 'Motor', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-soluciones', descripcion: 'Revisión de soluciones', area: 'General', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-circuito-luces', descripcion: 'Circuito de Luces (revisión)', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 20 }
 ];
-
-const TAREAS_20000 = [...TAREAS_EXTENDIDAS_20000, ...TAREAS_5000];
 
 const TAREAS_POR_AREA_EMPRESA = {
   Motor: [
@@ -300,15 +333,14 @@ function reconstruirReparacion() {
 export function aplicarTareas(datos) {
   if (!datos || typeof datos !== 'object') return;
 
-  const base = datos.mantenimiento?.base5000;
-  const extendidas = datos.mantenimiento?.extendidas20000;
+  const lista5000 = datos.mantenimiento?.lista5000;
+  const lista20000 = datos.mantenimiento?.lista20000;
 
-  if (Array.isArray(base)) {
-    reemplazar(CATALOGO.mantenimiento_5000, conGrupo('mantenimiento_5000', base));
-    const mayor = [...base, ...(Array.isArray(extendidas) ? extendidas : clonarLista(TAREAS_EXTENDIDAS_20000))];
-    reemplazar(CATALOGO.mantenimiento_20000, conGrupo('mantenimiento_20000', mayor));
-  } else if (Array.isArray(extendidas)) {
-    reemplazar(CATALOGO.mantenimiento_20000, conGrupo('mantenimiento_20000', [...TAREAS_5000, ...extendidas]));
+  if (Array.isArray(lista5000)) {
+    reemplazar(CATALOGO.mantenimiento_5000, conGrupo('mantenimiento_5000', lista5000));
+  }
+  if (Array.isArray(lista20000)) {
+    reemplazar(CATALOGO.mantenimiento_20000, conGrupo('mantenimiento_20000', lista20000));
   }
 
   if (datos.empresa && typeof datos.empresa === 'object') {
@@ -330,8 +362,8 @@ export function aplicarTareas(datos) {
 export function obtenerEditorTareas() {
   return {
     mantenimiento: {
-      base5000: clonarLista(TAREAS_5000),
-      extendidas20000: clonarLista(TAREAS_EXTENDIDAS_20000),
+      lista5000: clonarLista(TAREAS_5000),
+      lista20000: clonarLista(TAREAS_20000),
     },
     empresa: clonarMapa(TAREAS_POR_AREA_EMPRESA),
     genericas: clonarLista(TAREAS_REPARACION_GENERICAS),

@@ -6,7 +6,6 @@ import {
   TbPencil,
   TbTrash,
   TbUser,
-  TbCamera,
   TbUpload,
   TbCircleCheck,
   TbPrinter,
@@ -1240,7 +1239,7 @@ export default function DetalleOrden() {
 
       <div className="card" style={{ marginTop: 20 }}>
         <div className="form-section-title" style={{ marginTop: 0 }}>
-          <TbCamera className="icon" /> Inspección Perimetral 360° — Estado Actual de la Unidad
+          <IconoMascara className="icon" src="/iconos/camara-fotografica.png" size={16} /> Inspección Perimetral 360° — Estado Actual de la Unidad
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--color-text-muted)', marginBottom: 14 }}>
           Fotografías perimetrales de la unidad. En caso de novedades o reparaciones, actualice la toma correspondiente.
@@ -1265,7 +1264,7 @@ export default function DetalleOrden() {
             return (
               <div key={lado.key} className="side-photo-card">
                 <div className="side-photo-header">
-                  <span className="side-photo-label"><TbCamera /> {lado.num}. {lado.label}</span>
+                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> {lado.num}. {lado.label}</span>
                   <span className="side-photo-angle-tag">{lado.tag}</span>
                 </div>
                 {foto ? (
@@ -1299,7 +1298,7 @@ export default function DetalleOrden() {
                       cursor: 'pointer'
                     }}
                   >
-                    <TbCamera size={12} /> Cámara
+                    <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
                   </button>
                   <button
                     type="button"
@@ -1333,7 +1332,7 @@ export default function DetalleOrden() {
       {(orden.fotosIngreso?.length > 0 || orden.fotosSalida?.length > 0) && (
         <div className="card" style={{ marginTop: 20 }}>
           <div className="form-section-title" style={{ marginTop: 0 }}>
-            <TbCamera className="icon" /> Fotos de Evidencia de esta Orden (ingreso y reparación)
+            <IconoMascara className="icon" src="/iconos/camara-fotografica.png" size={16} /> Fotos de Evidencia de esta Orden (ingreso y reparación)
           </div>
           {orden.fotosIngreso?.length > 0 && (
             <>
