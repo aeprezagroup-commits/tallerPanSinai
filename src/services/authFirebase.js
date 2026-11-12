@@ -77,10 +77,49 @@ export async function abrirSesionFirebase(usuario, password) {
       return { uid: cred.user.uid, email, origen: 'creada' };
     } catch (e) {
       const codigo = e?.code || '';
+      if (codigo === 'auth/email-already-in-use') {
+        return abrirSesionRespaldo(email, clave);
+      }
       console.warn('[auth] no se pudo crear la cuenta:', codigo || e?.message || e);
       return { uid: null, email, origen: 'sin-migrar', error: codigo || String(e?.message) };
     }
   });
+}
+
+// Cuando Personal reinicia la contraseña de un usuario, la local cambia pero
+// la de Firebase Auth no (el cliente no puede sincronizar la de otro usuario).
+// Las reglas sólo exigen una cuenta real —no un uid en particular—, así que
+// ante ese desajuste se abre sesión con una identidad de respaldo equivalente;
+// el uid nuevo se guarda en el documento del usuario y la contraseña propia
+// vuelve a quedar sincronizada al forzar el cambio.
+async function abrirSesionRespaldo(email, clave) {
+  const [base, dominio = 'pansinai.com'] = String(email).split('@');
+  for (let n = 2; n <= 5; n++) {
+    const respaldo = `${base}-${n}@${dominio}`;
+    try {
+      const cred = await signInWithEmailAndPassword(auth, respaldo, clave);
+      return { uid: cred.user.uid, email: respaldo, origen: 'existente' };
+    } catch (e) {
+      const codigo = e?.code || '';
+      if (codigo !== 'auth/user-not-found' && codigo !== 'auth/invalid-credential') {
+        console.warn('[auth] no se pudo abrir la sesión de respaldo:', codigo || e?.message || e);
+        return { uid: null, email, origen: 'sin-migrar', error: codigo || String(e?.message) };
+      }
+    }
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, respaldo, clave);
+      console.warn(`[auth] ${email} conservaba una contraseña antigua; sesión abierta con ${respaldo}`);
+      return { uid: cred.user.uid, email: respaldo, origen: 'creada' };
+    } catch (e) {
+      const codigo = e?.code || '';
+      if (codigo !== 'auth/email-already-in-use') {
+        console.warn('[auth] no se pudo crear la cuenta de respaldo:', codigo || e?.message || e);
+        return { uid: null, email, origen: 'sin-migrar', error: codigo || String(e?.message) };
+      }
+    }
+  }
+  console.warn('[auth] las identidades de respaldo están ocupadas con otra contraseña:', email);
+  return { uid: null, email, origen: 'sin-migrar', error: 'auth/email-already-in-use' };
 }
 
 // Sesión anónima: sirve para LEER antes del login (pantalla de login y la
