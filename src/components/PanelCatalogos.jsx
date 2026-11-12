@@ -154,10 +154,6 @@ export default function PanelCatalogos() {
   };
 
   const eliminarArea = async (i, valor) => {
-    if (valor === 'General') {
-      addToast('"General" es el área por defecto del sistema y no se puede eliminar', 'warning');
-      return;
-    }
     const confirmado = await confirm({
       title: '¿Eliminar el área?',
       message: `Se quitará "${valor}" del catálogo. Las órdenes guardadas con esa área la conservan en su historial.`,
@@ -529,7 +525,7 @@ export default function PanelCatalogos() {
                 {!esReparacion && (
                   <select
                     className="form-select"
-                    value={fila.area || 'General'}
+                    value={fila.area || AREAS_TRABAJO[0]}
                     onChange={e => cambiarTarea(fila, 'area', e.target.value)}
                     aria-label="Área de la tarea"
                     style={{ width: 165 }}

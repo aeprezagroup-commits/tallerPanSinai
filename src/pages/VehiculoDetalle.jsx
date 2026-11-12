@@ -23,6 +23,8 @@ import {
 import { useToast } from '../components/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import IconoMascara from '../components/IconoMascara';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
+import CameraModal from '../components/CameraModal';
 
 const LADOS_FICHA = [
   { key: 'frontal', num: '1', label: 'Frontal' },
@@ -42,7 +44,6 @@ const FORM_VACIO = {
   departamento: '',
   ruta: '',
   centroCosto: '',
-  areaPredilecta: '',
   observaciones: '',
 };
 
@@ -88,6 +89,14 @@ export default function VehiculoDetalle() {
   const fotoInputRef = useRef(null);
   const ladoPendienteRef = useRef('');
   const [zoomFrontal, setZoomFrontal] = useState(false);
+  const [camaraLado, setCamaraLado] = useState('');
+
+  const fichaEditada = editando && vehiculo
+    ? Object.keys(FORM_VACIO).some(
+      k => JSON.stringify(form[k] ?? '') !== JSON.stringify(vehiculo[k] ?? '')
+    )
+    : false;
+  useDatosSinGuardar(fichaEditada, confirm);
 
   useEffect(() => {
     const flota = obtenerFlotaVehiculos();
@@ -198,9 +207,7 @@ export default function VehiculoDetalle() {
     }
   };
 
-  const handleFotoCargada = async e => {
-    const archivo = e.target.files && e.target.files[0];
-    const lado = ladoPendienteRef.current;
+  const procesarFoto = async (lado, archivo) => {
     if (!archivo || !lado) return;
 
     const etiqueta = LADOS_FICHA.find(l => l.key === lado)?.label || lado;
@@ -232,6 +239,11 @@ export default function VehiculoDetalle() {
       ladoPendienteRef.current = '';
       if (fotoInputRef.current) fotoInputRef.current.value = '';
     }
+  };
+
+  const handleFotoCargada = e => {
+    const archivo = e.target.files && e.target.files[0];
+    procesarFoto(ladoPendienteRef.current, archivo);
   };
 
   const handleBaja = async () => {
@@ -283,6 +295,12 @@ export default function VehiculoDetalle() {
         accept="image/*"
         style={{ display: 'none' }}
         onChange={handleFotoCargada}
+      />
+
+      <CameraModal
+        isOpen={Boolean(camaraLado)}
+        onClose={() => setCamaraLado('')}
+        onFoto={archivo => procesarFoto(camaraLado, archivo)}
       />
 
       <div style={{
@@ -356,7 +374,16 @@ export default function VehiculoDetalle() {
               <button type="button" className="btn btn-primary" onClick={handleGuardar} disabled={guardando}>
                 <TbDeviceFloppy /> {guardando ? 'Guardando…' : 'Guardar Ficha'}
               </button>
-              <button type="button" className="btn btn-secondary" onClick={() => {
+              <button type="button" className="btn btn-secondary" onClick={async () => {
+                if (fichaEditada) {
+                  const ok = await confirm({
+                    title: '¿Cancelar los cambios?',
+                    message: AVISO_DATOS_SIN_GUARDAR,
+                    confirmText: 'Sí, salir',
+                    cancelText: 'Seguir editando',
+                  });
+                  if (!ok) return;
+                }
                 setEditando(false);
                 setErrores({});
                 setForm({ ...FORM_VACIO, ...vehiculo, placa: vehiculo.placa });
@@ -427,10 +454,6 @@ export default function VehiculoDetalle() {
                 <input id="f-centro" className="form-input" value={form.centroCosto}
                   onChange={e => setCampo('centroCosto', e.target.value)} placeholder="Se deriva del departamento" />
               </Campo>
-              <Campo id="f-area" label="Área predilecta">
-                <input id="f-area" className="form-input" value={form.areaPredilecta}
-                  onChange={e => setCampo('areaPredilecta', e.target.value)} placeholder="Área técnica asignada" />
-              </Campo>
             </div>
 
             <Campo id="f-obs" label="Observaciones">
@@ -458,7 +481,6 @@ export default function VehiculoDetalle() {
             <Dato label="Departamento" valor={vehiculo.departamento} />
             <Dato label="Ruta asignada" valor={vehiculo.ruta} />
             <Dato label="Centro de costo" valor={vehiculo.centroCosto} />
-            <Dato label="Área predilecta" valor={vehiculo.areaPredilecta} />
             <Dato label="Observaciones" valor={vehiculo.observaciones} />
           </div>
         )}
@@ -562,7 +584,7 @@ export default function VehiculoDetalle() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                     <button type="button"
                       className={foto ? 'btn btn-secondary' : 'btn btn-primary'}
-                      onClick={() => pedirFoto(lado.key, true)}
+                      onClick={() => setCamaraLado(lado.key)}
                       disabled={ocupado}
                       style={{
                         width: '100%', justifyContent: 'center', padding: '6px 6px', fontSize: 12,

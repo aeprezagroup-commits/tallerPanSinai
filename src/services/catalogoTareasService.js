@@ -24,7 +24,7 @@ const TAREAS_5000 = [
   { clave: 'mtto5k-fugas-aceite', descripcion: 'Fugas de Aceite en Motor (Revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
   { clave: 'mtto5k-filtro-aire', descripcion: 'Filtro de Aire (Cambio o Revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
   { clave: 'mtto5k-filtro-combustible', descripcion: 'Filtro de Combustible (Cambio o Revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto5k-niveles', descripcion: 'Nivel de Liquido Power Steering y Freno (Revisión)', area: 'General', tiempoEstimadoMinutos: 15 },
+  { clave: 'mtto5k-niveles', descripcion: 'Nivel de Liquido Power Steering y Freno (Revisión)', area: 'Dirección', tiempoEstimadoMinutos: 15 },
   { clave: 'mtto5k-agua', descripcion: 'Revisión de Agua', area: 'Motor', tiempoEstimadoMinutos: 10 },
   { clave: 'mtto5k-fajas', descripcion: 'Fajas (Revisión)(Apretar)', area: 'Motor', tiempoEstimadoMinutos: 15 },
   { clave: 'mtto5k-luces-principales', descripcion: 'Luces principales (Revisión)', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 10 },
@@ -34,8 +34,8 @@ const TAREAS_5000 = [
   { clave: 'mtto5k-frenos-limpieza', descripcion: 'Limpieza y Revisión de frenos (desmontar tambor para lijar fricciones y pastillas)', area: 'Frenos', tiempoEstimadoMinutos: 60 },
   { clave: 'mtto5k-frenos-regulacion', descripcion: 'Regulación general de frenos', area: 'Frenos', tiempoEstimadoMinutos: 30 },
   { clave: 'mtto5k-freno-mano', descripcion: 'Revisión de Freno de Mano', area: 'Frenos', tiempoEstimadoMinutos: 15 },
-  { clave: 'mtto5k-engrase', descripcion: 'Engrase General', area: 'General', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto5k-reaprieto-chasis', descripcion: 'Reaprieto de Tuercas y Tornillos de Chasis', area: 'General', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto5k-engrase', descripcion: 'Engrase General', area: 'Suspensión', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto5k-reaprieto-chasis', descripcion: 'Reaprieto de Tuercas y Tornillos de Chasis', area: 'Suspensión', tiempoEstimadoMinutos: 30 },
   { clave: 'mtto5k-soporte-cardan', descripcion: 'Revisión de Soporte de Cardan', area: 'Transmisión', tiempoEstimadoMinutos: 20 },
   { clave: 'mtto5k-tapones-hule', descripcion: 'Revisión de Tapones de Hule (cambiar)', area: 'Motor', tiempoEstimadoMinutos: 10 },
   { clave: 'mtto5k-crucetas-cardan', descripcion: 'Revisión de crucetas de Cardan', area: 'Transmisión', tiempoEstimadoMinutos: 30 },
@@ -45,8 +45,8 @@ const TAREAS_5000 = [
 const TAREAS_20000 = [
   { clave: 'mtto20k-fricciones', descripcion: 'Fricciones desmontar tambores para lijar fricciones y pastillas', area: 'Frenos', tiempoEstimadoMinutos: 60 },
   { clave: 'mtto20k-baleros-ruedas', descripcion: 'Revisión de baleros de ruedas', area: 'Suspensión', tiempoEstimadoMinutos: 45 },
-  { clave: 'mtto20k-engrase', descripcion: 'Engrase general', area: 'General', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto20k-reapriete-chasis', descripcion: 'Reapreté de tuercas y tornillos de chasis', area: 'General', tiempoEstimadoMinutos: 30 },
+  { clave: 'mtto20k-engrase', descripcion: 'Engrase general', area: 'Suspensión', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-reapriete-chasis', descripcion: 'Reapreté de tuercas y tornillos de chasis', area: 'Suspensión', tiempoEstimadoMinutos: 30 },
   { clave: 'mtto20k-manecillas', descripcion: 'Revisión de manecillas de puertas', area: 'Carrocería', tiempoEstimadoMinutos: 15 },
   { clave: 'mtto20k-sube-vidrios', descripcion: 'Revisión de sistema sube vidrios', area: 'Carrocería', tiempoEstimadoMinutos: 20 },
   { clave: 'mtto20k-soporte-cardan', descripcion: 'Revisión de soporte de cardan', area: 'Transmisión', tiempoEstimadoMinutos: 20 },
@@ -70,7 +70,7 @@ const TAREAS_20000 = [
   { clave: 'mtto20k-fugas-aceite', descripcion: 'Fugas de aceite en motor (revisión)', area: 'Motor', tiempoEstimadoMinutos: 20 },
   { clave: 'mtto20k-fugas-hidraulico', descripcion: 'Fugas en sistema hidráulico (revisión)', area: 'Dirección', tiempoEstimadoMinutos: 20 },
   { clave: 'mtto20k-lavado-motor', descripcion: 'Lavado de motor', area: 'Motor', tiempoEstimadoMinutos: 20 },
-  { clave: 'mtto20k-soluciones', descripcion: 'Revisión de soluciones', area: 'General', tiempoEstimadoMinutos: 20 },
+  { clave: 'mtto20k-soluciones', descripcion: 'Revisión de soluciones', area: 'Dirección', tiempoEstimadoMinutos: 20 },
   { clave: 'mtto20k-circuito-luces', descripcion: 'Circuito de Luces (revisión)', area: 'Sistema Eléctrico', tiempoEstimadoMinutos: 20 }
 ];
 
@@ -267,10 +267,7 @@ const TAREAS_REPARACION_GENERICAS = [
   { clave: 'rep-pint-pulido', descripcion: 'Pulido y encerado', area: 'Pintura', tiempoEstimadoMinutos: 120 },
   { clave: 'rep-aa-gas', descripcion: 'Recarga de gas de aire acondicionado', area: 'Aire Acondicionado', tiempoEstimadoMinutos: 60 },
   { clave: 'rep-aa-compresor', descripcion: 'Reparación / cambio de compresor', area: 'Aire Acondicionado', tiempoEstimadoMinutos: 180 },
-  { clave: 'rep-aa-evaporador', descripcion: 'Limpieza de evaporador', area: 'Aire Acondicionado', tiempoEstimadoMinutos: 90 },
-  { clave: 'rep-gen-inspeccion', descripcion: 'Inspección general del vehículo', area: 'General', tiempoEstimadoMinutos: 60 },
-  { clave: 'rep-gen-prueba', descripcion: 'Prueba de ruta y verificación', area: 'General', tiempoEstimadoMinutos: 30 },
-  { clave: 'rep-gen-ajustes', descripcion: 'Ajustes varios', area: 'General', tiempoEstimadoMinutos: 60 }
+  { clave: 'rep-aa-evaporador', descripcion: 'Limpieza de evaporador', area: 'Aire Acondicionado', tiempoEstimadoMinutos: 90 }
 ];
 
 const TAREAS_REPARACION = [
@@ -345,7 +342,9 @@ export function aplicarTareas(datos) {
 
   if (datos.empresa && typeof datos.empresa === 'object') {
     Object.keys(TAREAS_POR_AREA_EMPRESA).forEach(k => delete TAREAS_POR_AREA_EMPRESA[k]);
-    Object.entries(datos.empresa).forEach(([area, textos]) => {
+    Object.entries(datos.empresa)
+      .filter(([area]) => area !== 'General')
+      .forEach(([area, textos]) => {
       TAREAS_POR_AREA_EMPRESA[area] = (Array.isArray(textos) ? textos : [])
         .map(t => String(t || '').trim())
         .filter(Boolean);
@@ -353,7 +352,10 @@ export function aplicarTareas(datos) {
   }
 
   if (Array.isArray(datos.genericas)) {
-    reemplazar(TAREAS_REPARACION_GENERICAS, datos.genericas.map(t => ({ ...t })));
+    reemplazar(
+      TAREAS_REPARACION_GENERICAS,
+      datos.genericas.map(t => ({ ...t })).filter(t => t.area !== 'General')
+    );
   }
 
   reconstruirReparacion();

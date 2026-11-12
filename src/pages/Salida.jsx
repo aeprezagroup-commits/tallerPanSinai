@@ -17,6 +17,7 @@ import { filtrarOrdenesPorUsuario, apoyosDeOrden } from '../services/permisosSer
 import StatusBadge from '../components/StatusBadge';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import IconoMascara from '../components/IconoMascara';
+import CameraModal from '../components/CameraModal';
 
 const LADOS_FICHA = [
   { key: 'frontal', num: 1, label: 'Frontal', vacio: 'Sin foto frontal' },
@@ -42,6 +43,7 @@ export default function Salida() {
   const [cargandoFotos, setCargandoFotos] = useState(false);
   const [actualizandoLado, setActualizandoLado] = useState('');
   const fotoInputRef = useRef(null);
+  const [camaraLado, setCamaraLado] = useState('');
   const ladoPendienteRef = useRef('');
 
   const { addToast, confirm } = useToast();
@@ -90,10 +92,7 @@ export default function Salida() {
     inp.click();
   };
 
-  const handleFotoLado = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    const lado = ladoPendienteRef.current;
+  const procesarFotoLado = async (lado, file) => {
     if (!file || !lado || !ordenActual?.placa) return;
 
     setActualizandoLado(lado);
@@ -119,6 +118,12 @@ export default function Salida() {
     } finally {
       setActualizandoLado('');
     }
+  };
+
+  const handleFotoLado = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    await procesarFotoLado(ladoPendienteRef.current, file);
   };
 
   const handleCerrarOrden = async (e) => {
@@ -491,6 +496,11 @@ export default function Salida() {
                 style={{ display: 'none' }}
                 onChange={handleFotoLado}
               />
+              <CameraModal
+                isOpen={Boolean(camaraLado)}
+                onClose={() => setCamaraLado('')}
+                onFoto={archivo => procesarFotoLado(camaraLado, archivo)}
+              />
 
               {!ordenActual ? (
                 <div style={{
@@ -559,7 +569,7 @@ export default function Salida() {
                           <button
                             type="button"
                             className="btn btn-sm btn-primary"
-                            onClick={() => pedirFotoLado(lado.key, true)}
+                            onClick={() => setCamaraLado(lado.key)}
                             disabled={ocupado}
                             style={{
                               gridColumn: ocupado ? '1 / -1' : 'auto',

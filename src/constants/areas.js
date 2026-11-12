@@ -8,8 +8,7 @@ export const AREAS_TRABAJO = [
   'Sistema Eléctrico',
   'Pintura',
   'Carrocería',
-  'Aire Acondicionado',
-  'General'
+  'Aire Acondicionado'
 ];
 
 export const AREAS_TRABAJO_CON_TODAS = ['Todas', ...AREAS_TRABAJO];
@@ -23,11 +22,10 @@ export const AREAS_CON_CODIGO = [
   { nombre: 'Sistema Eléctrico', codigo: 'ELEC' },
   { nombre: 'Pintura', codigo: 'PINT' },
   { nombre: 'Carrocería', codigo: 'CARRO' },
-  { nombre: 'Aire Acondicionado', codigo: 'A/A' },
-  { nombre: 'General', codigo: 'GEN' }
+  { nombre: 'Aire Acondicionado', codigo: 'A/A' }
 ];
 
-export const AREAS_SELECT = AREAS_TRABAJO.filter(a => a !== 'General');
+export const AREAS_SELECT = [...AREAS_TRABAJO];
 
 export function opcionesArea(valorHeredado) {
   if (valorHeredado && !AREAS_SELECT.includes(valorHeredado)) {
@@ -57,14 +55,15 @@ export function aplicarAreas(areas, codigos) {
     .map(a => String(a || '').trim())
     .filter(Boolean);
   const lista = entrada.length ? entrada : AREAS_TRABAJO.slice();
-  const final = lista.includes('General') ? lista : [...lista, 'General'];
+  const filtrada = lista.filter(a => a !== 'General');
+  const final = filtrada.length ? filtrada : AREAS_TRABAJO.slice();
 
   const codigosPrevios = new Map(AREAS_CON_CODIGO.map(c => [c.nombre, c.codigo]));
   const nuevosCodigos = (codigos && typeof codigos === 'object') ? codigos : {};
 
   reemplazar(AREAS_TRABAJO, final);
   reemplazar(AREAS_TRABAJO_CON_TODAS, ['Todas', ...final]);
-  reemplazar(AREAS_SELECT, final.filter(a => a !== 'General'));
+  reemplazar(AREAS_SELECT, final);
   reemplazar(AREAS_CON_CODIGO, final.map(nombre => ({
     nombre,
     codigo: nuevosCodigos[nombre] || codigosPrevios.get(nombre) || codigoAutomatico(nombre),

@@ -28,6 +28,7 @@ import FinalizacionOrdenModal from '../components/FinalizacionOrdenModal';
 import ReactivarOrdenModal from '../components/ReactivarOrdenModal';
 import ModalPortal from '../components/ModalPortal';
 import IconoMascara from '../components/IconoMascara';
+import CameraModal from '../components/CameraModal';
 
 const LADOS_FICHA = [
   { key: 'frontal', num: 1, label: 'Frontal', tag: 'Frente', vacio: 'Sin foto frontal' },
@@ -85,6 +86,7 @@ export default function DetalleOrden() {
   const [fotosBase, setFotosBase] = useState(null);
   const [ladoPendiente, setLadoPendiente] = useState(null);
   const baseInputRef = useRef(null);
+  const [camaraLado, setCamaraLado] = useState('');
 
   useEffect(() => {
     let cancelado = false;
@@ -106,14 +108,12 @@ export default function DetalleOrden() {
     inp.click();
   };
 
-  const handleArchivoBase = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file || !orden?.placa || !ladoPendiente) return;
+  const procesarArchivoBase = async (lado, file) => {
+    if (!file || !orden?.placa || !lado) return;
     try {
       const { registro: nuevo, errores } = await guardarFotosBase(
         orden.placa,
-        { [ladoPendiente]: file },
+        { [lado]: file },
         currentUser?.nombre || ''
       );
       setFotosBase(nuevo);
@@ -130,6 +130,13 @@ export default function DetalleOrden() {
       console.error(err);
       addToast('Error al actualizar la foto: ' + err.message, 'error');
     }
+  };
+
+  const handleArchivoBase = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !orden?.placa || !ladoPendiente) return;
+    await procesarArchivoBase(ladoPendiente, file);
   };
 
   const cargarOrden = useCallback(async () => {
@@ -1258,6 +1265,11 @@ export default function DetalleOrden() {
           style={{ display: 'none' }}
           onChange={handleArchivoBase}
         />
+        <CameraModal
+          isOpen={Boolean(camaraLado)}
+          onClose={() => setCamaraLado('')}
+          onFoto={archivo => procesarArchivoBase(camaraLado, archivo)}
+        />
         <div className="side-photos-grid">
           {LADOS_FICHA.map((lado) => {
             const foto = fotosBase?.[lado.key] || orden.fotosLados?.[lado.key];
@@ -1280,7 +1292,7 @@ export default function DetalleOrden() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 8 }}>
                   <button
                     type="button"
-                    onClick={() => actualizarFotoBase(lado.key, true)}
+                    onClick={() => setCamaraLado(lado.key)}
                     title="Tomar esta fotografía con la cámara"
                     style={{
                       width: '100%',

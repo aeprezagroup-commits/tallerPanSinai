@@ -140,7 +140,6 @@ const FLOTA_INICIAL = [
     conductorHabitual: 'Mauricio Rivas',
     departamento: 'San Miguel',
     ruta: 'Ruta 06 - Oriente 1: San Miguel / Usulután',
-    areaPredilecta: 'Suspensión',
     observaciones: 'Unidad asignada a supervisión de rutas oriente'
   },
   {
@@ -153,7 +152,6 @@ const FLOTA_INICIAL = [
     conductorHabitual: 'José Guardado',
     departamento: 'San Salvador',
     ruta: 'Ruta 01 - San Salvador Centro & Escalerón',
-    areaPredilecta: 'Motor',
     observaciones: 'Ruta San Salvador Centro - Capacidad 3.5 Ton'
   },
   {
@@ -166,7 +164,6 @@ const FLOTA_INICIAL = [
     conductorHabitual: 'Elena Salazar',
     departamento: 'La Libertad',
     ruta: 'Ruta 03 - Santa Tecla / Antiguo Cuscatlán / Lourdes',
-    areaPredilecta: 'Sistema Eléctrico',
     observaciones: 'Vehículo de asistencia en carretera'
   },
   {
@@ -179,7 +176,6 @@ const FLOTA_INICIAL = [
     conductorHabitual: 'Samuel Mendoza',
     departamento: 'Santa Ana',
     ruta: 'Ruta 04 - Occidente 1: Santa Ana Centro / Chalchuapa',
-    areaPredilecta: 'Frenos',
     observaciones: 'Ruta Occidente - Santa Ana / Sonsonate'
   },
   {
@@ -192,7 +188,6 @@ const FLOTA_INICIAL = [
     conductorHabitual: 'Nelson Lemus',
     departamento: 'San Salvador',
     ruta: 'Ruta 02 - Soyapango / Ilopango / San Martín',
-    areaPredilecta: 'General',
     observaciones: 'Ruta Soyapango / Ilopango'
   },
   {
@@ -205,7 +200,6 @@ const FLOTA_INICIAL = [
     conductorHabitual: 'David Monge',
     departamento: 'Sonsonate',
     ruta: 'Ruta 05 - Occidente 2: Sonsonate / Acajutla',
-    areaPredilecta: 'Transmisión',
     observaciones: 'Transporte de materia prima y harina'
   }
 ];

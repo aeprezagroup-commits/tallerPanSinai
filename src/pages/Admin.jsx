@@ -37,6 +37,7 @@ import { validarPassword } from '../utils/passwords';
 import ModalPortal from '../components/ModalPortal';
 import ResumenErrores from '../components/ResumenErrores';
 import IconoMascara from '../components/IconoMascara';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 
 export default function Admin({ seccion = 'personal' }) {
   const esPersonal = seccion !== 'vehiculos';
@@ -69,7 +70,7 @@ export default function Admin({ seccion = 'personal' }) {
   const [verFormUsuario, setVerFormUsuario] = useState(false);
   const [verFormVehiculo, setVerFormVehiculo] = useState(false);
 
-  const [nuevoVehiculo, setNuevoVehiculo] = useState({
+  const VEHICULO_INICIAL = {
     placa: '',
     marca: '',
     modelo: '',
@@ -81,7 +82,21 @@ export default function Admin({ seccion = 'personal' }) {
     departamento: '',
     ruta: '',
     observaciones: ''
-  });
+  };
+  const [nuevoVehiculo, setNuevoVehiculo] = useState(VEHICULO_INICIAL);
+
+  const sucioNuevoUsuario =
+    verFormUsuario &&
+    !usuarioEditando &&
+    Object.keys(FORM_USUARIO_VACIO).some(
+      k => JSON.stringify(nuevoUsuario[k]) !== JSON.stringify(FORM_USUARIO_VACIO[k])
+    );
+  const sucioNuevoVehiculo =
+    verFormVehiculo &&
+    Object.keys(VEHICULO_INICIAL).some(
+      k => String(nuevoVehiculo[k] ?? '') !== String(VEHICULO_INICIAL[k] ?? '')
+    );
+  useDatosSinGuardar(sucioNuevoUsuario || sucioNuevoVehiculo, confirm);
 
   const [asignacionVehiculo, setAsignacionVehiculo] = useState(null);
 
@@ -529,7 +544,18 @@ export default function Admin({ seccion = 'personal' }) {
         <button
           type="button"
           className={`btn ${formularioAbierto ? 'btn-secondary' : 'btn-primary'}`}
-          onClick={alternarFormularioNuevo}
+          onClick={async () => {
+            if (formularioAbierto && (sucioNuevoUsuario || sucioNuevoVehiculo)) {
+              const ok = await confirm({
+                title: '¿Cerrar el formulario?',
+                message: AVISO_DATOS_SIN_GUARDAR,
+                confirmText: 'Sí, salir',
+                cancelText: 'Seguir aquí',
+              });
+              if (!ok) return;
+            }
+            alternarFormularioNuevo();
+          }}
           style={{ flexShrink: 0 }}
         >
           {formularioAbierto ? <TbX /> : <TbPlus />}

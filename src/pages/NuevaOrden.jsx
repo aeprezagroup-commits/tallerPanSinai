@@ -27,6 +27,8 @@ import { useAuth } from '../context/AuthContext';
 import { obtenerFotosBase, guardarFotosBase, LADOS_VEHICULO } from '../services/fotosVehiculoService';
 import ScannerModal from '../components/ScannerModal';
 import IconoMascara from '../components/IconoMascara';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
+import CameraModal from '../components/CameraModal';
 
 function construirActividades(tareas, mecanico = '', areaDefault = 'General') {
   return tareas.map((t, i) => ({
@@ -80,6 +82,7 @@ export default function NuevaOrden() {
     trasera: ''
   });
   const [fotosLadosNuevas, setFotosLadosNuevas] = useState({});
+  const [camaraLado, setCamaraLado] = useState('');
 
   const [form, setForm] = useState({
     placa: '',
@@ -100,6 +103,17 @@ export default function NuevaOrden() {
     tiempoEstimadoHoras: ''
   });
   const [areasSeleccionadas, setAreasSeleccionadas] = useState(() => new Set());
+
+  const hayDatosSinGuardar = Boolean(
+    form.placa ||
+    form.motivoIngreso ||
+    form.kilometraje ||
+    tareasMarcadas.size ||
+    tareasManuales.length ||
+    areasSeleccionadas.size ||
+    Object.values(fotosLadosNuevas).some(Boolean)
+  );
+  useDatosSinGuardar(hayDatosSinGuardar, confirm);
 
   const cargarBaseFotos = useCallback(async (placa) => {
     try {
@@ -233,13 +247,15 @@ export default function NuevaOrden() {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const guardarFotoLado = (lado, file) => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setFotosLados(prev => ({ ...prev, [lado]: url }));
+    setFotosLadosNuevas(prev => ({ ...prev, [lado]: file }));
+  };
+
   const handleFotoLadoChange = (lado, e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setFotosLados(prev => ({ ...prev, [lado]: url }));
-      setFotosLadosNuevas(prev => ({ ...prev, [lado]: file }));
-    }
+    guardarFotoLado(lado, e.target.files[0]);
     e.target.value = '';
   };
 
@@ -251,7 +267,12 @@ export default function NuevaOrden() {
   const modoMantenimiento = form.tipoTrabajo === 'Mantenimiento';
   const areasArr = [...areasSeleccionadas];
   const areaPrincipalTexto = areasArr.join(', ');
-  const areaDefecto = areasArr[0] || 'General';
+  const areaPorDefecto = modoMantenimiento
+    ? 'Mantenimiento'
+    : modoAtencion === 'asistencia'
+      ? 'Asistencia'
+      : 'General';
+  const areaDefecto = areasArr[0] || areaPorDefecto;
   const tareasCatalogo = (() => {
     if (modoMantenimiento) {
       return servicioMantenimiento ? obtenerTareasMantenimiento(servicioMantenimiento) : [];
@@ -493,7 +514,7 @@ export default function NuevaOrden() {
       await crearOrden({
         ...form,
         placa: placaLimpia,
-        areaPrincipal: areaPrincipalTexto || 'General',
+        areaPrincipal: areaPrincipalTexto || areaPorDefecto,
         kilometraje: form.kilometraje ? Number(form.kilometraje) : null,
         costoRepuestos: 0,
         costoManoObra: 0,
@@ -564,6 +585,12 @@ export default function NuevaOrden() {
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScanSuccess={handleScanSuccess}
+      />
+
+      <CameraModal
+        isOpen={Boolean(camaraLado)}
+        onClose={() => setCamaraLado('')}
+        onFoto={archivo => guardarFotoLado(camaraLado, archivo)}
       />
 
       <form onSubmit={handleSubmit}>
@@ -1328,16 +1355,13 @@ export default function NuevaOrden() {
                     <span className="side-photo-upload-text">Foto Frontal</span>
                     <span className="side-photo-upload-hint">Frente y parrilla</span>
                     <div className="side-photo-actions">
-                      <label className="btn btn-primary btn-sm side-photo-option">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm side-photo-option"
+                        onClick={() => setCamaraLado('frontal')}
+                      >
                         <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFotoLadoChange('frontal', e)}
-                        />
-                      </label>
+                      </button>
                       <label className="btn btn-secondary btn-sm side-photo-option">
                         <TbUpload /> Subir
                         <input
@@ -1378,16 +1402,13 @@ export default function NuevaOrden() {
                     <span className="side-photo-upload-text">Costado Izq.</span>
                     <span className="side-photo-upload-hint">Lado del motorista</span>
                     <div className="side-photo-actions">
-                      <label className="btn btn-primary btn-sm side-photo-option">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm side-photo-option"
+                        onClick={() => setCamaraLado('lateralIzquierdo')}
+                      >
                         <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFotoLadoChange('lateralIzquierdo', e)}
-                        />
-                      </label>
+                      </button>
                       <label className="btn btn-secondary btn-sm side-photo-option">
                         <TbUpload /> Subir
                         <input
@@ -1428,16 +1449,13 @@ export default function NuevaOrden() {
                     <span className="side-photo-upload-text">Costado Der.</span>
                     <span className="side-photo-upload-hint">Lado del copiloto</span>
                     <div className="side-photo-actions">
-                      <label className="btn btn-primary btn-sm side-photo-option">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm side-photo-option"
+                        onClick={() => setCamaraLado('lateralDerecho')}
+                      >
                         <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFotoLadoChange('lateralDerecho', e)}
-                        />
-                      </label>
+                      </button>
                       <label className="btn btn-secondary btn-sm side-photo-option">
                         <TbUpload /> Subir
                         <input
@@ -1478,16 +1496,13 @@ export default function NuevaOrden() {
                     <span className="side-photo-upload-text">Foto Trasera</span>
                     <span className="side-photo-upload-hint">Compuerta / Baúl</span>
                     <div className="side-photo-actions">
-                      <label className="btn btn-primary btn-sm side-photo-option">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm side-photo-option"
+                        onClick={() => setCamaraLado('trasera')}
+                      >
                         <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFotoLadoChange('trasera', e)}
-                        />
-                      </label>
+                      </button>
                       <label className="btn btn-secondary btn-sm side-photo-option">
                         <TbUpload /> Subir
                         <input
@@ -1509,7 +1524,18 @@ export default function NuevaOrden() {
           <button
             type="button"
             className="btn btn-secondary btn-lg"
-            onClick={() => navigate(-1)}
+            onClick={async () => {
+              if (hayDatosSinGuardar) {
+                const ok = await confirm({
+                  title: '¿Cancelar la orden?',
+                  message: AVISO_DATOS_SIN_GUARDAR,
+                  confirmText: 'Sí, salir',
+                  cancelText: 'Seguir aquí',
+                });
+                if (!ok) return;
+              }
+              navigate(-1);
+            }}
           >
             <TbX /> Cancelar
           </button>
