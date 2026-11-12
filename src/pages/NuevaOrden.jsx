@@ -53,13 +53,13 @@ export default function NuevaOrden() {
   const [loading, setLoading] = useState(false);
   const [modoAtencion, setModoAtencion] = useState('taller');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const tipoAtencionRef = useRef(null);
   const datosVehiculoRef = useRef(null);
   const seccionRecepcionRef = useRef(null);
   const seccionMotivoRef = useRef(null);
   const seccionTareasRef = useRef(null);
   const seccionFotosRef = useRef(null);
   const botonGuardarRef = useRef(null);
-  const pendienteScrollRef = useRef(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -207,12 +207,13 @@ export default function NuevaOrden() {
         conductorEntrega: vehiculo.conductorHabitual || prev.conductorEntrega
       }));
       addToast(`Vehículo detectado en catálogo. Asignado a ${vehiculo.departamento} (${vehiculo.ruta}).`, 'success');
-      setTimeout(() => {
-        seccionRecepcionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 350);
     } else {
       setVehiculoDetectado(null);
     }
+
+    setTimeout(() => {
+      (vehiculo ? tipoAtencionRef : datosVehiculoRef).current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 350);
 
     try {
       const previas = await buscarPorPlaca(placaABuscar);
@@ -233,14 +234,7 @@ export default function NuevaOrden() {
   const handleScanSuccess = (placaEscaneada) => {
     setForm(prev => ({ ...prev, placa: placaEscaneada }));
     aplicarAutocompletado(placaEscaneada);
-    pendienteScrollRef.current = true;
   };
-
-  useEffect(() => {
-    if (isScannerOpen || !pendienteScrollRef.current) return;
-    pendienteScrollRef.current = false;
-    datosVehiculoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [isScannerOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -344,7 +338,7 @@ export default function NuevaOrden() {
     setTareasMarcadas(new Set());
     setTareasOmitidasMotivos({});
     setTimeout(() => {
-      seccionTareasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      seccionTareasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 250);
   };
 
@@ -594,7 +588,7 @@ export default function NuevaOrden() {
       />
 
       <form onSubmit={handleSubmit}>
-        <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card" ref={tipoAtencionRef} style={{ marginBottom: 24, scrollMarginTop: 84 }}>
           <div className="form-section-title" style={{ marginTop: 0 }}>
             <IconoMascara className="icon" src="/iconos/consultas-taller.png" size={16} /> Tipo de Atención *
           </div>
