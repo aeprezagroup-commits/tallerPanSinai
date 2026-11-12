@@ -1,6 +1,10 @@
 
 import { zonaDelUsuario } from './usuariosService';
 
+function esAdmin(usuario) {
+  return usuario?.rol === 'admin' || usuario?.rol === 'superadmin';
+}
+
 export function apoyosDeOrden(orden) {
   if (Array.isArray(orden?.mecanicosApoyo)) return orden.mecanicosApoyo;
   return orden?.mecanicoAsignado2 ? [orden.mecanicoAsignado2] : [];
@@ -33,7 +37,7 @@ function limitadoPorZona(usuario) {
 
 export function puedeVerOrden(orden, usuario) {
   if (!usuario) return false;
-  if (usuario.rol === 'admin') return true;
+  if (esAdmin(usuario)) return true;
   if (limitadoPorZona(usuario) && !ordenEnZona(orden, usuario)) return false;
   if (usuario.rol === 'encargado') return true;
   return esPropiaDe(orden, usuario);
@@ -41,7 +45,7 @@ export function puedeVerOrden(orden, usuario) {
 
 export function filtrarOrdenesPorUsuario(ordenes, usuario) {
   if (!usuario) return [];
-  if (usuario.rol === 'admin') return ordenes;
+  if (esAdmin(usuario)) return ordenes;
   return ordenes.filter(o => {
     if (limitadoPorZona(usuario) && !ordenEnZona(o, usuario)) return false;
     if (usuario.rol === 'encargado') return true;
@@ -51,7 +55,7 @@ export function filtrarOrdenesPorUsuario(ordenes, usuario) {
 
 export function visiblesParaTaller(ordenes, usuario) {
   if (!usuario) return [];
-  if (usuario.rol === 'admin') return ordenes;
+  if (esAdmin(usuario)) return ordenes;
   return ordenes.filter(o => {
     if (limitadoPorZona(usuario) && !ordenEnZona(o, usuario)) return false;
     if (usuario.rol === 'encargado') return true;
@@ -65,11 +69,11 @@ export function puedeAutoasignarse(orden, usuario) {
 }
 
 export function puedeAsignarPersonal(usuario) {
-  return usuario?.rol === 'admin' || usuario?.rol === 'encargado';
+  return esAdmin(usuario) || usuario?.rol === 'encargado';
 }
 
 export function puedeModificarOrden(usuario) {
-  return usuario?.rol === 'admin' || usuario?.rol === 'encargado';
+  return esAdmin(usuario) || usuario?.rol === 'encargado';
 }
 
 export function ordenCompleta(orden) {
@@ -79,11 +83,11 @@ export function ordenCompleta(orden) {
 }
 
 export function puedeReactivarOrden(usuario) {
-  return usuario?.rol === 'admin' || usuario?.rol === 'encargado';
+  return esAdmin(usuario) || usuario?.rol === 'encargado';
 }
 
 export function puedeCambiarEstadoActividad(orden, usuario) {
   if (!orden || !usuario) return false;
-  if (usuario.rol === 'admin' || usuario.rol === 'encargado') return true;
+  if (esAdmin(usuario) || usuario.rol === 'encargado') return true;
   return esPropiaDe(orden, usuario);
 }
