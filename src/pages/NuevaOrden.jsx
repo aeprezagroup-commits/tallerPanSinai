@@ -342,6 +342,15 @@ export default function NuevaOrden() {
     }, 250);
   };
 
+  // Tras elegir el tipo de atención, la vista lleva a verificar el vehículo
+  // y registrar el kilometraje antes de seguir con la recepción.
+  const seleccionarTipoAtencion = (modo) => {
+    setModoAtencion(modo);
+    setTimeout(() => {
+      datosVehiculoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 250);
+  };
+
   const seleccionarAreaTaller = (area) => {
     const next = new Set(areasSeleccionadas);
     if (next.has(area)) next.delete(area); else next.add(area);
@@ -596,7 +605,7 @@ export default function NuevaOrden() {
             <button
               type="button"
               className="option-card"
-              onClick={() => setModoAtencion('taller')}
+              onClick={() => seleccionarTipoAtencion('taller')}
               style={{
                 textAlign: 'left',
                 padding: '16px 18px',
@@ -622,7 +631,7 @@ export default function NuevaOrden() {
             <button
               type="button"
               className="option-card"
-              onClick={() => setModoAtencion('asistencia')}
+              onClick={() => seleccionarTipoAtencion('asistencia')}
               style={{
                 textAlign: 'left',
                 padding: '16px 18px',
