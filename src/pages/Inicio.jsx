@@ -1,6 +1,5 @@
 import {  } from '../icons';
 import { useAuth } from '../context/AuthContext';
-import IconoMascara from '../components/IconoMascara';
 
 export default function Inicio() {
   const { currentUser, isAdmin, isEncargado, isMecanico } = useAuth();
@@ -36,20 +35,24 @@ export default function Inicio() {
       >
         <span
           style={{
-            width: 64,
-            height: 64,
+            width: 96,
+            height: 96,
             borderRadius: 'var(--radius-md)',
-            background: 'var(--color-bg-card)',
+            background: '#ffffff',
             border: '1px solid var(--color-border-active)',
             display: 'grid',
             placeItems: 'center',
-            color: 'var(--color-accent)',
-            fontSize: 28,
+            padding: 7,
+            overflow: 'hidden',
             boxShadow: '0 4px 16px rgba(134, 153, 46, 0.18)',
             animation: 'pulseGlow 3s ease-in-out infinite'
           }}
         >
-          <IconoMascara src="/iconos/taller.png" size={28} />
+          <img
+            src="/logo-sinai.png"
+            alt="Logo Pan Sinaí"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         </span>
 
         <h2 className="card-title" style={{ margin: 0, fontSize: 18 }}>
