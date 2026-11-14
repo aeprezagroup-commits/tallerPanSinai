@@ -285,7 +285,7 @@ export default function Ordenes() {
                     <td>
                       <span className="tech-tag">{orden.areaPrincipal}</span>
                     </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
+                    <td>
                       {orden.mecanicoAsignado || <span style={{ color: 'var(--color-text-muted)' }}>Sin asignar</span>}
                       {apoyosDeOrden(orden).filter(Boolean).length ? <span style={{ color: 'var(--color-text-muted)' }}> + {apoyosDeOrden(orden).filter(Boolean).join(', ')}</span> : null}
                     </td>

@@ -568,16 +568,11 @@ export default function SuperAdmin() {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <table className="table">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--color-border)', opacity: 0.7 }}>
+                    <tr>
                       {['Fecha', 'Tipo', 'Acción', 'Detalle', 'Persona'].map((h) => (
-                        <th key={h} style={{
-                          textAlign: 'left', padding: '11px 14px',
-                          fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 600,
-                        }}>
-                          {h}
-                        </th>
+                        <th key={h}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -585,10 +580,10 @@ export default function SuperAdmin() {
                     {aMostrar.map((ev) => (
                       <tr key={ev.id || `${ev.fechaMs}-${ev.detalle}`}
                         style={{ borderBottom: '1px solid var(--color-border)' }}>
-                        <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', fontSize: 12, opacity: 0.85 }}>
+                        <td style={{ whiteSpace: 'nowrap', opacity: 0.85 }}>
                           {fechaLegible(ev.fechaMs)}
                         </td>
-                        <td style={{ padding: '10px 14px' }}>
+                        <td>
                           <span style={{
                             display: 'inline-block', fontSize: 11, fontWeight: 600,
                             padding: '3px 9px', borderRadius: 999,
@@ -600,13 +595,13 @@ export default function SuperAdmin() {
                           </span>
                         </td>
                         <td style={{
-                          padding: '10px 14px', fontSize: 12, textTransform: 'capitalize',
+                          fontSize: 12, textTransform: 'capitalize',
                           color: ev.accion === 'eliminar' || ev.accion === 'baja' ? '#e35d8f' : undefined,
                           fontWeight: ev.accion === 'eliminar' || ev.accion === 'baja' ? 600 : 400,
                         }}>
                           {ev.accion}
                         </td>
-                        <td style={{ padding: '10px 14px', minWidth: 260 }}>
+                        <td style={{ minWidth: 200, overflowWrap: 'anywhere' }}>
                           {ev.detalle}
                           {ev.datos && Object.keys(ev.datos).length > 0 && (
                             <div style={{ fontSize: 11, opacity: 0.55, marginTop: 3 }}>
@@ -617,7 +612,7 @@ export default function SuperAdmin() {
                             </div>
                           )}
                         </td>
-                        <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', fontSize: 12 }}>
+                        <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
                           <div>{ev.usuario || '—'}</div>
                           <div style={{ fontSize: 11, opacity: 0.55 }}>{ev.rol || ''}</div>
                         </td>

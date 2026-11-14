@@ -248,7 +248,7 @@ export default function Salida() {
                           {ord.placa}
                         </td>
                         <td>{ord.marca} {ord.modelo}</td>
-                        <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
+                        <td style={{ fontSize: 12 }}>
                           {ord.mecanicoAsignado || 'General'}
                           {apoyosDeOrden(ord).filter(Boolean).length ? ` + ${apoyosDeOrden(ord).filter(Boolean).join(', ')}` : ''}
                         </td>

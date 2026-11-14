@@ -197,7 +197,7 @@ export default function Taller() {
                       <td>
                         <span className="tech-tag">{orden.areaPrincipal}</span>
                       </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
+                      <td>
                         {esColaRecepcion(orden) ? (
                           <span style={{ color: 'var(--color-accent)', fontWeight: 700, fontSize: 12 }}>Pendiente de asignación</span>
                         ) : (

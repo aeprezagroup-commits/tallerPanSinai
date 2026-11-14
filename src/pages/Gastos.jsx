@@ -665,13 +665,13 @@ export default function Gastos() {
                   <tr key={g.id}>
                     <td style={{ whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{fmtFecha(g.fecha)}</td>
                     <td style={{ whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{docRef(g)}</td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
+                    <td>
                       <strong>{almac ? 'Bodega / Almacén' : (g.proveedor || '—')}</strong>
                       <div style={{ marginTop: 3 }}>
                         <span className="badge badge-info" style={{ fontSize: 9, padding: '2px 6px' }}>{almac ? 'ALMACÉN' : 'PROVEEDOR'}</span>
                       </div>
                     </td>
-                    <td style={{ minWidth: 220, fontSize: 12.5 }}>{g.gastos || '—'}</td>
+                    <td style={{ minWidth: 150, fontSize: 12.5 }}>{g.gastos || '—'}</td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{g.cantidad !== '' && g.cantidad != null ? g.cantidad : '—'}</td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#ef4444' }}>{g.descuento ? `-${fmtMoney(g.descuento)}` : '—'}</td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#22c55e', whiteSpace: 'nowrap' }}>{montoTexto(g)}</td>
@@ -681,12 +681,12 @@ export default function Gastos() {
                     <td>
                       <span
                         className={`badge ${g.estado === 'pagado' ? 'badge-finalizado' : 'badge-pausado'}`}
-                        style={{ fontSize: 10, whiteSpace: 'nowrap' }}
+                        style={{ fontSize: 10 }}
                       >
                         {g.estado === 'pagado' ? 'Pagado' : 'Pendiente de pago'}
                       </span>
                     </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
+                    <td>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{g.unidad || '—'}</span>
                       {veh && (veh.marca || veh.modelo) && (
                         <div style={{ fontSize: 10.5, color: 'var(--color-text-muted)' }}>{veh.marca} {veh.modelo}{veh.anio ? ` (${veh.anio})` : ''}</div>
