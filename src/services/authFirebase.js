@@ -129,6 +129,14 @@ export function asegurarSesionAnonima() {
   if (!isFirebaseConfigured || !auth) return Promise.resolve(false);
   if (auth.currentUser) return Promise.resolve(true);
   return enCola(async () => {
+    // Espera a que Firebase restaure la sesión persistida antes de decidir.
+    // Sin esta espera, un usuario real que abría la app en otra pestaña o
+    // contexto era reemplazado por una sesión anónima y se perdía el login.
+    try {
+      await auth.authStateReady();
+    } catch {
+      // SDK sin authStateReady: se conserva el comportamiento anterior.
+    }
     if (auth.currentUser) return true;
     try {
       await signInAnonymously(auth);
