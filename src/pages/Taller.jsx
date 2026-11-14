@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { obtenerMecanicosActivos } from '../services/usuariosService';
 import { visiblesParaTaller, esColaRecepcion, apoyosDeOrden } from '../services/permisosService';
 import StatusBadge from '../components/StatusBadge';
+import { formatearDinero, formatearMiles } from '../utils/formato';
 import OrdenOperativa from '../components/OrdenOperativa';
 import BotonVolver from '../components/BotonVolver';
 
@@ -179,7 +180,7 @@ export default function Taller() {
                         <strong>{orden.marca}</strong> {orden.modelo} {orden.anio ? `(${orden.anio})` : ''}
                         {orden.kilometraje ? (
                           <div style={{ fontSize: 11, color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}>
-                            {orden.kilometraje.toLocaleString()} km
+                            {formatearMiles(orden.kilometraje)} km
                           </div>
                         ) : null}
                       </td>
@@ -211,7 +212,7 @@ export default function Taller() {
                       </td>
                       {isAdmin && (
                         <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                          ${(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0)).toFixed(2)}
+                          {formatearDinero(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0))}
                         </td>
                       )}
                       <td style={{ whiteSpace: 'nowrap' }}>
@@ -263,7 +264,7 @@ export default function Taller() {
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginTop: 3 }}>
                     {orden.marca} {orden.modelo} {orden.anio ? `(${orden.anio})` : ''}
-                    {orden.kilometraje ? <span style={{ marginLeft: 6, color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}>&bull; {orden.kilometraje.toLocaleString()} km</span> : null}
+                    {orden.kilometraje ? <span style={{ marginLeft: 6, color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}>&bull; {formatearMiles(orden.kilometraje)} km</span> : null}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
                     <span className="badge badge-en-proceso" style={{ fontSize: 10, padding: '2px 6px' }}>

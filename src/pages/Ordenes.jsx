@@ -10,6 +10,7 @@ import { obtenerMecanicosActivos } from '../services/usuariosService';
 import { useAuth } from '../context/AuthContext';
 import { filtrarOrdenesPorUsuario, visiblesParaTaller, esColaRecepcion, apoyosDeOrden } from '../services/permisosService';
 import StatusBadge from '../components/StatusBadge';
+import { formatearDinero } from '../utils/formato';
 import OrdenOperativa from '../components/OrdenOperativa';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import { AREAS_TRABAJO_CON_TODAS as AREAS } from '../constants/areas';
@@ -293,7 +294,7 @@ export default function Ordenes() {
                     </td>
                     {isAdmin && (
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                        ${(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0)).toFixed(2)}
+                        {formatearDinero(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0))}
                       </td>
                     )}
                     <td style={{ whiteSpace: 'nowrap' }}>

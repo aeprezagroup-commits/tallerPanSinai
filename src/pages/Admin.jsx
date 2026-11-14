@@ -235,15 +235,21 @@ export default function Admin({ seccion = 'personal' }) {
   };
 
   const handleEliminarUsuario = async (id, nombre) => {
-    const confirmado = await confirm({
+    const motivo = await confirm({
       title: '¿Eliminar personal del taller?',
       message: `¿Estás seguro de que deseas eliminar permanentemente a "${nombre}"? Esta acción removerá sus credenciales de acceso al sistema.`,
       confirmText: 'Sí, eliminar personal',
       cancelText: 'Cancelar',
-      danger: true
+      danger: true,
+      input: {
+        label: 'Justificación de la eliminación *',
+        placeholder: 'Motivo de la eliminación (ej. Renuncia, fin de contrato, duplicidad de cuenta...)...',
+        minLength: 10,
+        rows: 3
+      }
     });
-    if (confirmado) {
-      eliminarUsuario(id);
+    if (motivo) {
+      eliminarUsuario(id, motivo);
       addToast(`Personal "${nombre}" eliminado del sistema`, 'info');
       cargarDatos();
     }
@@ -421,7 +427,7 @@ export default function Admin({ seccion = 'personal' }) {
   };
 
   const handleEliminarVehiculo = async (placa) => {
-    const confirmado = await confirm({
+    const motivo = await confirm({
       title: '¿Dar de baja unidad de flota?',
       message: `¿Dar de baja el vehículo con placa "${placa}" del inventario activo? ` +
         'Se retirará del catálogo de flota operacional y SE ELIMINARÁN TODAS SUS FOTOS: ' +
@@ -429,11 +435,17 @@ export default function Admin({ seccion = 'personal' }) {
         'Esta acción no se puede deshacer.',
       confirmText: 'Sí, dar de baja',
       cancelText: 'Cancelar',
-      danger: true
+      danger: true,
+      input: {
+        label: 'Justificación de la baja *',
+        placeholder: 'Motivo de la baja (ej. Unidad vendida, fuera de servicio, reemplazo por unidad nueva...)...',
+        minLength: 10,
+        rows: 3
+      }
     });
-    if (!confirmado) return;
+    if (!motivo) return;
 
-    eliminarVehiculoCatalogo(placa);
+    eliminarVehiculoCatalogo(placa, motivo);
 
     try {
       const res = await eliminarFotosVehiculo(placa);

@@ -23,6 +23,7 @@ import { puedeVerOrden, puedeModificarOrden, ordenCompleta, puedeReactivarOrden,
 import { obtenerMecanicosActivos } from '../services/usuariosService';
 import { DEPARTAMENTOS_EL_SALVADOR, RUTAS_PREDETERMINADAS } from '../services/vehiculosService';
 import { opcionesArea } from '../constants/areas';
+import { formatearDinero, formatearMiles, formatoKmEntrada, soloDigitos } from '../utils/formato';
 import StatusBadge from '../components/StatusBadge';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import FinalizacionOrdenModal from '../components/FinalizacionOrdenModal';
@@ -184,7 +185,8 @@ export default function DetalleOrden() {
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setFormEdit(prev => ({ ...prev, [name]: value }));
+    // El kilometraje se guarda sólo con dígitos; la coma de miles es visual.
+    setFormEdit(prev => ({ ...prev, [name]: name === 'kilometraje' ? soloDigitos(value) : value }));
   };
 
   const apoyosForm = (Array.isArray(formEdit.mecanicosApoyo) && formEdit.mecanicosApoyo.length > 0)
@@ -288,7 +290,7 @@ export default function DetalleOrden() {
       const resumenDocs = docsNorm
         .map(d => `${d.tipo === 'almacen'
           ? `Vale de almacén ${d.vale || 's/n'}`
-          : `${d.proveedor || 'Proveedor'}${d.dte ? ` (DTE: ${d.dte})` : ''}`}${d.detalle ? ` — ${d.detalle}` : ''}${d.total ? ` ($${d.total.toFixed(2)})` : ''}`)
+          : `${d.proveedor || 'Proveedor'}${d.dte ? ` (DTE: ${d.dte})` : ''}`}${d.detalle ? ` — ${d.detalle}` : ''}${d.total ? ` (${formatearDinero(d.total)})` : ''}`)
         .join(' | ');
       const provNorm = docsNorm
         .filter(d => d.tipo === 'proveedor' && (d.proveedor || d.dte))
@@ -714,7 +716,7 @@ export default function DetalleOrden() {
               </div>
               <div className="form-group">
                 <label className="form-label">Kilometraje (Km)</label>
-                <input name="kilometraje" type="number" value={formEdit.kilometraje || ''} onChange={handleEditChange} className="form-input" />
+                <input name="kilometraje" type="text" inputMode="numeric" value={formatoKmEntrada(formEdit.kilometraje)} onChange={handleEditChange} className="form-input" autoComplete="off" />
               </div>
               <div className="form-group">
                 <label className="form-label">Departamento</label>
@@ -756,7 +758,7 @@ export default function DetalleOrden() {
               <div className="detail-item">
                 <div className="detail-item-label">Kilometraje</div>
                 <div className="detail-item-value" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)' }}>
-                  {orden.kilometraje ? `${Number(orden.kilometraje).toLocaleString()} km` : 'No registrado'}
+                  {orden.kilometraje ? `${formatearMiles(orden.kilometraje)} km` : 'No registrado'}
                 </div>
               </div>
               <div className="detail-item">
@@ -803,7 +805,7 @@ export default function DetalleOrden() {
                     <input
                       type="text"
                       readOnly
-                      value={`$${sumaDocs.toFixed(2)}`}
+                      value={formatearDinero(sumaDocs)}
                       className="form-input"
                       style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-accent)', background: 'var(--color-bg-input)', cursor: 'default' }}
                     />
@@ -813,7 +815,7 @@ export default function DetalleOrden() {
                     <input
                       type="text"
                       readOnly
-                      value={`$${(sumaDocs + (parseFloat(formEdit.costoManoObra) || 0)).toFixed(2)}`}
+                      value={formatearDinero(sumaDocs + (parseFloat(formEdit.costoManoObra) || 0))}
                       className="form-input"
                       style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#22c55e', background: 'rgba(34,197,95,0.06)', cursor: 'default' }}
                     />
@@ -963,7 +965,7 @@ export default function DetalleOrden() {
                 <div className="detail-item">
                   <div className="detail-item-label">Repuestos e Insumos</div>
                   <div className="detail-item-value" style={{ fontFamily: 'var(--font-mono)' }}>
-                    ${(Number(orden.costoRepuestos) || 0).toFixed(2)}
+                    {formatearDinero(Number(orden.costoRepuestos) || 0)}
                   </div>
                 </div>
                 <div className="detail-item">
@@ -1018,7 +1020,7 @@ export default function DetalleOrden() {
                             <span style={{ color: 'var(--color-text-secondary)', flex: '1 1 220px' }}>— {d.detalle}</span>
                           ) : null}
                           <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e', marginLeft: 'auto' }}>
-                            ${(Number(d.total) || 0).toFixed(2)}
+                            {formatearDinero(Number(d.total) || 0)}
                           </span>
                         </div>
                       ))
@@ -1028,7 +1030,7 @@ export default function DetalleOrden() {
                 <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
                   <div className="detail-item-label">Total Recursos Invertidos</div>
                   <div className="detail-item-value" style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: '#22c55e', fontWeight: 800 }}>
-                    ${(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0)).toFixed(2)} USD
+                    {formatearDinero(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0))} USD
                   </div>
                 </div>
                 {orden.detalleRepuestos && docsDesdeLegacy(orden).length === 0 && (
@@ -1572,8 +1574,13 @@ export default function DetalleOrden() {
               </div>
               <form onSubmit={(e) => {
                 e.preventDefault();
+                const motivoLimpio = String(modalTransicion.motivo || '').trim();
+                if (motivoLimpio.length < 5) {
+                  addToast('La justificación es obligatoria: describa el motivo de la transición antes de confirmar.', 'warning');
+                  return;
+                }
                 setModalTransicion(prev => ({ ...prev, guardando: true }));
-                handleCambiarEstado(modalTransicion.nuevoEstado, modalTransicion.motivo.trim() || `Transición a ${modalTransicion.etiqueta}`, modalTransicion.etiqueta);
+                handleCambiarEstado(modalTransicion.nuevoEstado, motivoLimpio, modalTransicion.etiqueta);
               }}>
                 <div className="modal-body" style={{ padding: '20px 24px' }}>
                   <div style={{
@@ -1601,7 +1608,7 @@ export default function DetalleOrden() {
 
                   <div className="form-group" style={{ marginBottom: 8 }}>
                     <label className="form-label" style={{ display: 'block', marginBottom: 8, fontWeight: 700 }}>
-                      Justificación u Observación Operativa
+                      Justificación u Observación Operativa *
                     </label>
                     <textarea
                       className="form-textarea"
@@ -1612,7 +1619,7 @@ export default function DetalleOrden() {
                       autoFocus
                     />
                     <span style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block', marginTop: 4 }}>
-                      Quedará registrada en la bitácora y trazabilidad de la orden.
+                      Obligatoria: no se puede guardar sin ella. Quedará visible en el expediente de trazabilidad de la orden y en la bitácora.
                     </span>
                   </div>
                 </div>
@@ -1628,7 +1635,7 @@ export default function DetalleOrden() {
                   <button
                     type="submit"
                     className="btn btn-primary"
-                    disabled={modalTransicion.guardando}
+                    disabled={modalTransicion.guardando || String(modalTransicion.motivo || '').trim().length < 5}
                   >
                     {modalTransicion.guardando ? 'Actualizando...' : 'Confirmar Transición'}
                   </button>

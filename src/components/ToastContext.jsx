@@ -57,7 +57,8 @@ export function ToastProvider({ children }) {
     confirmText = 'Confirmar',
     cancelText = 'Cancelar',
     danger = false,
-    icon = null
+    icon = null,
+    input = null
   }) => {
     return new Promise((resolve) => {
       confirmResolveRef.current = resolve;
@@ -67,17 +68,30 @@ export function ToastProvider({ children }) {
         confirmText,
         cancelText,
         danger,
-        icon
+        icon,
+        input,
+        inputValor: ''
       });
     });
   }, []);
 
   const handleConfirmAction = () => {
     if (confirmResolveRef.current) {
-      confirmResolveRef.current(true);
+      if (confirmDialog?.input) {
+        const valor = String(confirmDialog.inputValor || '').trim();
+        const minimo = confirmDialog.input.minLength || 1;
+        if (valor.length < minimo) return;
+        confirmResolveRef.current(valor);
+      } else {
+        confirmResolveRef.current(true);
+      }
       confirmResolveRef.current = null;
     }
     setConfirmDialog(null);
+  };
+
+  const handleConfirmInputChange = (e) => {
+    setConfirmDialog(prev => (prev ? { ...prev, inputValor: e.target.value } : prev));
   };
 
   const handleCancelAction = () => {
@@ -185,6 +199,29 @@ export function ToastProvider({ children }) {
                 <p className="confirm-modal-text">
                   {confirmDialog.message}
                 </p>
+                {confirmDialog.input && (
+                  <div style={{ marginTop: 12, textAlign: 'left' }}>
+                    <label
+                      htmlFor="confirm-modal-input"
+                      style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 6, color: 'var(--color-text-primary)' }}
+                    >
+                      {confirmDialog.input.label || 'Justificación *'}
+                    </label>
+                    <textarea
+                      id="confirm-modal-input"
+                      className="form-textarea"
+                      rows={confirmDialog.input.rows || 3}
+                      placeholder={confirmDialog.input.placeholder || 'Detalle el motivo de esta acción...'}
+                      value={confirmDialog.inputValor}
+                      onChange={handleConfirmInputChange}
+                      style={{ width: '100%', resize: 'vertical' }}
+                      autoFocus
+                    />
+                    <span style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block', marginTop: 4 }}>
+                      Obligatorio: el comentario quedará guardado y visible en la bitácora.
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="confirm-modal-actions">
                 <button
@@ -198,7 +235,8 @@ export function ToastProvider({ children }) {
                   type="button"
                   className={`btn ${confirmDialog.danger ? 'btn-danger' : 'btn-primary'} confirm-btn-action`}
                   onClick={handleConfirmAction}
-                  autoFocus
+                  disabled={Boolean(confirmDialog.input) && (confirmDialog.inputValor || '').trim().length < (confirmDialog.input.minLength || 1)}
+                  autoFocus={!confirmDialog.input}
                 >
                   {confirmDialog.confirmText}
                 </button>

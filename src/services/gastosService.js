@@ -106,15 +106,15 @@ export async function actualizarGasto(id, cambios) {
   }
 }
 
-export async function eliminarGasto(id) {
+export async function eliminarGasto(id, motivo = '') {
   if (isFirebaseConfigured && db) {
     await deleteDoc(doc(db, GASTOS_COLLECTION, id));
     contarEscritura();
     registrarBitacora({
       tipo: TIPOS_BITACORA.GASTO,
       accion: 'eliminar',
-      detalle: `Eliminó el gasto ${id}`,
-      datos: { id },
+      detalle: `Eliminó el gasto ${id}${motivo ? `. Justificación: ${motivo}` : ''}`,
+      datos: { id, motivo: motivo || '' },
     });
   } else {
     saveLocalGastos(getLocalGastos().filter(g => g.id !== id));

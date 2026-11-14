@@ -26,6 +26,7 @@ import { obtenerPersonalVisible } from '../services/usuariosService';
 import { escucharGastos, montoConDescuento } from '../services/gastosService';
 import { DEPARTAMENTOS_EL_SALVADOR, obtenerFlotaVehiculos } from '../services/vehiculosService';
 import { AREAS_CON_CODIGO as AREAS } from '../constants/areas';
+import { formatearDinero } from '../utils/formato';
 import IconoMascara from '../components/IconoMascara';
 
 const APARTADOS = [
@@ -45,6 +46,7 @@ export default function Dashboard() {
   const [gastos, setGastos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [horaActual, setHoraActual] = useState(() => new Date().toLocaleTimeString('es-SV'));
+  const [anioLectivo, setAnioLectivo] = useState(() => new Date().getFullYear());
   const [filtroDepto, setFiltroDepto] = useState('TODOS');
 
   useEffect(() => {
@@ -311,6 +313,57 @@ export default function Dashboard() {
     };
   }, [ordenes, mecanicosPersonal]);
 
+  // Año lectivo: las tarjetas KPI se calculan sólo con las órdenes ingresadas en el año seleccionado.
+  const anioDeOrden = (o) => {
+    const f = o?.fechaIngreso;
+    let fecha = null;
+    if (f && typeof f.toDate === 'function') fecha = f.toDate();
+    else if (f) fecha = new Date(f);
+    return fecha && !Number.isNaN(fecha.getTime()) ? fecha.getFullYear() : null;
+  };
+
+  const aniosLectivos = useMemo(() => {
+    const set = new Set(ordenes.map(anioDeOrden).filter(Boolean));
+    set.add(new Date().getFullYear());
+    return Array.from(set).sort((a, b) => b - a);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ordenes]);
+
+  const statsAnio = useMemo(() => {
+    const delAnio = ordenes.filter(o => anioDeOrden(o) === anioLectivo);
+    let gastoTotalFlota = 0;
+    let gastoRepuestosFlota = 0;
+    let gastoManoObraFlota = 0;
+    let sumaTiempoHoras = 0;
+    let countConTiempo = 0;
+
+    delAnio.forEach(o => {
+      const rep = Number(o.costoRepuestos) || 0;
+      const mo = Number(o.costoManoObra) || 0;
+      gastoTotalFlota += Number(o.costoTotal) || (rep + mo);
+      gastoRepuestosFlota += rep;
+      gastoManoObraFlota += mo;
+
+      const tiempo = Number(o.tiempoRealMinutos ? o.tiempoRealMinutos / 60 : o.tiempoEstimadoHoras) || 0;
+      if (tiempo > 0) {
+        sumaTiempoHoras += tiempo;
+        countConTiempo++;
+      }
+    });
+
+    const finalizadosAnio = delAnio.filter(o => o.estado === 'finalizado' || o.estado === 'entregado').length;
+
+    return {
+      total: delAnio.length,
+      gastoTotalFlota,
+      gastoRepuestosFlota,
+      gastoManoObraFlota,
+      tiempoPromedioHoras: countConTiempo > 0 ? (sumaTiempoHoras / countConTiempo).toFixed(1) : '0.0',
+      tasaFinalizacion: delAnio.length > 0 ? Math.round((finalizadosAnio / delAnio.length) * 100) : 0
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ordenes, anioLectivo]);
+
   const ordenesActivas = useMemo(() => {
     return ordenes
       .filter(o => o.estado !== 'entregado')
@@ -456,7 +509,7 @@ export default function Dashboard() {
           <span style={{ margin: '0 8px' }}>|</span>
           <span>EFECTIVIDAD TALLER: <strong style={{ color: 'var(--color-accent)' }}>{stats.tasaFinalizacion}%</strong></span>
           <span style={{ margin: '0 8px' }}>|</span>
-          <span>PRESUPUESTO EJECUTADO: <strong style={{ color: '#22c55e' }}>${stats.gastoTotalFlota.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+          <span>PRESUPUESTO EJECUTADO {anioLectivo}: <strong style={{ color: '#22c55e' }}>{formatearDinero(statsAnio.gastoTotalFlota)}</strong></span>
         </div>
       </div>
 
@@ -480,6 +533,26 @@ export default function Dashboard() {
         ))}
       </nav>
 
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+        <label htmlFor="select-anio-lectivo" style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--color-text-muted)' }}>
+          Año lectivo:
+        </label>
+        <select
+          id="select-anio-lectivo"
+          className="form-input"
+          style={{ width: 'auto', minWidth: 110, fontWeight: 800, paddingTop: 6, paddingBottom: 6 }}
+          value={anioLectivo}
+          onChange={(e) => setAnioLectivo(Number(e.target.value))}
+        >
+          {aniosLectivos.map(a => (
+            <option key={a} value={a}>{a}</option>
+          ))}
+        </select>
+        <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+          Tarjetas calculadas con las órdenes ingresadas en el año seleccionado.
+        </span>
+      </div>
+
       <div className="kpi-color-grid">
         <div className="kpi-color-card kpi-verde">
           <div className="kpi-color-top">
@@ -487,10 +560,10 @@ export default function Dashboard() {
             <span className="kpi-color-tag">Finanzas</span>
           </div>
           <div className="kpi-color-value">
-            ${stats.gastoTotalFlota.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatearDinero(statsAnio.gastoTotalFlota)}
           </div>
           <div className="kpi-color-label">Gasto Total de Flota</div>
-          <div className="kpi-color-desc">Repuestos, lubricantes y mano de obra acumulados</div>
+          <div className="kpi-color-desc">Repuestos, lubricantes y mano de obra acumulados en {anioLectivo}</div>
         </div>
 
         <div className="kpi-color-card kpi-azul">
@@ -499,10 +572,10 @@ export default function Dashboard() {
             <span className="kpi-color-tag">Bodega</span>
           </div>
           <div className="kpi-color-value">
-            ${stats.gastoRepuestosFlota.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatearDinero(statsAnio.gastoRepuestosFlota)}
           </div>
           <div className="kpi-color-label">Repuestos / Insumos</div>
-          <div className="kpi-color-desc">Materiales consumidos en las reparaciones</div>
+          <div className="kpi-color-desc">Materiales consumidos en {anioLectivo}</div>
         </div>
 
         <div className="kpi-color-card kpi-naranja">
@@ -510,9 +583,9 @@ export default function Dashboard() {
             <span className="kpi-color-icon"><TbClock /></span>
             <span className="kpi-color-tag">SLA</span>
           </div>
-          <div className="kpi-color-value">{stats.tiempoPromedioHoras} h</div>
+          <div className="kpi-color-value">{statsAnio.tiempoPromedioHoras} h</div>
           <div className="kpi-color-label">Tiempo Promedio</div>
-          <div className="kpi-color-desc">Horas de taller por unidad atendida</div>
+          <div className="kpi-color-desc">Horas de taller por unidad atendida en {anioLectivo}</div>
         </div>
 
         <div className="kpi-color-card kpi-cian">
@@ -520,9 +593,20 @@ export default function Dashboard() {
             <span className="kpi-color-icon"><TbShieldCheck /></span>
             <span className="kpi-color-tag">Taller</span>
           </div>
-          <div className="kpi-color-value">{stats.tasaFinalizacion}%</div>
+          <div className="kpi-color-value">{statsAnio.tasaFinalizacion}%</div>
           <div className="kpi-color-label">Cumplimiento</div>
-          <div className="kpi-color-desc">Órdenes finalizadas sobre el total</div>
+          <div className="kpi-color-desc">Órdenes finalizadas sobre el total de {anioLectivo}</div>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 24, padding: '12px 16px', background: 'var(--color-bg-input)', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-md)' }}>
+        <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--color-accent)', marginBottom: 4 }}>
+          ¿Qué es el año lectivo?
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+          Es el período anual del <strong>1 de enero al 31 de diciembre</strong> del año seleccionado (<strong>{anioLectivo}</strong>).
+          Las tarjetas anteriores suman únicamente las órdenes de trabajo ingresadas en ese período, para que sepas
+          exactamente cuánto del <strong>presupuesto anual</strong> se ha ejecutado hasta ahora y cuánto queda por ejecutar.
         </div>
       </div>
 
@@ -738,7 +822,7 @@ export default function Dashboard() {
                     <strong style={{ color: 'var(--color-accent)' }}>{area.unidades}</strong>
                     <span style={{ color: 'var(--color-text-muted)' }}> uds ({area.enProceso} en proceso)</span>
                     <div style={{ fontSize: 11, color: '#22c55e' }}>
-                      ${area.costo.toFixed(2)}
+                      {formatearDinero(area.costo)}
                     </div>
                   </div>
                 </div>
@@ -806,7 +890,7 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                        ${f.costoAcumulado.toFixed(2)}
+                        {formatearDinero(f.costoAcumulado)}
                       </td>
                       <td style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)' }}>
                         {f.tiempoPromedioHoras !== '—' ? `${f.tiempoPromedioHoras} hrs` : '—'}
@@ -895,13 +979,13 @@ export default function Dashboard() {
                         <span className="tech-tag">{r.visitasTaller} ingresos</span>
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>
-                        ${r.totalRepuestos.toFixed(2)}
+                        {formatearDinero(r.totalRepuestos)}
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>
-                        ${r.totalManoObra.toFixed(2)}
+                        {formatearDinero(r.totalManoObra)}
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#22c55e', fontSize: 14 }}>
-                        ${r.totalGasto.toFixed(2)}
+                        {formatearDinero(r.totalGasto)}
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -975,7 +1059,7 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <strong style={{ color: '#22c55e', fontFamily: 'var(--font-mono)', fontSize: 14 }}>
-                      ${dep.totalGasto.toFixed(2)}
+                      {formatearDinero(dep.totalGasto)}
                     </strong>
                   </div>
                   <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
@@ -1046,7 +1130,7 @@ export default function Dashboard() {
 
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ color: '#22c55e', fontWeight: 800, fontFamily: 'var(--font-mono)', fontSize: 15 }}>
-                    ${u.totalGasto.toFixed(2)}
+                    {formatearDinero(u.totalGasto)}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                     {u.reparaciones} reparaci{u.reparaciones > 1 ? 'ones' : 'ón'}
@@ -1146,7 +1230,7 @@ export default function Dashboard() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
                 <span style={{ color: 'var(--color-text-muted)' }}>Recursos administrados:</span>
                 <strong style={{ color: '#22c55e', fontFamily: 'var(--font-mono)' }}>
-                  ${mec.recursosManejados.toFixed(2)}
+                  {formatearDinero(mec.recursosManejados)}
                 </strong>
               </div>
             </div>
@@ -1222,7 +1306,7 @@ export default function Dashboard() {
                       <StatusBadge estado={orden.estado} />
                     </td>
                     <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                      ${(orden.costoTotal || (orden.costoRepuestos || 0) + (orden.costoManoObra || 0)).toFixed(2)}
+                      {formatearDinero(orden.costoTotal || (orden.costoRepuestos || 0) + (orden.costoManoObra || 0))}
                     </td>
                     <td>
                       <Link to={`/ordenes/${orden.id}`} className="btn btn-secondary btn-sm">

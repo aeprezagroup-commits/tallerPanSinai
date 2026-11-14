@@ -1,4 +1,5 @@
 import BotonVolver from '../components/BotonVolver';
+import { formatearDinero } from '../utils/formato';
 import { useState, useEffect, useMemo } from 'react';
 import {
   TbPlus, TbDownload, TbSearch, TbFilter, TbTrash, TbPencil,
@@ -32,7 +33,7 @@ const FORM_VACIO = {
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
   'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-const fmtMoney = (n) => `$${(Number(n) || 0).toFixed(2)}`;
+const fmtMoney = (n) => formatearDinero(n);
 
 const normPlaca = (p) => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
@@ -445,18 +446,24 @@ export default function Gastos() {
     const emisor = esAlmacenG(g) ? 'Vale Almacén' : (g.proveedor || 'Proveedor');
     const valor = montoTexto(g);
 
-    const confirmado = await confirm({
+    const motivo = await confirm({
       title: '¿Eliminar registro de gasto?',
       message: `¿Estás seguro de eliminar el gasto ${doc} (${emisor})${valor === '—' ? '' : ` por valor de ${valor}`}? Esta acción no se puede deshacer.`,
       confirmText: 'Sí, eliminar gasto',
       cancelText: 'Cancelar',
-      danger: true
+      danger: true,
+      input: {
+        label: 'Justificación de la eliminación *',
+        placeholder: 'Motivo de la eliminación (ej. Registro duplicado, captura errónea, comprobante anulado...)...',
+        minLength: 10,
+        rows: 3
+      }
     });
 
-    if (!confirmado) return;
+    if (!motivo) return;
 
     try {
-      await eliminarGasto(g.id);
+      await eliminarGasto(g.id, motivo);
       addToast(`Gasto ${doc} eliminado correctamente`, 'info');
     } catch (err) {
       console.error(err);

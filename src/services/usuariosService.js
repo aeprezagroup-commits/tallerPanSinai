@@ -341,7 +341,7 @@ export function actualizarUsuario(id, datos) {
   return null;
 }
 
-export function eliminarUsuario(id) {
+export function eliminarUsuario(id, motivo = '') {
   const previo = obtenerUsuarios().find((u) => u.id === id);
   if (esSuperAdmin(previo)) {
     throw new Error('La cuenta de soporte no se puede eliminar.');
@@ -353,8 +353,8 @@ export function eliminarUsuario(id) {
   registrarBitacora({
     tipo: TIPOS_BITACORA.USUARIO,
     accion: 'eliminar',
-    detalle: `Eliminó el usuario "${previo?.nombre || id}"`,
-    datos: { id, nombre: previo?.nombre || '', rol: previo?.rol || '' },
+    detalle: `Eliminó el usuario "${previo?.nombre || id}"${motivo ? `. Justificación: ${motivo}` : ''}`,
+    datos: { id, nombre: previo?.nombre || '', rol: previo?.rol || '', motivo: motivo || '' },
   });
 }
 

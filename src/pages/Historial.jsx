@@ -11,6 +11,7 @@ import { escucharOrdenes, formatoOT } from '../firebase/ordenesService';
 import { obtenerMecanicosActivos } from '../services/usuariosService';
 import StatusBadge from '../components/StatusBadge';
 import { AREAS_TRABAJO_CON_TODAS as AREAS } from '../constants/areas';
+import { formatearDinero, formatearMiles } from '../utils/formato';
 
 const ESTADOS_FILTRO = [
   { val: 'Todos', label: 'Todos los Estados' },
@@ -355,13 +356,13 @@ export default function Historial() {
                       </td>
                       <td>{ord.marca} {ord.modelo}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-accent)' }}>
-                        {ord.kilometraje ? `${Number(ord.kilometraje).toLocaleString()} km` : '—'}
+                        {ord.kilometraje ? `${formatearMiles(ord.kilometraje)} km` : '—'}
                       </td>
                       <td>{ord.tipoTrabajo} &bull; {ord.areaPrincipal}</td>
                       <td>{formatFecha(ord.fechaIngreso)}</td>
                       <td>{ord.mecanicoAsignado || '—'}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                        ${(Number(ord.costoTotal) || 0).toFixed(2)}
+                        {formatearDinero(Number(ord.costoTotal) || 0)}
                       </td>
                       <td>
                         <StatusBadge estado={ord.estado} />
@@ -414,12 +415,12 @@ export default function Historial() {
                   </div>
                   <div className="order-card-info">
                     <TbMapPin className="icon" />
-                    <span>{ord.kilometraje ? `${Number(ord.kilometraje).toLocaleString()} km` : 'Sin kilometraje'}</span>
+                    <span>{ord.kilometraje ? `${formatearMiles(ord.kilometraje)} km` : 'Sin kilometraje'}</span>
                   </div>
                   <div className="order-card-info">
                     <TbReportMoney className="icon" />
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                      ${(Number(ord.costoTotal) || (Number(ord.costoRepuestos) || 0) + (Number(ord.costoManoObra) || 0)).toFixed(2)}
+                      {formatearDinero(Number(ord.costoTotal) || (Number(ord.costoRepuestos) || 0) + (Number(ord.costoManoObra) || 0))}
                     </span>
                   </div>
                 </div>

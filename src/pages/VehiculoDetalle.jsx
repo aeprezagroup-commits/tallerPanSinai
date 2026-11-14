@@ -247,21 +247,27 @@ export default function VehiculoDetalle() {
   };
 
   const handleBaja = async () => {
-    const ok = await confirm({
+    const motivo = await confirm({
       title: '¿Dar de baja esta unidad?',
       message: `Se retirará el vehículo ${vehiculo.placa} del catálogo de flota y SE ELIMINARÁN ` +
         'sus 4 fotos de la base fotográfica. Esta acción no se puede deshacer.',
       confirmText: 'Sí, dar de baja',
       cancelText: 'Cancelar',
       danger: true,
+      input: {
+        label: 'Justificación de la baja *',
+        placeholder: 'Motivo de la baja (ej. Unidad vendida, fuera de servicio, reemplazo...)...',
+        minLength: 10,
+        rows: 3
+      },
     });
-    if (!ok) return;
+    if (!motivo) return;
 
     try {
       await eliminarFotosVehiculo(vehiculo.placa);
     } catch {
     }
-    eliminarVehiculoCatalogo(vehiculo.placa);
+    eliminarVehiculoCatalogo(vehiculo.placa, motivo);
     addToast(`Unidad ${vehiculo.placa} dada de baja y sus fotos eliminadas.`, 'success');
     navigate('/admin/vehiculos');
   };

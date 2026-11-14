@@ -1,4 +1,5 @@
 import BotonVolver from '../components/BotonVolver';
+import { formatearDinero } from '../utils/formato';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -338,7 +339,7 @@ export default function Salida() {
                       <>
                         <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Gasto de Reparación</div>
                         <div style={{ fontSize: 16, fontWeight: 800, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>
-                          ${(Number(ordenActual.costoTotal) || (Number(ordenActual.costoRepuestos) || 0) + (Number(ordenActual.costoManoObra) || 0)).toFixed(2)} USD
+                          {formatearDinero(Number(ordenActual.costoTotal) || (Number(ordenActual.costoRepuestos) || 0) + (Number(ordenActual.costoManoObra) || 0))} USD
                         </div>
                       </>
                     )}

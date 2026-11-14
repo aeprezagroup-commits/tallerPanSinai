@@ -30,6 +30,7 @@ import { obtenerFotosBase, guardarFotosBase, LADOS_VEHICULO } from '../services/
 import ScannerModal from '../components/ScannerModal';
 import IconoMascara from '../components/IconoMascara';
 import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
+import { formatearMiles, formatoKmEntrada, soloDigitos } from '../utils/formato';
 import CameraModal from '../components/CameraModal';
 
 function construirActividades(tareas, mecanico = '', areaDefault = 'General') {
@@ -260,7 +261,8 @@ export default function NuevaOrden() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    // El kilometraje se guarda sólo con dígitos; la coma de miles es visual en el campo.
+    setForm(prev => ({ ...prev, [name]: name === 'kilometraje' ? soloDigitos(value) : value }));
   };
 
   const guardarFotoLado = (lado, file) => {
@@ -592,7 +594,7 @@ export default function NuevaOrden() {
   const fotosCompletas = LADOS_VEHICULO.filter((lado) => fotosLados[lado]).length;
 
   const kmAnterior = historialPrevio?.[0]?.kilometraje;
-  const kmAnteriorTexto = kmAnterior ? `${Number(kmAnterior).toLocaleString('es-SV')} km` : 'Sin registro';
+  const kmAnteriorTexto = kmAnterior ? `${formatearMiles(kmAnterior)} km` : 'Sin registro';
 
   const caracteristicasVehiculo = [
     ['Marca', form.marca],
@@ -770,7 +772,7 @@ export default function NuevaOrden() {
                 <span>Expediente histórico encontrado: {historialPrevio.length} {historialPrevio.length === 1 ? 'visita previa' : 'visitas previas'}</span>
               </div>
               <div style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
-                Último ingreso: <strong>{historialPrevio[0].fechaIngreso?.toDate ? historialPrevio[0].fechaIngreso.toDate().toLocaleDateString('es-SV') : 'Reciente'}</strong> &bull; Km anterior: <strong>{historialPrevio[0].kilometraje ? `${historialPrevio[0].kilometraje.toLocaleString()} km` : 'No registrado'}</strong> &bull; Falla previa: <em>{historialPrevio[0].diagnosticoInicial || 'Mantenimiento preventivo'}</em>
+                Último ingreso: <strong>{historialPrevio[0].fechaIngreso?.toDate ? historialPrevio[0].fechaIngreso.toDate().toLocaleDateString('es-SV') : 'Reciente'}</strong> &bull; Km anterior: <strong>{historialPrevio[0].kilometraje ? `${formatearMiles(historialPrevio[0].kilometraje)} km` : 'No registrado'}</strong> &bull; Falla previa: <em>{historialPrevio[0].diagnosticoInicial || 'Mantenimiento preventivo'}</em>
               </div>
             </div>
           )}
@@ -805,12 +807,11 @@ export default function NuevaOrden() {
             <div className="form-group">
               <label className="form-label">Nuevo Kilometraje (Km)</label>
               <input
-                type="number"
+                type="text"
                 name="kilometraje"
-                value={form.kilometraje}
+                value={formatoKmEntrada(form.kilometraje)}
                 onChange={handleChange}
                 placeholder="Kilometraje actual del odómetro"
-                min="0"
                 className="form-input"
                 inputMode="numeric"
                 autoComplete="off"

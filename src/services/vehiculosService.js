@@ -350,7 +350,7 @@ export function actualizarVehiculoCatalogo(placa, cambios = {}) {
   return registrarVehiculoCatalogo({ ...actual, ...cambios, placa: actual.placa });
 }
 
-export function eliminarVehiculoCatalogo(placa) {
+export function eliminarVehiculoCatalogo(placa, motivo = '') {
   let flota = obtenerFlotaVehiculos();
   const placaNorm = normalizarPlaca(placa);
   const previa = flota.find(v => normalizarPlaca(v.placa) === placaNorm);
@@ -360,13 +360,14 @@ export function eliminarVehiculoCatalogo(placa) {
   registrarBitacora({
     tipo: TIPOS_BITACORA.VEHICULO,
     accion: 'eliminar',
-    detalle: `Eliminó del catálogo la unidad ${placaNorm}${previa ? ` (${previa.marca} ${previa.modelo})` : ''}`,
+    detalle: `Eliminó del catálogo la unidad ${placaNorm}${previa ? ` (${previa.marca} ${previa.modelo})` : ''}${motivo ? `. Justificación: ${motivo}` : ''}`,
     datos: {
       placa: placaNorm,
       marca: previa?.marca || '',
       modelo: previa?.modelo || '',
       conductorHabitual: previa?.conductorHabitual || '',
       departamento: previa?.departamento || '',
+      motivo: motivo || '',
     },
   });
 }
