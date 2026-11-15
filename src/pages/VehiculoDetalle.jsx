@@ -593,7 +593,7 @@ export default function VehiculoDetalle() {
                       onClick={() => setCamaraLado(lado.key)}
                       disabled={ocupado}
                       style={{
-                        width: '100%', justifyContent: 'center', padding: '6px 6px', fontSize: 12,
+                        width: '100%', justifyContent: 'center', padding: '6px 4px', fontSize: 11, gap: 4,
                         gridColumn: ocupado ? '1 / -1' : 'auto',
                       }}>
                       <IconoMascara src="/iconos/camara-fotografica.png" size={12} />
@@ -603,7 +603,7 @@ export default function VehiculoDetalle() {
                       <button type="button"
                         className="btn btn-secondary"
                         onClick={() => pedirFoto(lado.key, false)}
-                        style={{ width: '100%', justifyContent: 'center', padding: '6px 6px', fontSize: 12 }}>
+                        style={{ width: '100%', justifyContent: 'center', padding: '6px 4px', fontSize: 11, gap: 4 }}>
                         <TbUpload />
                         Subir
                       </button>

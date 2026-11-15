@@ -290,9 +290,9 @@ export default function SuperAdmin() {
               <TbShield />
             </span>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>
+              <h1 style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2, margin: 0 }}>
                 Consola de Auditoría
-              </div>
+              </h1>
               <div style={{ fontSize: 11, opacity: 0.65 }}>
                 Super administración · uso, eliminaciones y consumo del sistema
               </div>

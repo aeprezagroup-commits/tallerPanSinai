@@ -601,7 +601,7 @@ export default function Salida() {
               <button
                 type="button"
                 className="btn btn-secondary btn-lg"
-                style={{ width: '100%', marginBottom: 12, gap: 8, borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+                style={{ width: '100%', marginBottom: 12, gap: 8, borderColor: 'var(--color-accent)', color: 'var(--color-accent)', whiteSpace: 'normal' }}
                 onClick={() => setIsCertOpen(true)}
               >
                 <TbPrinter /> Vista Previa Acta de Taller
@@ -611,7 +611,7 @@ export default function Salida() {
             <button
               type="submit"
               className="btn btn-primary btn-lg"
-              style={{ width: '100%', gap: 10 }}
+              style={{ width: '100%', gap: 10, whiteSpace: 'normal' }}
               disabled={guardando || !ordenSeleccionadaId}
             >
               {guardando ? (
