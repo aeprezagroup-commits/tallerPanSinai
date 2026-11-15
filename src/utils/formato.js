@@ -25,3 +25,18 @@ export function formatoKmEntrada(v) {
 export function soloDigitos(v) {
   return String(v ?? '').replace(/[^\d]/g, '');
 }
+
+// Teléfono de El Salvador:8 dígitos (o11 con503) → +503 XXXX-XXXX.
+// Lo que no sea un número local estándar se muestra como se guardó.
+export function formatearTelefono(tel) {
+  const crudo = String(tel ?? '').trim();
+  if (!crudo) return '';
+  const digitos = crudo.replace(/[^\d]/g, '');
+  if (digitos.length === 8) {
+    return `+503 ${digitos.slice(0, 4)}-${digitos.slice(4)}`;
+  }
+  if (digitos.length === 11 && digitos.startsWith('503')) {
+    return `+503 ${digitos.slice(3, 7)}-${digitos.slice(7)}`;
+  }
+  return crudo;
+}

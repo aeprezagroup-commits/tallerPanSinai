@@ -1,6 +1,7 @@
 import BotonVolver from '../components/BotonVolver';
 import { useState, useEffect, useRef } from 'react';
 import { normalizarPlaca } from '../utils/placas';
+import { formatearTelefono, soloDigitos } from '../utils/formato';
 import { Link } from 'react-router-dom';
 import {
   TbTruck,
@@ -150,7 +151,7 @@ export default function Admin({ seccion = 'personal' }) {
       password: '',
       rol: u.rol || 'mecanico',
       cargo: u.cargo || '',
-      telefono: u.telefono || '',
+      telefono: soloDigitos(u.telefono || ''),
       departamento: u.departamento || '',
       rutas: Array.isArray(u.rutas) ? u.rutas : []
     });
@@ -257,6 +258,12 @@ export default function Admin({ seccion = 'personal' }) {
 
   const handleToggleEstado = async (u) => {
     const activar = u.activo === false;
+    // Nadie puede inactivarse a sí mismo: si no, el usuario se bloquea su
+    // propia cuenta y ya no puede volver a entrar (le pasó al tester).
+    if (!activar && u.id === currentUser?.id) {
+      addToast('No puedes inactivar tu propia cuenta. Pide a otro administrador que lo haga.', 'error');
+      return;
+    }
     const confirmado = await confirm({
       title: activar ? '¿Activar usuario?' : '¿Inactivar usuario?',
       message: activar
@@ -526,12 +533,17 @@ export default function Admin({ seccion = 'personal' }) {
   );
 
   const qUsuario = busquedaUsuario.trim().toLowerCase();
+  // Búsqueda por teléfono: se comparan sólo dígitos para que "7245" encuentre
+  // tanto "72458810" como "+503 7245-8810" guardado con formato.
+  const qUsuarioTel = qUsuario.replace(/\D/g, '');
   const usuariosFiltrados = usuarios.filter(u =>
     !qUsuario ||
     (u.nombre || '').toLowerCase().includes(qUsuario) ||
     (u.cargo || '').toLowerCase().includes(qUsuario) ||
     (u.rol || '').toLowerCase().includes(qUsuario) ||
-    (u.telefono || '').toLowerCase().includes(qUsuario) ||
+    (qUsuarioTel
+      ? String(u.telefono || '').replace(/\D/g, '').includes(qUsuarioTel)
+      : (u.telefono || '').toLowerCase().includes(qUsuario)) ||
     zonaTexto(u).toLowerCase().includes(qUsuario)
   );
 
@@ -826,7 +838,7 @@ export default function Admin({ seccion = 'personal' }) {
                     </div>
                     {u.telefono && (
                       <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>
-                        <TbPhone style={{ marginRight: 4, verticalAlign: -1 }} /> {u.telefono}
+                        <TbPhone style={{ marginRight: 4, verticalAlign: -1 }} /> {formatearTelefono(u.telefono)}
                       </div>
                     )}
                   </div>
