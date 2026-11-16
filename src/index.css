@@ -5364,3 +5364,127 @@ h3,
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
+
+/* ==========================================================================
+   Lote C - Auditoria S2-S3 (UI/UX)
+   ========================================================================== */
+
+/* Personal: el boton Activar de un usuario inactivo debe distinguirse de los
+   botones deshabilitados (Reiniciar/Editar/Eliminar) que si estan atenuados. */
+.btn-card-activar {
+  background: #16a34a;
+  border: 1px solid #16a34a;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+}
+
+.btn-card-activar:hover {
+  background: #15803d;
+  border-color: #15803d;
+  color: #ffffff;
+}
+
+[data-theme='dark'] .btn-card-activar {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+[data-theme='dark'] .btn-card-activar:hover {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #ffffff;
+}
+
+/* Historial: indicador de unidad dada de baja o vendida (fuera del catalogo). */
+.badge-baja {
+  background: rgba(100, 116, 139, 0.14);
+  color: #64748b;
+  border: 1px solid rgba(100, 116, 139, 0.35);
+}
+
+[data-theme='dark'] .badge-baja {
+  background: rgba(148, 163, 184, 0.14);
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+/* Acta de Taller: logo real de la empresa (parte superior izquierda). */
+.cert-logo-empresa {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cert-logo-empresa img {
+  height: 56px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* Ordenes de Trabajo: barra de busqueda fija durante el desplazamiento
+   (mismo patron que .reportes-nav). */
+.filters-bar-sticky {
+  position: sticky;
+  top: 52px;
+  z-index: 80;
+  background: var(--color-bg-primary);
+  padding: 8px 0;
+  margin-bottom: 14px;
+}
+
+/* Impresion de la Ficha del vehiculo. */
+@media print {
+  .ficha-print-area,
+  .ficha-print-area * {
+    visibility: visible !important;
+  }
+
+  .ficha-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 640px) {
+
+  /* Modal Asignacion: botones Cancelar/Guardar apilados y centrados. */
+  .modal-form-acciones {
+    justify-content: center !important;
+  }
+
+  .modal-form-acciones .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  /* Gastos: espaciado mas compacto de los campos en pantallas pequenas. */
+  .gastos-modal-body {
+    padding: 14px !important;
+  }
+
+  .gastos-form-grid {
+    gap: 9px !important;
+  }
+
+  .gastos-modal-body .form-group {
+    gap: 5px;
+  }
+
+  .gastos-modal-body .form-input,
+  .gastos-modal-body .form-select,
+  .gastos-modal-body .form-textarea {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+}

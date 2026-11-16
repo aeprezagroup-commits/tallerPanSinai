@@ -133,6 +133,7 @@ export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
 
   const actual = await obtenerFotosBase(key);
   const nuevo = { ...actual, placa: key };
+  const hashes = { ...(actual.hashes || {}) };
   const errores = [];
 
   for (const lado of LADOS_VEHICULO) {
@@ -144,6 +145,7 @@ export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
         await eliminarFoto(actual[lado]);
       }
       nuevo[lado] = '';
+      hashes[lado] = '';
       continue;
     }
 
@@ -158,7 +160,11 @@ export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
         nombreFijo: true,
         urlAnterior: actual[lado] || '',
       });
-      if (url) nuevo[lado] = url;
+      if (url) {
+        nuevo[lado] = url;
+        const hashNuevo = cambios.hashes && cambios.hashes[lado];
+        if (hashNuevo) hashes[lado] = hashNuevo;
+      }
     } catch (err) {
       console.error(`Error subiendo foto ${lado} de ${key}:`, err);
       errores.push(lado);
@@ -166,6 +172,7 @@ export async function guardarFotosBase(placa, cambios = {}, usuario = '') {
     }
   }
 
+  nuevo.hashes = hashes;
   nuevo.actualizadoEn = new Date().toISOString();
   nuevo.actualizadoPor = usuario || '';
 

@@ -52,8 +52,8 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
           <div className="modal-body cert-sheet" ref={printAreaRef} style={{ overflowY: 'auto', padding: '32px 40px', background: 'var(--color-bg-card)' }}>
             <div className="cert-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div className="cert-logo-seal">
-                  <span>PS</span>
+                <div className="cert-logo-empresa">
+                  <img src="/logo-sinai.png" alt="Pan Sinaí" />
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, letterSpacing: 0.5, color: 'var(--color-text-primary)' }}>

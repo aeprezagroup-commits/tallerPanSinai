@@ -9,6 +9,7 @@ import {
 } from '../icons';
 import { escucharOrdenes, formatoOT } from '../firebase/ordenesService';
 import { obtenerMecanicosActivos } from '../services/usuariosService';
+import { obtenerFlotaVehiculos } from '../services/vehiculosService';
 import StatusBadge from '../components/StatusBadge';
 import { AREAS_TRABAJO_CON_TODAS as AREAS } from '../constants/areas';
 import { formatearDinero, formatearMiles } from '../utils/formato';
@@ -52,6 +53,20 @@ export default function Historial() {
       window.removeEventListener('pan_sinai_users_updated', handleUsers);
     };
   }, []);
+
+  // Auditoría S2-S3: indicador de unidad dada de baja o vendida en el Historial.
+  // La baja retira la placa del catálogo de flota, pero sus órdenes siguen aquí.
+  const placasEnFlota = useMemo(() => {
+    const flota = obtenerFlotaVehiculos();
+    if (!flota || flota.length === 0) return null;
+    return new Set(flota.map((v) => normalizarPlaca(v.placa)));
+  }, []);
+
+  const fueraDeFlota = (placa) => {
+    if (!placasEnFlota || !placa) return false;
+    const norm = normalizarPlaca(placa);
+    return Boolean(norm) && !placasEnFlota.has(norm);
+  };
 
   const ordenesFiltradas = useMemo(() => {
     return ordenes.filter((o) => {
@@ -351,6 +366,15 @@ export default function Historial() {
                         >
                           {ord.placa || 'S/P'}
                         </button>
+                        {fueraDeFlota(ord.placa) && (
+                          <span
+                            className="badge badge-baja"
+                            style={{ marginLeft: 6, fontSize: 9, padding: '2px 6px' }}
+                            title="Unidad que ya no aparece en el catálogo de flota activo (dada de baja o vendida)"
+                          >
+                            Baja / Vendido
+                          </span>
+                        )}
                       </td>
                       <td>{ord.marca} {ord.modelo}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-accent)' }}>
@@ -388,8 +412,17 @@ export default function Historial() {
               <div key={ord.id} className={`order-card estado-${ord.estado}`} style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="order-card-header">
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       <span className="order-card-placa">{ord.placa || 'S/P'}</span>
+                      {fueraDeFlota(ord.placa) && (
+                        <span
+                          className="badge badge-baja"
+                          style={{ fontSize: 9, padding: '2px 6px' }}
+                          title="Unidad que ya no aparece en el catálogo de flota activo (dada de baja o vendida)"
+                        >
+                          Baja / Vendido
+                        </span>
+                      )}
                       <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{formatoOT(ord)}</span>
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 3 }}>

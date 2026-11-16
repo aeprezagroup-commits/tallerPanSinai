@@ -11,6 +11,7 @@ import {
   TbAlertCircle,
   TbUpload,
   TbTruck,
+  TbPrinter,
 } from '../icons';
 import ResumenErrores from '../components/ResumenErrores';
 import {
@@ -70,6 +71,25 @@ const Campo = ({ id, label, children, error }) => (
     )}
   </div>
 );
+
+// Auditoría S2-S3: huella del archivo original para detectar imágenes duplicadas
+// dentro del mismo expediente (mismo archivo subido a otro costado de la unidad).
+const hashArchivo = async (archivo) => {
+  const buffer = await archivo.arrayBuffer();
+  if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
+    const digest = await window.crypto.subtle.digest('SHA-256', buffer);
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  const bytes = new Uint8Array(buffer);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < bytes.length; i += 1) {
+    h ^= bytes[i];
+    h = Math.imul(h, 0x01000193);
+  }
+  return `fnv1a-${h >>> 0}-${bytes.length}`;
+};
 
 export default function VehiculoDetalle() {
   const { placa } = useParams();
@@ -217,6 +237,24 @@ export default function VehiculoDetalle() {
 
     const etiqueta = LADOS_FICHA.find(l => l.key === lado)?.label || lado;
 
+    // Bloqueo de imágenes duplicadas dentro del mismo expediente (auditoría S2-S3).
+    let hash = '';
+    try {
+      hash = await hashArchivo(archivo);
+    } catch {
+      hash = '';
+    }
+    if (hash) {
+      const previos = fotos.hashes || {};
+      const duplicada = Object.keys(previos).some(k => previos[k] && previos[k] === hash);
+      if (duplicada) {
+        addToast('No se permite el ingreso de imágenes duplicadas: este archivo ya está adjunto a esta unidad.', 'error');
+        if (fotoInputRef.current) fotoInputRef.current.value = '';
+        ladoPendienteRef.current = '';
+        return;
+      }
+    }
+
     if (fotos[lado]) {
       const ok = await confirm({
         title: `¿Reemplazar ${etiqueta.toLowerCase()}?`,
@@ -230,7 +268,9 @@ export default function VehiculoDetalle() {
 
     setActualizandoLado(lado);
     try {
-      const res = await guardarFotosBase(vehiculo.placa, { [lado]: archivo }, currentUser);
+      const cambios = { [lado]: archivo };
+      if (hash) cambios.hashes = { [lado]: hash };
+      const res = await guardarFotosBase(vehiculo.placa, cambios, currentUser);
       setFotos(res?.registro || {});
       if (res?.errores?.length) {
         addToast(`No se pudo guardar ${etiqueta}: se conservó la foto anterior.`, 'error');
@@ -249,6 +289,31 @@ export default function VehiculoDetalle() {
   const handleFotoCargada = e => {
     const archivo = e.target.files && e.target.files[0];
     procesarFoto(ladoPendienteRef.current, archivo);
+  };
+
+  // Auditoría S2-S3: control para eliminar o descartar fotografías ya subidas.
+  const eliminarFotoLado = async (lado) => {
+    const etiqueta = LADOS_FICHA.find(l => l.key === lado)?.label || lado;
+    const ok = await confirm({
+      title: `¿Eliminar la foto de ${etiqueta.toLowerCase()}?`,
+      message: `Se eliminará la fotografía ${etiqueta.toLowerCase()} de ${vehiculo.placa} de la base fotográfica. ` +
+        'Esta acción no se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      danger: true,
+    });
+    if (!ok) return;
+
+    setActualizandoLado(lado);
+    try {
+      const res = await guardarFotosBase(vehiculo.placa, { [lado]: '' }, currentUser);
+      setFotos(res?.registro || {});
+      addToast(`Foto ${etiqueta} de ${vehiculo.placa} eliminada.`, 'success');
+    } catch (e2) {
+      addToast(e2.message || 'No se pudo eliminar la foto.', 'error');
+    } finally {
+      setActualizandoLado('');
+    }
   };
 
   const handleBaja = async () => {
@@ -299,7 +364,7 @@ export default function VehiculoDetalle() {
   }
 
   return (
-    <div className="content-wrapper">
+    <div className="content-wrapper ficha-print-area">
       <input
         ref={fotoInputRef}
         type="file"
@@ -319,7 +384,7 @@ export default function VehiculoDetalle() {
         justifyContent: 'space-between', marginBottom: 20,
       }}>
         <div style={{ minWidth: 0 }}>
-          <Link to="/admin/vehiculos" style={{
+          <Link to="/admin/vehiculos" className="no-print" style={{
             display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5,
             fontWeight: 750, color: 'var(--color-accent)', textDecoration: 'none', marginBottom: 8,
           }}>
@@ -403,9 +468,19 @@ export default function VehiculoDetalle() {
               </button>
             </>
           ) : (
-            <button type="button" className="btn btn-secondary" onClick={() => setEditando(true)}>
-              <TbPencil /> Editar Ficha
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => window.print()}
+                title="Imprimir la ficha técnica de la unidad con su base fotográfica"
+              >
+                <TbPrinter /> Imprimir Ficha
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setEditando(true)}>
+                <TbPencil /> Editar Ficha
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -618,6 +693,16 @@ export default function VehiculoDetalle() {
                         style={{ width: '100%', justifyContent: 'center', padding: '6px 3px', fontSize: 10, gap: 3 }}>
                         <TbUpload size={12} />
                         Subir
+                      </button>
+                    )}
+                    {foto && !ocupado && (
+                      <button type="button"
+                        className="btn btn-danger"
+                        onClick={() => eliminarFotoLado(lado.key)}
+                        title={`Eliminar la foto ${lado.label} de ${vehiculo.placa}`}
+                        style={{ width: '100%', justifyContent: 'center', padding: '6px 3px', fontSize: 10, gap: 3 }}>
+                        <TbTrash size={12} />
+                        Eliminar
                       </button>
                     )}
                   </div>

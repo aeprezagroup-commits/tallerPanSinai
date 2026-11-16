@@ -781,7 +781,7 @@ export default function Gastos() {
                   <TbX />
                 </button>
               </div>
-              <div className="modal-body" style={{ padding: 20 }}>
+              <div className="modal-body gastos-modal-body" style={{ padding: 20 }}>
                 <form onSubmit={handleGuardar}>
                 <div className="form-group" style={{ gap: 4, marginBottom: 12 }}>
                   <label className="form-label">Tipo de registro *</label>
@@ -797,7 +797,7 @@ export default function Gastos() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))', gap: 12 }}>
+                <div className="gastos-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))', gap: 12 }}>
                   <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
                     <label className="form-label">Fecha *</label>
                     <input type="date" name="fecha" value={form.fecha} onChange={handleChange} className="form-input" required />
@@ -848,7 +848,7 @@ export default function Gastos() {
                           {' — '}{vehiculoDetectado.marca} {vehiculoDetectado.modelo}{vehiculoDetectado.anio ? ` (${vehiculoDetectado.anio})` : ''}
                           {vehiculoDetectado.fuente ? <span style={{ color: 'var(--color-text-muted)' }}> · {vehiculoDetectado.fuente}</span> : null}
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))', gap: '4px 14px', marginTop: 8 }}>
+                        <div className="gastos-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))', gap: '4px 14px', marginTop: 8 }}>
                           <div style={{ fontSize: 12 }}>
                             <span style={{ color: 'var(--color-text-muted)' }}>Ruta asignada: </span>
                             <strong>{vehiculoDetectado.ruta || 'Sin ruta asignada'}</strong>
@@ -920,7 +920,7 @@ export default function Gastos() {
                     placeholder={esAlmacen ? 'Detalle de repuestos o insumos despachados de bodega...' : 'Detalle de repuestos, lubricantes o servicios facturados...'} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 12, marginTop: 12 }}>
+                <div className="gastos-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 12, marginTop: 12 }}>
                   <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
                     <label className="form-label">{esAlmacen ? 'Cantidad de repuestos' : 'Cantidad'}</label>
                     <input name="cantidad" value={form.cantidad} onChange={handleChange} className="form-input"
@@ -966,7 +966,7 @@ export default function Gastos() {
                   )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 12, marginTop: 12 }}>
+                <div className="gastos-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 12, marginTop: 12 }}>
                   <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
                     <label className="form-label">Centro de Costo</label>
                     <select name="centroCosto" value={form.centroCosto} onChange={handleChange} className="form-select">

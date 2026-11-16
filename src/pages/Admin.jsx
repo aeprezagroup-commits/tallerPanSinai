@@ -804,11 +804,8 @@ export default function Admin({ seccion = 'personal' }) {
                 <div
                   key={u.id}
                   className="user-item-card"
-                  style={{
-                    opacity: u.activo === false ? 0.55 : 1
-                  }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ flex: 1, minWidth: 0, opacity: u.activo === false ? 0.6 : 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <strong style={{ fontSize: 14, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
                         {u.nombre}
@@ -865,7 +862,7 @@ export default function Admin({ seccion = 'personal' }) {
                     </button>
                     <button
                       type="button"
-                      className={`btn-card-action ${u.activo === false ? 'btn-success' : ''}`}
+                      className={`btn-card-action ${u.activo === false ? 'btn-card-activar' : ''}`}
                       onClick={() => handleToggleEstado(u)}
                       title={u.activo === false ? 'Activar usuario' : 'Inactivar usuario'}
                     >
@@ -1277,7 +1274,7 @@ export default function Admin({ seccion = 'personal' }) {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
+                  <div className="modal-form-acciones" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
                     <button type="button" className="btn btn-secondary" onClick={() => setAsignacionVehiculo(null)}>
                       Cancelar
                     </button>
