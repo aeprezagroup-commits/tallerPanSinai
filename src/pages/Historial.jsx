@@ -12,6 +12,7 @@ import { obtenerMecanicosActivos } from '../services/usuariosService';
 import StatusBadge from '../components/StatusBadge';
 import { AREAS_TRABAJO_CON_TODAS as AREAS } from '../constants/areas';
 import { formatearDinero, formatearMiles } from '../utils/formato';
+import { descargarXLSX } from '../utils/exportaciones';
 
 const ESTADOS_FILTRO = [
   { val: 'Todos', label: 'Todos los Estados' },
@@ -104,7 +105,7 @@ export default function Historial() {
     });
   };
 
-  const exportarCSV = () => {
+  const exportarExcel = () => {
     if (ordenesFiltradas.length === 0) return;
 
     const encabezados = [
@@ -132,36 +133,33 @@ export default function Historial() {
 
     const filas = ordenesFiltradas.map(o => [
       formatoOT(o),
-      `"${o.placa || ''}"`,
-      `"${o.marca || ''}"`,
-      `"${o.modelo || ''}"`,
-      o.anio || '',
-      o.kilometraje || '',
-      `"${o.departamento || ''}"`,
-      `"${o.ruta || ''}"`,
-      `"${o.mecanicoAsignado || ''}"`,
-      `"${o.areaPrincipal || ''}"`,
-      `"${o.tipoTrabajo || ''}"`,
-      `"${(o.diagnosticoInicial || '').replace(/"/g, '""')}"`,
-      (Number(o.costoRepuestos) || 0).toFixed(2),
-      (Number(o.costoManoObra) || 0).toFixed(2),
-      (Number(o.costoTotal) || 0).toFixed(2),
-      o.tiempoRealMinutos || 0,
+      o.placa || '',
+      o.marca || '',
+      o.modelo || '',
+      Number(o.anio) || '',
+      Number(o.kilometraje) || 0,
+      o.departamento || '',
+      o.ruta || '',
+      o.mecanicoAsignado || '',
+      o.areaPrincipal || '',
+      o.tipoTrabajo || '',
+      o.diagnosticoInicial || '',
+      Number(o.costoRepuestos) || 0,
+      Number(o.costoManoObra) || 0,
+      Number(o.costoTotal) || 0,
+      Number(o.tiempoRealMinutos) || 0,
       o.estado || '',
       o.fechaIngreso?.toDate ? new Date(o.fechaIngreso.toDate()).toLocaleDateString('es-SV') : '',
       o.fechaSalida?.toDate ? new Date(o.fechaSalida.toDate()).toLocaleDateString('es-SV') : '',
-      `"${o.personaRetira || ''}"`
+      o.personaRetira || ''
     ]);
 
-    const csvContent = '\uFEFF' + [encabezados.join(','), ...filas.map(f => f.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Reporte_Taller_Pan_Sinai_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    descargarXLSX(
+      `Reporte_Taller_Pan_Sinai_${new Date().toISOString().slice(0, 10)}`,
+      encabezados,
+      filas,
+      'Historial'
+    );
   };
 
   if (loading) {
@@ -183,11 +181,11 @@ export default function Historial() {
         <button
           type="button"
           className="btn btn-secondary"
-          onClick={exportarCSV}
+          onClick={exportarExcel}
           style={{ gap: 8 }}
-          title="Descargar reporte con las órdenes filtradas"
+          title="Descargar reporte en Excel (.xlsx) con las órdenes filtradas"
         >
-          <TbDownload /> Exportar CSV
+          <TbDownload /> Exportar Excel
         </button>
       </div>
 

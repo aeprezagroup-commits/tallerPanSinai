@@ -26,7 +26,8 @@ import { obtenerPersonalVisible } from '../services/usuariosService';
 import { escucharGastos, montoConDescuento } from '../services/gastosService';
 import { DEPARTAMENTOS_EL_SALVADOR, obtenerFlotaVehiculos } from '../services/vehiculosService';
 import { AREAS_CON_CODIGO as AREAS } from '../constants/areas';
-import { formatearDinero } from '../utils/formato';
+import { formatearDinero, formatearTelefono } from '../utils/formato';
+import { descargarXLSX } from '../utils/exportaciones';
 import IconoMascara from '../components/IconoMascara';
 
 const APARTADOS = [
@@ -430,70 +431,63 @@ export default function Dashboard() {
     return { total, circ, items };
   })();
 
-  const descargarCSV = (nombreArchivo, encabezados, filas) => {
+  const descargarReporte = (nombreArchivo, encabezados, filas, hoja) => {
     if (!filas.length) return;
-    const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const csv = '﻿' + [encabezados.join(','), ...filas.map((f) => f.map(escapar).join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${nombreArchivo}_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    descargarXLSX(`${nombreArchivo}_${new Date().toISOString().slice(0, 10)}`, encabezados, filas, hoja);
   };
 
-  const exportarReporteCSV = (tipo) => {
+  const exportarReporte = (tipo) => {
     const fecha = (f) => (f?.toDate ? f.toDate().toLocaleDateString('es-SV') : f ? String(f).slice(0, 10) : '');
 
     if (tipo === 'ordenes') {
-      descargarCSV('reporte_ordenes_trabajo', [
+      descargarReporte('reporte_ordenes_trabajo', [
         'Orden (OT)', 'Placa', 'Marca', 'Modelo', 'Año', 'Kilometraje', 'Departamento',
         'Ruta', 'Mecánico Responsable', 'Área Principal', 'Tipo Trabajo',
         'Costo Repuestos ($)', 'Costo Mano Obra ($)', 'Costo Total ($)', 'Estado',
         'Fecha Ingreso', 'Fecha Salida',
       ], ordenes.map((o) => [
-        formatoOT(o), o.placa, o.marca, o.modelo, o.anio, o.kilometraje,
-        o.departamento, o.ruta, o.mecanicoAsignado, o.areaPrincipal, o.tipoTrabajo,
-        o.costoRepuestos ?? '', o.costoManoObra ?? '', o.costoTotal ?? '', o.estado,
+        formatoOT(o), o.placa || '', o.marca || '', o.modelo || '',
+        Number(o.anio) || '', Number(o.kilometraje) || 0,
+        o.departamento || '', o.ruta || '', o.mecanicoAsignado || '', o.areaPrincipal || '', o.tipoTrabajo || '',
+        Number(o.costoRepuestos) || 0, Number(o.costoManoObra) || 0, Number(o.costoTotal) || 0, o.estado || '',
         fecha(o.fechaIngreso || o.creadoEn), fecha(o.fechaSalida),
-      ]));
+      ]), 'Órdenes de Trabajo');
       return;
     }
 
     if (tipo === 'gastos') {
-      descargarCSV('reporte_gastos_flota', [
-        'Fecha', 'Documento (DTE/CCF)', 'Proveedor', 'Concepto', 'Cantidad ($)',
+      descargarReporte('reporte_gastos_flota', [
+        'Fecha', 'Documento (DTE/CCF)', 'Proveedor', 'Concepto', 'Cantidad',
         'Descuento ($)', 'Total con Descuento ($)', 'Centro de Costo', 'Estado',
         'Unidad (Placa)', 'Orden (OT)',
       ], gastos.map((g) => [
-        fecha(g.fecha), g.dte || g.ccf || g.vale || '', g.proveedor, g.gastos,
-        g.cantidad ?? '', g.descuento ?? '', montoConDescuento(g),
-        g.centroCosto, g.estado, g.unidad, g.ot,
-      ]));
+        fecha(g.fecha), g.dte || g.ccf || g.vale || '', g.proveedor || '', g.gastos || '',
+        g.cantidad === '' || g.cantidad == null ? '' : Number(g.cantidad) || 0,
+        Number(g.descuento) || 0, Number(montoConDescuento(g)) || 0,
+        g.centroCosto || '', g.estado || '', g.unidad || '', g.ot || '',
+      ]), 'Gastos de Flota');
       return;
     }
 
     if (tipo === 'personal') {
-      descargarCSV('reporte_personal', [
+      descargarReporte('reporte_personal', [
         'Nombre', 'Rol', 'Cargo', 'Teléfono', 'Activo',
       ], obtenerPersonalVisible().map((u) => [
-        u.nombre, u.rol, u.cargo, u.telefono,
+        u.nombre || '', u.rol || '', u.cargo || '', formatearTelefono(u.telefono || ''),
         u.activo === false ? 'NO' : 'SÍ',
-      ]));
+      ]), 'Personal');
       return;
     }
 
     if (tipo === 'flota') {
-      descargarCSV('reporte_flota', [
+      descargarReporte('reporte_flota', [
         'Placa', 'Marca', 'Modelo', 'N° Motor', 'Año', 'Tipo Unidad',
         'Conductor Habitual', 'Observaciones',
       ], obtenerFlotaVehiculos().map((v) => [
-        v.placa, v.marca, v.modelo, v.numeroMotor, v.anio, v.tipoUnidad,
-        v.conductorHabitual, v.observaciones,
-      ]));
+        v.placa || '', v.marca || '', v.modelo || '', v.numMotor || '',
+        Number(v.anio) || '', v.tipo || '',
+        v.conductorHabitual || '', v.observaciones || '',
+      ]), 'Vehículos y Flota');
     }
   };
 
@@ -673,19 +667,19 @@ export default function Dashboard() {
           <IconoMascara className="icon" src="/iconos/taller-balances.png" size={16} /> Exportaciones (CSV / Excel)
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--color-text-secondary)', margin: '0 0 14px' }}>
-          Exporta los datos a CSV / Excel.
+          Exporta los datos a Excel (.xlsx) con diseño tabular.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(230px, 100%), 1fr))', gap: 10 }}>
-          <button type="button" className="btn btn-secondary" onClick={() => exportarReporteCSV('ordenes')} disabled={!ordenes.length}>
+          <button type="button" className="btn btn-secondary" onClick={() => exportarReporte('ordenes')} disabled={!ordenes.length}>
             <TbStack2 /> Órdenes de Trabajo ({ordenes.length})
           </button>
-          <button type="button" className="btn btn-secondary" onClick={() => exportarReporteCSV('gastos')} disabled={!gastos.length}>
+          <button type="button" className="btn btn-secondary" onClick={() => exportarReporte('gastos')} disabled={!gastos.length}>
             <TbReceipt /> Gastos de Flota ({gastos.length})
           </button>
-          <button type="button" className="btn btn-secondary" onClick={() => exportarReporteCSV('personal')}>
+          <button type="button" className="btn btn-secondary" onClick={() => exportarReporte('personal')}>
             <TbUsers /> Personal ({obtenerPersonalVisible().length})
           </button>
-          <button type="button" className="btn btn-secondary" onClick={() => exportarReporteCSV('flota')}>
+          <button type="button" className="btn btn-secondary" onClick={() => exportarReporte('flota')}>
             <TbTruck /> Vehículos / Flota ({obtenerFlotaVehiculos().length})
           </button>
         </div>

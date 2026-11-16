@@ -537,6 +537,15 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
                   : hayOtraEnCurso
                     ? 'Ya existe una actividad en curso en esta orden. Finalícela o páusela para iniciar otra'
                     : 'Iniciar cronometraje de esta tarea';
+              // Auditoría S2–S3: el botón Listo replica el bloqueo secuencial
+              // de Iniciar — no se marca una labor como lista antes de
+              // finalizar la actividad previa.
+              const listoBloqueado = !previaFinalizada || !puedeCambiarEstados;
+              const motivoListo = !puedeCambiarEstados
+                ? AVISO_ESTADOS
+                : !previaFinalizada
+                  ? `Debe finalizar la actividad previa (#${actIndex}: ${actividades[actIndex - 1]?.descripcion}) antes de marcar esta labor como lista`
+                  : 'Marcar actividad completada';
 
               return (
                 <div
@@ -627,10 +636,10 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
                       <button
                         type="button"
                         className="btn btn-success btn-sm"
-                        disabled={!puedeCambiarEstados}
-                        style={{ fontSize: 10, padding: '2px 8px', gap: 3, opacity: !puedeCambiarEstados ? 0.45 : 1, cursor: !puedeCambiarEstados ? 'not-allowed' : 'pointer' }}
+                        disabled={listoBloqueado}
+                        style={{ fontSize: 10, padding: '2px 8px', gap: 3, opacity: listoBloqueado ? 0.45 : 1, cursor: listoBloqueado ? 'not-allowed' : 'pointer' }}
                         onClick={() => handleFinalizarSubActividad(act)}
-                        title={!puedeCambiarEstados ? AVISO_ESTADOS : 'Marcar actividad completada'}
+                        title={motivoListo}
                       >
                         <TbCheck /> Listo
                       </button>

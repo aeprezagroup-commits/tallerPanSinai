@@ -40,6 +40,14 @@ export default function Salida() {
   const [observacionesFinales, setObservacionesFinales] = useState('');
   const [recomendaciones, setRecomendaciones] = useState('');
 
+  // Auditoría S2–S3: al cambiar de unidad seleccionada se vacía el campo
+  // Motorista, evitando que el nombre digitado para otra unidad se herede
+  // en el registro de entrega.
+  const seleccionarUnidadSalida = (id) => {
+    if (id && id !== ordenSeleccionadaId) setPersonaRetira('');
+    setOrdenSeleccionadaId(id);
+  };
+
   const [fotosBase, setFotosBase] = useState({});
   const [cargandoFotos, setCargandoFotos] = useState(false);
   const [actualizandoLado, setActualizandoLado] = useState('');
@@ -234,7 +242,7 @@ export default function Salida() {
                     ordenesListas.map(ord => (
                       <tr
                         key={ord.id}
-                        onClick={() => setOrdenSeleccionadaId(ord.id)}
+                        onClick={() => seleccionarUnidadSalida(ord.id)}
                         title="Toca para seleccionar la unidad y abrir el cierre"
                         style={{
                           cursor: 'pointer',
@@ -263,7 +271,7 @@ export default function Salida() {
               {ordenesListas.map(ord => (
                 <div
                   key={ord.id}
-                  onClick={() => setOrdenSeleccionadaId(ord.id)}
+                  onClick={() => seleccionarUnidadSalida(ord.id)}
                   style={{
                     padding: 14,
                     borderRadius: 'var(--radius-md)',
@@ -300,7 +308,7 @@ export default function Salida() {
                 className="form-select"
                 style={{ marginTop: 8 }}
                 value={ordenSeleccionadaId}
-                onChange={(e) => setOrdenSeleccionadaId(e.target.value)}
+                onChange={(e) => seleccionarUnidadSalida(e.target.value)}
               >
                 <option value="">Seleccionar vehículo...</option>
                 {otrasEnTaller.map(o => (

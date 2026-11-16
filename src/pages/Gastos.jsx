@@ -1,5 +1,6 @@
 import BotonVolver from '../components/BotonVolver';
 import { formatearDinero, filtrarCantidad } from '../utils/formato';
+import { descargarXLSX } from '../utils/exportaciones';
 import { useState, useEffect, useMemo } from 'react';
 import {
   TbPlus, TbDownload, TbSearch, TbFilter, TbTrash, TbPencil,
@@ -484,35 +485,27 @@ export default function Gastos() {
     setFechaHasta('');
   };
 
-  const exportarCSV = () => {
+  const exportarExcel = () => {
     if (gastosFiltrados.length === 0) { addToast('No hay gastos para exportar', 'error'); return; }
     const encabezados = [
       'FECHA', 'CCF', 'PROVEEDOR', 'GASTOS', 'CANTIDAD',
       'DESCUENTO', 'MONTO CON DESCUENTO', 'CENTRO DE COSTO', 'ESTADO', 'UNIDAD', 'OT'
     ];
-    const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const filas = gastosFiltrados.map(g => [
       fmtFecha(g.fecha),
       docRef(g),
       esAlmacenG(g) ? 'BODEGA/ALMACÉN' : (g.proveedor || ''),
       g.gastos || '',
-      g.cantidad ?? '',
-      fmtMoney(g.descuento),
-      montoTexto(g),
+      g.cantidad === '' || g.cantidad == null ? '' : Number(g.cantidad) || 0,
+      Number(g.descuento) || 0,
+      esAlmacenG(g) && !(Number(g.monto) > 0) ? '' : Number(montoConDescuento(g)) || 0,
       g.centroCosto || '',
       g.estado === 'pagado' ? 'Pagado' : 'Pendiente de pago',
       g.unidad || '',
       g.ot || ''
-    ].map(escapar).join(','));
-    const csv = '﻿' + [encabezados.join(','), ...filas].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `gastos_vehiculo_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    addToast(`CSV exportado (${gastosFiltrados.length} registros)`, 'success');
+    ]);
+    descargarXLSX(`gastos_vehiculo_${new Date().toISOString().slice(0, 10)}`, encabezados, filas, 'Gastos');
+    addToast(`Reporte en Excel exportado (${gastosFiltrados.length} registros)`, 'success');
   };
 
   const vehDePlaca = (placa) => catalogo.get(normPlaca(placa));
@@ -535,8 +528,8 @@ export default function Gastos() {
           <p>Control de facturas, créditos fiscales y vales de almacén por unidad.</p>
         </div>
         <div className="btn-group">
-          <button type="button" className="btn btn-secondary" onClick={exportarCSV}>
-            <TbDownload /> Exportar CSV
+          <button type="button" className="btn btn-secondary" onClick={exportarExcel}>
+            <TbDownload /> Exportar Excel
           </button>
           <button type="button" className="btn btn-primary" onClick={abrirNuevo}>
             <TbPlus /> Registrar Gasto
