@@ -3038,6 +3038,19 @@ h3,
     min-width: 0 !important;
     max-width: 100%;
     box-sizing: border-box;
+    flex: none !important;
+    height: auto;
+  }
+
+  /* Header de modales (ej. Acta de Taller): evita recortar el boton Imprimir */
+  .modal-header {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  .modal-header>*:last-child {
+    flex-shrink: 0;
+    margin-left: auto;
   }
 
   .filters-bar .form-group,
