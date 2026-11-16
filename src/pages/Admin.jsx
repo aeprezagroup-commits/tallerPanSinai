@@ -1,7 +1,7 @@
 import BotonVolver from '../components/BotonVolver';
 import { useState, useEffect, useRef } from 'react';
 import { normalizarPlaca } from '../utils/placas';
-import { formatearTelefono, soloDigitos, filtrarVIN, validarVIN } from '../utils/formato';
+import { formatearTelefono, soloDigitos, filtrarVIN, validarVIN, filtrarTexto, filtrarAlfanumerico } from '../utils/formato';
 import { Link } from 'react-router-dom';
 import {
   TbTruck,
@@ -610,7 +610,7 @@ export default function Admin({ seccion = 'personal' }) {
                   placeholder="Nombre y apellido"
                   value={nuevoUsuario.nombre}
                   onChange={e => {
-                    setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value });
+                    setNuevoUsuario({ ...nuevoUsuario, nombre: filtrarTexto(e.target.value) });
                     if (erroresUsuario.nombre) setErroresUsuario({ ...erroresUsuario, nombre: null });
                   }}
                 />
@@ -948,7 +948,7 @@ export default function Admin({ seccion = 'personal' }) {
                       style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}
                       value={nuevoVehiculo.placa}
                       onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, placa: e.target.value });
+                        setNuevoVehiculo({ ...nuevoVehiculo, placa: normalizarPlaca(e.target.value) });
                         if (erroresVehiculo.placa) setErroresVehiculo({ ...erroresVehiculo, placa: null });
                       }}
                     />
@@ -964,7 +964,7 @@ export default function Admin({ seccion = 'personal' }) {
                       placeholder="Marca del fabricante"
                       value={nuevoVehiculo.marca}
                       onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, marca: e.target.value });
+                        setNuevoVehiculo({ ...nuevoVehiculo, marca: filtrarTexto(e.target.value) });
                         if (erroresVehiculo.marca) setErroresVehiculo({ ...erroresVehiculo, marca: null });
                       }}
                     />
@@ -980,7 +980,7 @@ export default function Admin({ seccion = 'personal' }) {
                       placeholder="Modelo de la unidad"
                       value={nuevoVehiculo.modelo}
                       onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, modelo: e.target.value });
+                        setNuevoVehiculo({ ...nuevoVehiculo, modelo: filtrarAlfanumerico(e.target.value) });
                         if (erroresVehiculo.modelo) setErroresVehiculo({ ...erroresVehiculo, modelo: null });
                       }}
                     />
@@ -995,7 +995,7 @@ export default function Admin({ seccion = 'personal' }) {
                       className="form-input"
                       placeholder="Número de motor"
                       value={nuevoVehiculo.numMotor}
-                      onChange={e => setNuevoVehiculo({ ...nuevoVehiculo, numMotor: e.target.value })}
+                      onChange={e => setNuevoVehiculo({ ...nuevoVehiculo, numMotor: filtrarAlfanumerico(e.target.value) })}
                     />
                   </div>
                   <div className="form-group">

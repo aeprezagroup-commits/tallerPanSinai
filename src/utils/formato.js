@@ -52,6 +52,34 @@ export function validarVIN(v) {
   return null;
 }
 
+// ---------------------------------------------------------------
+// Campos de texto (nombres, marcas): sólo letras con tildes/ñ,
+// espacios y los signos . ' - (p. ej. "Mercedes-Benz").
+// ---------------------------------------------------------------
+export function filtrarTexto(v) {
+  return String(v ?? '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, '');
+}
+
+// ---------------------------------------------------------------
+// Campos alfanuméricos (modelos, números de motor): letras con
+// tildes/ñ, números y los símbolos comunes - . / (p. ej. "Hilux
+// D-4D 4x4", "4HK1-903125"). Sin caracteres especiales.
+// ---------------------------------------------------------------
+export function filtrarAlfanumerico(v) {
+  return String(v ?? '').replace(/[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s.'/-]/g, '');
+}
+
+// ---------------------------------------------------------------
+// Cantidad numérica (gastos): sólo números con un solo punto
+// decimal. Las letras y símbolos nunca llegan al estado.
+// ---------------------------------------------------------------
+export function filtrarCantidad(v) {
+  const limpio = String(v ?? '').replace(/[^\d.]/g, '');
+  const i = limpio.indexOf('.');
+  if (i === -1) return limpio;
+  return limpio.slice(0, i + 1) + limpio.slice(i + 1).replace(/\./g, '');
+}
+
 // Teléfono de El Salvador:8 dígitos (o11 con503) → +503 XXXX-XXXX.
 // Lo que no sea un número local estándar se muestra como se guardó.
 export function formatearTelefono(tel) {

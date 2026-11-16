@@ -1,5 +1,5 @@
 import BotonVolver from '../components/BotonVolver';
-import { formatearDinero } from '../utils/formato';
+import { formatearDinero, filtrarCantidad } from '../utils/formato';
 import { useState, useEffect, useMemo } from 'react';
 import {
   TbPlus, TbDownload, TbSearch, TbFilter, TbTrash, TbPencil,
@@ -287,7 +287,11 @@ export default function Gastos() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let value = e.target.value;
+    // Cantidad: sólo números con un solo punto decimal (letras y símbolos
+    // nunca llegan al estado).
+    if (name === 'cantidad') value = filtrarCantidad(value);
     setForm(prev => {
       const next = { ...prev, [name]: value };
       if (name === 'unidad') {

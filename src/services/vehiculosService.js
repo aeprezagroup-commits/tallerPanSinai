@@ -282,6 +282,19 @@ export function registrarVehiculoCatalogo(vehiculo) {
     throw new Error('El modelo del vehículo es obligatorio.');
   }
 
+  // Tipo de dato estricto (auditoría S2–S3): marca sólo texto; modelo y
+  // número de motor alfanuméricos sin caracteres especiales.
+  if (/[0-9]/.test(marcaNorm)) {
+    throw new Error('La marca del vehículo no debe contener números.');
+  }
+  if (/[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s.'/-]/.test(modeloNorm)) {
+    throw new Error('El modelo del vehículo no puede contener caracteres especiales.');
+  }
+  const motorNorm = (vehiculo.numMotor || '').trim();
+  if (motorNorm && /[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s.'/-]/.test(motorNorm)) {
+    throw new Error('El número de motor no puede contener caracteres especiales.');
+  }
+
   let anioValido = '';
   if (vehiculo.anio !== undefined && vehiculo.anio !== null && String(vehiculo.anio).trim() !== '') {
     const anioNum = parseInt(vehiculo.anio, 10);

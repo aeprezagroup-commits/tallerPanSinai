@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { normalizarPlaca } from '../utils/placas';
-import { filtrarVIN, validarVIN } from '../utils/formato';
+import { filtrarVIN, validarVIN, filtrarTexto, filtrarAlfanumerico } from '../utils/formato';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   TbArrowLeft,
@@ -16,7 +16,7 @@ import ResumenErrores from '../components/ResumenErrores';
 import {
   obtenerFlotaVehiculos, actualizarVehiculoCatalogo, eliminarVehiculoCatalogo,
   RUTAS_PREDETERMINADAS, DEPARTAMENTOS_EL_SALVADOR, centroCostoPorDepartamento,
-  opcionesCatalogo,
+  opcionesCatalogo, ANIOS_VEHICULO,
 } from '../services/vehiculosService';
 import {
   obtenerFotosBase, guardarFotosBase, eliminarFotosVehiculo
@@ -421,23 +421,28 @@ export default function VehiculoDetalle() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(210px, 100%), 1fr))', gap: '0 14px' }}>
               <Campo id="f-marca" label="Marca *" error={errores.marca}>
                 <input id="f-marca" className="form-input" value={form.marca}
-                  onChange={e => setCampo('marca', e.target.value)} placeholder="Marca del fabricante" />
+                  onChange={e => setCampo('marca', filtrarTexto(e.target.value))} placeholder="Marca del fabricante" />
               </Campo>
               <Campo id="f-modelo" label="Modelo *" error={errores.modelo}>
                 <input id="f-modelo" className="form-input" value={form.modelo}
-                  onChange={e => setCampo('modelo', e.target.value)} placeholder="Modelo de la unidad" />
+                  onChange={e => setCampo('modelo', filtrarAlfanumerico(e.target.value))} placeholder="Modelo de la unidad" />
               </Campo>
               <Campo id="f-tipo" label="Tipo de unidad">
                 <input id="f-tipo" className="form-input" value={form.tipo}
                   onChange={e => setCampo('tipo', e.target.value)} placeholder="Tipo de unidad" />
               </Campo>
               <Campo id="f-anio" label="Año" error={errores.anio}>
-                <input id="f-anio" className="form-input" value={form.anio}
-                  onChange={e => setCampo('anio', e.target.value)} placeholder="Año (AAAA)" inputMode="numeric" />
+                <select id="f-anio" className="form-input" value={form.anio || ''}
+                  onChange={e => setCampo('anio', e.target.value)}>
+                  <option value="">— Seleccione el año —</option>
+                  {opcionesCatalogo(ANIOS_VEHICULO, form.anio).map(a => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
               </Campo>
               <Campo id="f-motor" label="N.º de motor">
                 <input id="f-motor" className="form-input" value={form.numMotor}
-                  onChange={e => setCampo('numMotor', e.target.value)} placeholder="Número de motor" />
+                  onChange={e => setCampo('numMotor', filtrarAlfanumerico(e.target.value))} placeholder="Número de motor" />
               </Campo>
               <Campo id="f-vin" label="VIN" error={errores.vin}>
                 <input id="f-vin" className="form-input" value={form.vin}

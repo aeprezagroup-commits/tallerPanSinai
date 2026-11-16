@@ -30,7 +30,7 @@ import { obtenerFotosBase, guardarFotosBase, LADOS_VEHICULO } from '../services/
 import ScannerModal from '../components/ScannerModal';
 import IconoMascara from '../components/IconoMascara';
 import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
-import { formatearMiles, formatoKmEntrada, soloDigitos } from '../utils/formato';
+import { formatearMiles, formatoKmEntrada, soloDigitos, filtrarTexto, filtrarCantidad } from '../utils/formato';
 import CameraModal from '../components/CameraModal';
 
 function construirActividades(tareas, mecanico = '', areaDefault = 'General') {
@@ -260,10 +260,20 @@ export default function NuevaOrden() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    // El kilometraje se guarda sólo con dígitos; la coma de miles es visual en el campo.
-    setForm(prev => ({ ...prev, [name]: name === 'kilometraje' ? soloDigitos(value) : value }));
+    const { name } = e.target;
+    let value = e.target.value;
+    // Reglas de tipo de dato: kilometraje sólo dígitos (la coma es visual),
+    // conductor sólo texto y tiempo estimado sólo números con punto decimal.
+    if (name === 'kilometraje') value = soloDigitos(value);
+    else if (name === 'conductorEntrega') value = filtrarTexto(value);
+    else if (name === 'tiempoEstimadoHoras') value = filtrarCantidad(value);
+    setForm(prev => ({ ...prev, [name]: value }));
   };
+
+  // Catálogo cerrado para Receptor y Encargado: sólo nombres de mecánicos
+  // activos (más el valor actual si no está en la lista). Sin tipeo libre.
+  const opcionesReceptor = [...new Set([...mecanicos, form.mecanicoReceptor].filter(Boolean))];
+  const opcionesEncargado = [...new Set([...mecanicos, form.mecanicoAsignado].filter(Boolean))];
 
   const guardarFotoLado = (lado, file) => {
     if (!file) return;
@@ -956,22 +966,20 @@ export default function NuevaOrden() {
                     <TbLock style={{ marginLeft: 5, verticalAlign: -1, color: 'var(--color-text-muted)' }} title="Bloqueado por sesión" />
                   )}
                 </label>
-                <input
-                  list="lista-mecanicos-receptor"
+                <select
                   name="mecanicoReceptor"
                   value={form.mecanicoReceptor}
                   onChange={handleChange}
-                  placeholder="Escriba para buscar un mecánico..."
-                  className="form-input"
+                  className="form-select"
                   required={modoAtencion === 'taller'}
                   disabled={esMecanico}
-                  style={{ fontSize: 13, opacity: esMecanico ? 0.75 : 1, cursor: esMecanico ? 'not-allowed' : 'text' }}
-                />
-                <datalist id="lista-mecanicos-receptor">
-                  {mecanicos.map(m => (
-                    <option key={m} value={m} />
+                  style={{ fontSize: 13, opacity: esMecanico ? 0.75 : 1, cursor: esMecanico ? 'not-allowed' : 'pointer' }}
+                >
+                  <option value="">— Seleccione el receptor —</option>
+                  {opcionesReceptor.map(m => (
+                    <option key={m} value={m}>{m}</option>
                   ))}
-                </datalist>
+                </select>
                 <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                   {esMecanico
                     ? <><TbLock style={{ marginRight: 4, verticalAlign: -1 }} />Bloqueado: {currentUser.nombre} recibe la unidad.</>
@@ -990,21 +998,19 @@ export default function NuevaOrden() {
                     <TbLock style={{ marginLeft: 5, verticalAlign: -1, color: 'var(--color-text-muted)' }} title="Bloqueado por sesión" />
                   )}
                 </label>
-                <input
-                  list="lista-mecanicos-encargado"
+                <select
                   name="mecanicoAsignado"
-                  value={form.mecanicoAsignado}
+                  value={form.mecanicoAsignado || ''}
                   onChange={handleChange}
-                  placeholder="Sin asignación — escriba para buscar un mecánico..."
-                  className="form-input"
+                  className="form-select"
                   disabled={esMecanico && modoAtencion === 'asistencia'}
-                  style={{ fontSize: 13, opacity: (esMecanico && modoAtencion === 'asistencia') ? 0.75 : 1, cursor: (esMecanico && modoAtencion === 'asistencia') ? 'not-allowed' : 'text' }}
-                />
-                <datalist id="lista-mecanicos-encargado">
-                  {mecanicos.map(m => (
-                    <option key={m} value={m} />
+                  style={{ fontSize: 13, opacity: (esMecanico && modoAtencion === 'asistencia') ? 0.75 : 1, cursor: (esMecanico && modoAtencion === 'asistencia') ? 'not-allowed' : 'pointer' }}
+                >
+                  <option value="">— Sin asignación —</option>
+                  {opcionesEncargado.map(m => (
+                    <option key={m} value={m}>{m}</option>
                   ))}
-                </datalist>
+                </select>
                 <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                   {esMecanico && modoAtencion === 'asistencia'
                     ? <>Bloqueado: tú introduces la unidad.</>
@@ -1017,14 +1023,12 @@ export default function NuevaOrden() {
               <div className="form-group">
                 <label className="form-label">Tiempo Estimado de Solución (horas)</label>
                 <input
-                  type="number"
+                  type="text"
                   name="tiempoEstimadoHoras"
                   value={form.tiempoEstimadoHoras}
                   onChange={handleChange}
                   placeholder="Horas estimadas de trabajo"
                   className="form-input"
-                  min="0"
-                  step="0.5"
                   inputMode="decimal"
                   enterKeyHint="done"
                 />

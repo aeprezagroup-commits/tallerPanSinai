@@ -185,12 +185,16 @@ export default function DetalleOrden() {
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    // El kilometraje se guarda sólo con dígitos; la coma de miles es visual.
-    // El VIN sólo admite letras y números en mayúsculas (ISO 3779).
-    setFormEdit(prev => ({
-      ...prev,
-      [name]: name === 'kilometraje' ? soloDigitos(value) : name === 'vin' ? filtrarVIN(value) : value
-    }));
+    // Reglas de tipo de dato por campo: kilometraje sólo dígitos (la coma de
+    // miles es visual), VIN alfanumérico ISO 3779, marca sólo texto y
+    // modelo/motor alfanuméricos sin caracteres especiales.
+    const filtrado =
+      name === 'kilometraje' ? soloDigitos(value)
+        : name === 'vin' ? filtrarVIN(value)
+          : name === 'marca' || name === 'conductorEntrega' ? filtrarTexto(value)
+            : name === 'modelo' || name === 'numMotor' ? filtrarAlfanumerico(value)
+              : value;
+    setFormEdit(prev => ({ ...prev, [name]: filtrado }));
   };
 
   const apoyosForm = (Array.isArray(formEdit.mecanicosApoyo) && formEdit.mecanicosApoyo.length > 0)
