@@ -2888,6 +2888,16 @@ input[type='password'],
   animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Nueva Orden: al marcar áreas o cambiar Mantenimiento/Falla crece o encoge
+   lista de tareas dentro de la tarjeta. El scroll anchoring nativo del
+   navegador compensaba eso moviendo el scroll de la página y de la tarjeta
+   (overflow: hidden sigue siendo contenedor de scroll), lo que se veía como
+   un salto. Se desactiva sólo en esta página para que la vista quede fija. */
+.pagina-nueva-orden,
+.pagina-nueva-orden .card {
+  overflow-anchor: none;
+}
+
 h1,
 h2,
 h3,

@@ -1,5 +1,5 @@
 import BotonVolver from '../components/BotonVolver';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { normalizarPlaca } from '../utils/placas';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
@@ -361,7 +361,17 @@ export default function NuevaOrden() {
     setTareasOmitidasMotivos(prev => ({ ...prev, [id]: texto }));
   };
 
+  // Elegir Mantenimiento o Falla agrega o quita bloques enteros (áreas de
+  // taller, pauta de km, listas de hasta 67 tareas) y eso cambia el alto del
+  // documento. Se anota la posición visible del bloque "Motivo de Ingreso" para
+  // recomponerla después del render: la vista no debe saltar ni el scroll
+  // moverse solo cuando el usuario apenas está eligiendo el tipo de servicio.
+  const motivoTopAntesRef = useRef(null);
+
   const seleccionarMotivo = (motivo) => {
+    motivoTopAntesRef.current = seccionMotivoRef.current
+      ? seccionMotivoRef.current.getBoundingClientRect().top
+      : null;
     setForm(prev => ({
       ...prev,
       motivoIngreso: motivo.id,
@@ -371,10 +381,26 @@ export default function NuevaOrden() {
     setAreasSeleccionadas(new Set());
     setTareasMarcadas(new Set());
     setTareasOmitidasMotivos({});
-    setTimeout(() => {
-      seccionTareasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 250);
   };
+
+  // Recompone la posición visible del bloque "Motivo" justo antes del pintado,
+  // de modo que el cambio de alto del documento no arrastre la vista del usuario.
+  useLayoutEffect(() => {
+    const topAntes = motivoTopAntesRef.current;
+    if (topAntes === null) return;
+    motivoTopAntesRef.current = null;
+    const el = seccionMotivoRef.current;
+    if (!el) return;
+    const delta = el.getBoundingClientRect().top - topAntes;
+    if (Math.abs(delta) < 1) return;
+    // Se fuerza desplazamiento instantáneo: con scroll-behavior: smooth la
+    // compensación se vería como un segundo salto.
+    const html = document.documentElement;
+    const scrollPrevio = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
+    window.scrollBy(0, delta);
+    html.style.scrollBehavior = scrollPrevio;
+  }, [form.motivoIngreso]);
 
   // Tras elegir el tipo de atención, la vista lleva a verificar el vehículo
   // y registrar el kilometraje antes de seguir con la recepción.
@@ -618,7 +644,7 @@ export default function NuevaOrden() {
   ];
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in pagina-nueva-orden">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <BotonVolver a="/ordenes" etiqueta="Volver a Órdenes" />
