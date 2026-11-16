@@ -1,4 +1,5 @@
 import { normalizarPlaca } from '../utils/placas';
+import { validarVIN } from '../utils/formato';
 import { crearRepositorio } from '../firebase/repositorio';
 import { registrarBitacora, TIPOS_BITACORA } from './bitacoraService';
 
@@ -292,8 +293,9 @@ export function registrarVehiculoCatalogo(vehiculo) {
   }
 
   const vinNorm = (vehiculo.vin || '').trim().toUpperCase();
-  if (vinNorm && vinNorm.length > 17) {
-    throw new Error('El número VIN no puede superar los 17 caracteres alfanuméricos.');
+  const errorVin = validarVIN(vinNorm);
+  if (errorVin) {
+    throw new Error(errorVin);
   }
 
   const vehiculoSanitizado = {

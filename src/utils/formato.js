@@ -26,6 +26,32 @@ export function soloDigitos(v) {
   return String(v ?? '').replace(/[^\d]/g, '');
 }
 
+// ---------------------------------------------------------------
+// VIN / Número de chasis — norma ISO 3779:
+//   • exactamente 17 caracteres
+//   • letras (A–Z) y números (0–9), sin caracteres especiales
+//   • sin las letras I, O ni Q (se confunden con1,0 y O)
+// El campo es opcional: vacío = sin VIN registrado.
+// ---------------------------------------------------------------
+export function filtrarVIN(v) {
+  return String(v ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 17);
+}
+
+export function validarVIN(v) {
+  const vin = String(v ?? '').trim().toUpperCase();
+  if (!vin) return null;
+  if (!/^[A-Z0-9]+$/.test(vin)) {
+    return 'El VIN sólo puede contener letras y números (sin caracteres especiales).';
+  }
+  if (vin.length !== 17) {
+    return 'El VIN debe tener exactamente 17 caracteres.';
+  }
+  if (/[IOQ]/.test(vin)) {
+    return 'El VIN no puede contener las letras I, O ni Q.';
+  }
+  return null;
+}
+
 // Teléfono de El Salvador:8 dígitos (o11 con503) → +503 XXXX-XXXX.
 // Lo que no sea un número local estándar se muestra como se guardó.
 export function formatearTelefono(tel) {

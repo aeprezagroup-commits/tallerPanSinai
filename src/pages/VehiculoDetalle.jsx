@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { normalizarPlaca } from '../utils/placas';
+import { filtrarVIN, validarVIN } from '../utils/formato';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   TbArrowLeft,
@@ -164,6 +165,10 @@ export default function VehiculoDetalle() {
     }
     if (form.anio && !/^\d{4}$/.test(String(form.anio).trim())) {
       err.anio = 'El año debe ser un año válido de 4 dígitos.';
+    }
+    const errorVin = validarVIN(form.vin);
+    if (errorVin) {
+      err.vin = errorVin;
     }
     setErrores(err);
     if (Object.keys(err).length > 0) {
@@ -434,9 +439,11 @@ export default function VehiculoDetalle() {
                 <input id="f-motor" className="form-input" value={form.numMotor}
                   onChange={e => setCampo('numMotor', e.target.value)} placeholder="Número de motor" />
               </Campo>
-              <Campo id="f-vin" label="VIN">
+              <Campo id="f-vin" label="VIN" error={errores.vin}>
                 <input id="f-vin" className="form-input" value={form.vin}
-                  onChange={e => setCampo('vin', e.target.value)} placeholder="Número de chasis / VIN" />
+                  onChange={e => setCampo('vin', filtrarVIN(e.target.value))}
+                  maxLength={17} placeholder="Número de chasis / VIN (17 caracteres)"
+                  style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
               </Campo>
               <Campo id="f-depto" label="Departamento">
                 <select id="f-depto" className="form-input" value={form.departamento || ''}
@@ -587,13 +594,13 @@ export default function VehiculoDetalle() {
                   <div style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--color-text)' }}>
                     {lado.label}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))', gap: 6 }}>
                     <button type="button"
                       className={foto ? 'btn btn-secondary' : 'btn btn-primary'}
                       onClick={() => setCamaraLado(lado.key)}
                       disabled={ocupado}
                       style={{
-                        width: '100%', justifyContent: 'center', padding: '6px 4px', fontSize: 11, gap: 4,
+                        width: '100%', justifyContent: 'center', padding: '6px 3px', fontSize: 10, gap: 3,
                         gridColumn: ocupado ? '1 / -1' : 'auto',
                       }}>
                       <IconoMascara src="/iconos/camara-fotografica.png" size={12} />
@@ -603,8 +610,8 @@ export default function VehiculoDetalle() {
                       <button type="button"
                         className="btn btn-secondary"
                         onClick={() => pedirFoto(lado.key, false)}
-                        style={{ width: '100%', justifyContent: 'center', padding: '6px 4px', fontSize: 11, gap: 4 }}>
-                        <TbUpload />
+                        style={{ width: '100%', justifyContent: 'center', padding: '6px 3px', fontSize: 10, gap: 3 }}>
+                        <TbUpload size={12} />
                         Subir
                       </button>
                     )}

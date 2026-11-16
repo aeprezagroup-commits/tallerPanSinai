@@ -23,7 +23,7 @@ import { puedeVerOrden, puedeModificarOrden, ordenCompleta, puedeReactivarOrden,
 import { obtenerMecanicosActivos } from '../services/usuariosService';
 import { DEPARTAMENTOS_EL_SALVADOR, RUTAS_PREDETERMINADAS } from '../services/vehiculosService';
 import { opcionesArea } from '../constants/areas';
-import { formatearDinero, formatearMiles, formatoKmEntrada, soloDigitos } from '../utils/formato';
+import { formatearDinero, formatearMiles, formatoKmEntrada, soloDigitos, filtrarVIN, validarVIN } from '../utils/formato';
 import StatusBadge from '../components/StatusBadge';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import FinalizacionOrdenModal from '../components/FinalizacionOrdenModal';
@@ -186,7 +186,11 @@ export default function DetalleOrden() {
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     // El kilometraje se guarda sólo con dígitos; la coma de miles es visual.
-    setFormEdit(prev => ({ ...prev, [name]: name === 'kilometraje' ? soloDigitos(value) : value }));
+    // El VIN sólo admite letras y números en mayúsculas (ISO 3779).
+    setFormEdit(prev => ({
+      ...prev,
+      [name]: name === 'kilometraje' ? soloDigitos(value) : name === 'vin' ? filtrarVIN(value) : value
+    }));
   };
 
   const apoyosForm = (Array.isArray(formEdit.mecanicosApoyo) && formEdit.mecanicosApoyo.length > 0)
@@ -254,6 +258,12 @@ export default function DetalleOrden() {
       }
     }
 
+    const errorVin = validarVIN(formEdit.vin);
+    if (errorVin) {
+      addToast(errorVin, 'error');
+      return;
+    }
+
     if (isAdmin && formEdit.costoManoObra !== '' && parseFloat(formEdit.costoManoObra) < 0) {
       addToast('El costo de mano de obra no puede ser una cifra negativa', 'error');
       return;
@@ -301,7 +311,7 @@ export default function DetalleOrden() {
         marca: formEdit.marca,
         modelo: formEdit.modelo,
         numMotor: formEdit.numMotor,
-        vin: (formEdit.vin || '').toUpperCase(),
+        vin: filtrarVIN(formEdit.vin),
         anio: formEdit.anio,
         kilometraje: formEdit.kilometraje ? Number(formEdit.kilometraje) : (orden.kilometraje || null),
         departamento: formEdit.departamento || orden.departamento,
@@ -706,7 +716,7 @@ export default function DetalleOrden() {
                   onChange={handleEditChange}
                   className="form-input"
                   maxLength={17}
-                  placeholder="Número de chasis / VIN (17 dígitos)"
+                  placeholder="Número de chasis / VIN (17 caracteres)"
                   style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                 />
               </div>

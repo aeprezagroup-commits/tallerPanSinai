@@ -1,4 +1,5 @@
 import { normalizarPlaca } from '../utils/placas';
+import { filtrarVIN } from '../utils/formato';
 import {
   collection,
   addDoc,
@@ -188,7 +189,7 @@ export async function crearOrden(datosOrden) {
       marca: datosOrden.marca || '',
       modelo: datosOrden.modelo || '',
       numMotor: datosOrden.numMotor || '',
-      vin: (datosOrden.vin || '').toUpperCase(),
+      vin: filtrarVIN(datosOrden.vin),
       anio: datosOrden.anio || '',
       kilometraje: Number(datosOrden.kilometraje) || 0,
       departamento: datosOrden.departamento || 'San Salvador',

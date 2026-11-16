@@ -1,7 +1,7 @@
 import BotonVolver from '../components/BotonVolver';
 import { useState, useEffect, useRef } from 'react';
 import { normalizarPlaca } from '../utils/placas';
-import { formatearTelefono, soloDigitos } from '../utils/formato';
+import { formatearTelefono, soloDigitos, filtrarVIN, validarVIN } from '../utils/formato';
 import { Link } from 'react-router-dom';
 import {
   TbTruck,
@@ -338,8 +338,9 @@ export default function Admin({ seccion = 'personal' }) {
         errores.anio = `Año inválido (debe ser un año entre 1970 y ${anioMax}).`;
       }
     }
-    if (vin && vin.length > 17) {
-      errores.vin = 'El VIN no puede superar los 17 caracteres.';
+    const errorVin = validarVIN(vin);
+    if (errorVin) {
+      errores.vin = errorVin;
     }
 
     if (Object.keys(errores).length > 0) {
@@ -1003,11 +1004,11 @@ export default function Admin({ seccion = 'personal' }) {
                       type="text"
                       className={`form-input ${erroresVehiculo.vin ? 'is-invalid' : ''}`}
                       maxLength={17}
-                      placeholder="Número de chasis / VIN (17 dígitos)"
+                      placeholder="Número de chasis / VIN (17 caracteres)"
                       style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                       value={nuevoVehiculo.vin}
                       onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, vin: e.target.value });
+                        setNuevoVehiculo({ ...nuevoVehiculo, vin: filtrarVIN(e.target.value) });
                         if (erroresVehiculo.vin) setErroresVehiculo({ ...erroresVehiculo, vin: null });
                       }}
                     />
