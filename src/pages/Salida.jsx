@@ -39,7 +39,6 @@ export default function Salida() {
 
   const [personaRetira, setPersonaRetira] = useState('');
   const [observacionesFinales, setObservacionesFinales] = useState('');
-  const [recomendaciones, setRecomendaciones] = useState('');
 
   // Auditoría S2–S3: al cambiar de unidad seleccionada se vacía el campo
   // Motorista, evitando que el nombre digitado para otra unidad se herede
@@ -168,7 +167,7 @@ export default function Salida() {
         personaRetira: personaRetira.trim(),
         empleadoDespacha: entregadoPor,
         observacionesFinales: observacionesFinales.trim(),
-        recomendaciones: recomendaciones.trim()
+        recomendaciones: ''
       });
 
       addToast(`Vehículo ${ordenActual?.placa || ''} entregado. Orden cerrada.`, 'success');
@@ -480,21 +479,10 @@ export default function Salida() {
               <label className="form-label">Observaciones Finales Técnicas</label>
               <textarea
                 className="form-textarea"
-                rows={3}
-                placeholder="Detalle de trabajos, repuestos o pruebas de ruta..."
+                rows={4}
+                placeholder="Detalle de trabajos, repuestos, pruebas de ruta o recomendaciones para el conductor..."
                 value={observacionesFinales}
                 onChange={(e) => setObservacionesFinales(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 16 }}>
-              <label className="form-label">Recomendaciones Preventivas</label>
-              <textarea
-                className="form-textarea"
-                rows={3}
-                placeholder="Instrucciones o recomendaciones para el conductor..."
-                value={recomendaciones}
-                onChange={(e) => setRecomendaciones(e.target.value)}
               />
             </div>
 
@@ -650,8 +638,7 @@ export default function Salida() {
           orden={{
             ...ordenActual,
             personaRetira: personaRetira || ordenActual.conductorEntrega,
-            observacionesFinales,
-            recomendaciones
+            observacionesFinales
           }}
         />
       )}

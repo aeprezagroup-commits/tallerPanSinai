@@ -1548,11 +1548,9 @@ export default function DetalleOrden() {
             </div>
             <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
               <div className="detail-item-label">Observaciones Finales</div>
-              <div className="detail-item-value" style={{ fontWeight: 400 }}>{orden.observacionesFinales || '—'}</div>
-            </div>
-            <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
-              <div className="detail-item-label">Recomendaciones</div>
-              <div className="detail-item-value" style={{ fontWeight: 400 }}>{orden.recomendaciones || '—'}</div>
+              <div className="detail-item-value" style={{ fontWeight: 400 }}>
+                {orden.observacionesFinales || orden.recomendaciones || 'Sin comentarios técnicos'}
+              </div>
             </div>
           </div>
         </div>
