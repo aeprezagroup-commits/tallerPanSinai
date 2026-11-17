@@ -97,9 +97,9 @@ export default function GuardiaSalida() {
 
       dialogoAbiertoRef.current = true;
       const salir = await confirmRef.current({
-        title: '¿Abandonar esta pantalla?',
+        title: '¿Salir sin guardar?',
         message:
-          'Está por salir de un informe. Si continúa, se perderá su lugar.',
+          'Está por salir sin guardar. Si continúa, se perderán los cambios.',
         confirmText: 'Sí, salir',
         cancelText: 'Permanecer aquí',
         danger: true
