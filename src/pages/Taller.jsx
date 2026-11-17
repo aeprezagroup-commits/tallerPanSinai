@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { obtenerMecanicosActivos } from '../services/usuariosService';
 import { visiblesParaTaller, esColaRecepcion, apoyosDeOrden } from '../services/permisosService';
 import StatusBadge from '../components/StatusBadge';
-import { formatearDinero, formatearMiles } from '../utils/formato';
+import { formatearMiles } from '../utils/formato';
 import OrdenOperativa from '../components/OrdenOperativa';
 import BotonVolver from '../components/BotonVolver';
 
@@ -19,7 +19,7 @@ export default function Taller() {
   const [vista, setVista] = useState('fila');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
 
-  const { isMecanico, isAdmin, currentUser } = useAuth();
+  const { isMecanico, currentUser } = useAuth();
 
   const toggleOrden = (id) => setOrdenAbierta((prev) => (prev === id ? null : id));
 
@@ -148,7 +148,6 @@ export default function Taller() {
                 <th>Área Técnica</th>
                 <th>Responsable / Apoyos</th>
                 <th>Estado Operativo</th>
-                {isAdmin && <th style={{ textAlign: 'right' }}>Inversión (Admin)</th>}
                 <th>Acción</th>
               </tr>
             </thead>
@@ -210,11 +209,6 @@ export default function Taller() {
                       <td>
                         <StatusBadge estado={orden.estado} />
                       </td>
-                      {isAdmin && (
-                        <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                          {formatearDinero(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0))}
-                        </td>
-                      )}
                       <td style={{ whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
                           <button
@@ -233,7 +227,7 @@ export default function Taller() {
                     </tr>
                     {ordenAbierta === orden.id && (
                       <tr>
-                        <td colSpan={8 + (isAdmin ? 1 : 0)} style={{ padding: 0, background: 'var(--color-bg-secondary)', borderBottom: '2px solid rgba(134,153,46,0.35)' }}>
+                        <td colSpan={8} style={{ padding: 0, background: 'var(--color-bg-secondary)', borderBottom: '2px solid rgba(134,153,46,0.35)' }}>
                           <div style={{ padding: '14px 16px' }} onClick={(e) => e.stopPropagation()}>
                             <OrdenOperativa
                               orden={orden}

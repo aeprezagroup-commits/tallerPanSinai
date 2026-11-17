@@ -12,6 +12,7 @@ import {
   TbPlus,
   TbLock,
   TbAlertTriangle,
+  TbTrash,
 } from '../icons';
 import { crearOrden, buscarPorPlaca, formatoOT } from '../firebase/ordenesService';
 import { ESTADOS_CONFIG } from '../components/StatusBadge';
@@ -57,6 +58,14 @@ const ESTADOS_EN_TALLER = [
 const etiquetaEstadoOrden = (estado) =>
   ESTADOS_CONFIG[estado]?.label || String(estado || '').replace('_', ' ');
 
+// Tarjetas de la inspeccion perimetral 360° (ingreso de orden).
+const FOTOS_PERIMETRAL = [
+  { key: 'frontal', num: 1, label: 'Frontal', tag: 'Frente', titulo: 'Foto Frontal', hint: 'Frente y parrilla', alt: 'Vista Frontal' },
+  { key: 'lateralIzquierdo', num: 2, label: 'Lateral Izquierdo', tag: 'Conductor', titulo: 'Costado Izq.', hint: 'Lado del motorista', alt: 'Lateral Izquierdo' },
+  { key: 'lateralDerecho', num: 3, label: 'Lateral Derecho', tag: 'Acompañante', titulo: 'Costado Der.', hint: 'Lado del copiloto', alt: 'Lateral Derecho' },
+  { key: 'trasera', num: 4, label: 'Vista Trasera', tag: 'Posterior', titulo: 'Foto Trasera', hint: 'Compuerta / Baúl', alt: 'Vista Trasera' },
+];
+
 export default function NuevaOrden() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,6 +108,8 @@ export default function NuevaOrden() {
   });
   const [fotosLadosNuevas, setFotosLadosNuevas] = useState({});
   const [camaraLado, setCamaraLado] = useState('');
+  // Menu "Agregar o actualizar foto" abierto por tarjeta (vacio = cerrado).
+  const [menuFotoLado, setMenuFotoLado] = useState('');
 
   const [form, setForm] = useState({
     placa: '',
@@ -1433,193 +1444,78 @@ export default function NuevaOrden() {
             </p>
 
             <div className="side-photos-grid">
-              <div className="side-photo-card">
-                <div className="side-photo-header">
-                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> 1. Frontal</span>
-                  <span className="side-photo-angle-tag">Frente</span>
-                </div>
-                {fotosLados.frontal ? (
-                  <div className="side-photo-preview">
-                    <img src={fotosLados.frontal} alt="Vista Frontal" />
-                    <span className="badge-captured"><TbCircleCheck /> Lista</span>
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      title="Eliminar foto"
-                      onClick={() => handleQuitarFotoLado('frontal')}
-                    >
-                      <TbX />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="side-photo-upload">
-                    <div className="upload-icon-circle">
-                      <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
+              {FOTOS_PERIMETRAL.map(({ key, num, label, tag, titulo, hint, alt }) => {
+                const foto = fotosLados[key];
+                const menuAbierto = menuFotoLado === key;
+                return (
+                  <div key={key} className="side-photo-card">
+                    <div className="side-photo-header">
+                      <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> {num}. {label}</span>
+                      <span className="side-photo-angle-tag">{tag}</span>
                     </div>
-                    <span className="side-photo-upload-text">Foto Frontal</span>
-                    <span className="side-photo-upload-hint">Frente y parrilla</span>
-                    <div className="side-photo-actions">
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm side-photo-option"
-                        onClick={() => setCamaraLado('frontal')}
-                      >
-                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
-                      </button>
-                      <label className="btn btn-secondary btn-sm side-photo-option">
-                        <TbUpload /> Subir
-                        <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFotoLadoChange('frontal', e)}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
 
-              <div className="side-photo-card">
-                <div className="side-photo-header">
-                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> 2. Lateral Izquierdo</span>
-                  <span className="side-photo-angle-tag">Conductor</span>
-                </div>
-                {fotosLados.lateralIzquierdo ? (
-                  <div className="side-photo-preview">
-                    <img src={fotosLados.lateralIzquierdo} alt="Lateral Izquierdo" />
-                    <span className="badge-captured"><TbCircleCheck /> Lista</span>
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      title="Eliminar foto"
-                      onClick={() => handleQuitarFotoLado('lateralIzquierdo')}
-                    >
-                      <TbX />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="side-photo-upload">
-                    <div className="upload-icon-circle">
-                      <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
-                    </div>
-                    <span className="side-photo-upload-text">Costado Izq.</span>
-                    <span className="side-photo-upload-hint">Lado del motorista</span>
-                    <div className="side-photo-actions">
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm side-photo-option"
-                        onClick={() => setCamaraLado('lateralIzquierdo')}
-                      >
-                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
-                      </button>
-                      <label className="btn btn-secondary btn-sm side-photo-option">
-                        <TbUpload /> Subir
-                        <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFotoLadoChange('lateralIzquierdo', e)}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
+                    {foto ? (
+                      <div className="side-photo-preview">
+                        <img src={foto} alt={alt} />
+                        <span className="badge-captured"><TbCircleCheck /> Lista</span>
+                      </div>
+                    ) : (
+                      <div className="side-photo-upload">
+                        <div className="upload-icon-circle">
+                          <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
+                        </div>
+                        <span className="side-photo-upload-text">{titulo}</span>
+                        <span className="side-photo-upload-hint">{hint}</span>
+                      </div>
+                    )}
 
-              <div className="side-photo-card">
-                <div className="side-photo-header">
-                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> 3. Lateral Derecho</span>
-                  <span className="side-photo-angle-tag">Acompañante</span>
-                </div>
-                {fotosLados.lateralDerecho ? (
-                  <div className="side-photo-preview">
-                    <img src={fotosLados.lateralDerecho} alt="Lateral Derecho" />
-                    <span className="badge-captured"><TbCircleCheck /> Lista</span>
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      title="Eliminar foto"
-                      onClick={() => handleQuitarFotoLado('lateralDerecho')}
-                    >
-                      <TbX />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="side-photo-upload">
-                    <div className="upload-icon-circle">
-                      <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
-                    </div>
-                    <span className="side-photo-upload-text">Costado Der.</span>
-                    <span className="side-photo-upload-hint">Lado del copiloto</span>
                     <div className="side-photo-actions">
                       <button
                         type="button"
-                        className="btn btn-primary btn-sm side-photo-option"
-                        onClick={() => setCamaraLado('lateralDerecho')}
+                        className={`btn btn-sm side-photo-option ${menuAbierto ? 'btn-secondary' : 'btn-primary'}`}
+                        style={{ gridColumn: '1 / -1' }}
+                        onClick={() => setMenuFotoLado(menuAbierto ? '' : key)}
+                        aria-expanded={menuAbierto}
                       >
-                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
+                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Agregar o actualizar foto
                       </button>
-                      <label className="btn btn-secondary btn-sm side-photo-option">
-                        <TbUpload /> Subir
-                        <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFotoLadoChange('lateralDerecho', e)}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
 
-              <div className="side-photo-card">
-                <div className="side-photo-header">
-                  <span className="side-photo-label"><IconoMascara src="/iconos/camara-fotografica.png" size={12} /> 4. Vista Trasera</span>
-                  <span className="side-photo-angle-tag">Posterior</span>
-                </div>
-                {fotosLados.trasera ? (
-                  <div className="side-photo-preview">
-                    <img src={fotosLados.trasera} alt="Vista Trasera" />
-                    <span className="badge-captured"><TbCircleCheck /> Lista</span>
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      title="Eliminar foto"
-                      onClick={() => handleQuitarFotoLado('trasera')}
-                    >
-                      <TbX />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="side-photo-upload">
-                    <div className="upload-icon-circle">
-                      <IconoMascara src="/iconos/camara-fotografica.png" size={20} />
-                    </div>
-                    <span className="side-photo-upload-text">Foto Trasera</span>
-                    <span className="side-photo-upload-hint">Compuerta / Baúl</span>
-                    <div className="side-photo-actions">
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm side-photo-option"
-                        onClick={() => setCamaraLado('trasera')}
-                      >
-                        <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
-                      </button>
-                      <label className="btn btn-secondary btn-sm side-photo-option">
-                        <TbUpload /> Subir
-                        <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFotoLadoChange('trasera', e)}
-                        />
-                      </label>
+                      {foto && (
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm side-photo-option"
+                          style={{ gridColumn: '1 / -1' }}
+                          onClick={() => { handleQuitarFotoLado(key); setMenuFotoLado(''); }}
+                          title={`Quitar la foto ${label}`}
+                        >
+                          <TbTrash size={12} /> Quitar
+                        </button>
+                      )}
+
+                      {menuAbierto && (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm side-photo-option"
+                            onClick={() => { setCamaraLado(key); setMenuFotoLado(''); }}
+                          >
+                            <IconoMascara src="/iconos/camara-fotografica.png" size={12} /> Cámara
+                          </button>
+                          <label className="btn btn-secondary btn-sm side-photo-option">
+                            <TbUpload /> Subir
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => { handleFotoLadoChange(key, e); setMenuFotoLado(''); }}
+                            />
+                          </label>
+                        </>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
+                );
+              })}
             </div>
           </fieldset>
         </div>

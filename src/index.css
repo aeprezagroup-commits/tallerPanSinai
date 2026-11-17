@@ -4808,6 +4808,19 @@ h3,
   font-size: 11.5px;
 }
 
+/* "Agregar o actualizar foto" / "Quitar": siempre visibles bajo la tarjeta */
+.side-photo-actions .side-photo-option {
+  min-height: 40px;
+}
+
+@media (max-width: 640px) {
+  .side-photo-actions .side-photo-option {
+    min-height: 44px;
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}
+
 .side-photo-preview {
   position: relative;
   width: 100%;

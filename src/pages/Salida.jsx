@@ -1,5 +1,4 @@
 import BotonVolver from '../components/BotonVolver';
-import { formatearDinero } from '../utils/formato';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -56,7 +55,7 @@ export default function Salida() {
   const ladoPendienteRef = useRef('');
 
   const { addToast, confirm } = useToast();
-  const { currentUser, isAdmin } = useAuth();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const conductores = obtenerConductores();
 
@@ -342,16 +341,6 @@ export default function Salida() {
                     <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--color-accent)' }}>
                       {ordenActual.placa} — {ordenActual.marca} {ordenActual.modelo}
                     </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    {isAdmin && (
-                      <>
-                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Gasto de Reparación</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>
-                          {formatearDinero(Number(ordenActual.costoTotal) || (Number(ordenActual.costoRepuestos) || 0) + (Number(ordenActual.costoManoObra) || 0))} USD
-                        </div>
-                      </>
-                    )}
                   </div>
                 </div>
 

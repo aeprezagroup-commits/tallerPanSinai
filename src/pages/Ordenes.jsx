@@ -10,7 +10,6 @@ import { obtenerMecanicosActivos } from '../services/usuariosService';
 import { useAuth } from '../context/AuthContext';
 import { filtrarOrdenesPorUsuario, visiblesParaTaller, esColaRecepcion, apoyosDeOrden } from '../services/permisosService';
 import StatusBadge from '../components/StatusBadge';
-import { formatearDinero } from '../utils/formato';
 import OrdenOperativa from '../components/OrdenOperativa';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import { AREAS_TRABAJO_CON_TODAS as AREAS } from '../constants/areas';
@@ -23,7 +22,7 @@ const aFecha = (ts) => {
 };
 
 export default function Ordenes() {
-  const { isAdmin, isMecanico, currentUser } = useAuth();
+  const { isMecanico, currentUser } = useAuth();
 
   const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +115,7 @@ export default function Ordenes() {
     );
   }
 
-  const totalColumnas = 8 + (isAdmin ? 1 : 0);
+  const totalColumnas = 8;
 
   return (
     <div className="animate-fade-in">
@@ -246,7 +245,6 @@ export default function Ordenes() {
                 <th>Área Técnica</th>
                 <th>Técnico Asignado</th>
                 <th>Estado Operativo</th>
-                {isAdmin && <th style={{ textAlign: 'right' }}>Inversión (Admin)</th>}
                 <th>Acción</th>
               </tr>
             </thead>
@@ -292,11 +290,6 @@ export default function Ordenes() {
                     <td>
                       <StatusBadge estado={orden.estado} />
                     </td>
-                    {isAdmin && (
-                      <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                        {formatearDinero(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0))}
-                      </td>
-                    )}
                     <td style={{ whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
                         <button

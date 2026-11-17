@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { formatearDinero } from '../utils/formato';
 import {
   TbTools, TbPlayerPlay, TbPlayerPause, TbCheck, TbAlertTriangle,
   TbUser, TbClock, TbArrowRight, TbCircleCheck, TbPlus, TbX, TbStack2, TbRotateClockwise
@@ -87,7 +86,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
   };
 
   const { addToast, confirm } = useToast();
-  const { isAdmin, isMecanico, currentUser } = useAuth();
+  const { isMecanico, currentUser } = useAuth();
   const puedeAsignar = puedeAsignarPersonal(currentUser);
   const puedeCambiarEstados = puedeCambiarEstadoActividad(orden, currentUser);
 
@@ -387,11 +386,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
           <TbTools className="icon" />
           <span>Área: <strong>{orden.areaPrincipal}</strong> ({orden.tipoTrabajo})</span>
         </div>
-        {isAdmin && (
-          <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-            {formatearDinero(Number(orden.costoTotal) || (Number(orden.costoRepuestos) || 0) + (Number(orden.costoManoObra) || 0))}
-          </span>
-        )}
       </div>
 
       {esColaRecepcion(orden) && isMecanico ? (
