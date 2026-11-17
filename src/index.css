@@ -1288,7 +1288,7 @@ input[type='password'],
   flex-wrap: wrap;
 }
 
-.btn-accion {
+.acciones-ot .btn-accion {
   font-weight: 700;
 }
 
@@ -5035,12 +5035,13 @@ h3,
   }
 
   /* Acciones de la OT: en celular se estiran para tocarlas con el dedo
-     sin apuntar (antes llevaban tamano fijo en linea y quedaban diminutas). */
+     sin apuntar (antes llevaban tamano fijo en linea y quedaban diminutas).
+     La especificidad duplicada gana a las reglas compactas de tabla. */
   .acciones-ot {
     width: 100%;
   }
 
-  .btn-accion {
+  .acciones-ot .btn-accion {
     flex: 1 1 auto;
     min-height: 44px;
     font-size: 14px;

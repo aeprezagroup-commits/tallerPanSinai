@@ -724,7 +724,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
               : 'Asigna un mecánico responsable para poder iniciar el trabajo.'}
           </div>
         ) : (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="acciones-ot" style={{ gap: 8 }}>
             {orden.estado !== 'en_proceso' && orden.estado !== 'finalizado' && orden.estado !== 'listo_entrega' && orden.estado !== 'entregado' && (
               <button
                 type="button"
@@ -744,9 +744,9 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
             {orden.estado === 'en_proceso' && (
               <button
                 type="button"
-                className="btn btn-sm btn-secondary"
+                className="btn btn-sm btn-secondary btn-accion"
                 disabled={!puedeCambiarEstados}
-                style={{ flex: 1, minWidth: 120, color: 'var(--color-ingresado)', borderColor: 'var(--color-border-active)', opacity: !puedeCambiarEstados ? 0.45 : 1 }}
+                style={{ flex: 1, minWidth: 120, color: 'var(--color-ingresado)', borderColor: 'var(--color-border-active)' }}
                 onClick={() => abrirModalPausa(orden, null)}
                 title={!puedeCambiarEstados ? AVISO_ESTADOS : 'Pausar el trabajo general de esta OT'}
               >
@@ -757,9 +757,9 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
             {orden.estado !== 'finalizado' && orden.estado !== 'listo_entrega' && orden.estado !== 'entregado' && (
               <button
                 type="button"
-                className="btn btn-sm btn-success"
+                className="btn btn-sm btn-success btn-accion"
                 disabled={!puedeCambiarEstados}
-                style={{ flex: 1, minWidth: 120, opacity: !puedeCambiarEstados ? 0.45 : 1 }}
+                style={{ flex: 1, minWidth: 120 }}
                 onClick={handleFinalizarGeneral}
                 title={!puedeCambiarEstados ? AVISO_ESTADOS : 'Finalizar esta orden de trabajo'}
               >
