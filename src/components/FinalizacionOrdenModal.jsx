@@ -14,7 +14,7 @@ function FinalizacionModalContent({ onClose, orden, onConfirmar, guardando = fal
   const handleSubmit = (e) => {
     e.preventDefault();
     if (incompleta && !justificacionCierre.trim()) {
-      setError('La OT tiene actividades pendientes: es obligatorio indicar la justificación del cierre excepcional.');
+      setError('Indique la justificación del cierre excepcional.');
       return;
     }
 

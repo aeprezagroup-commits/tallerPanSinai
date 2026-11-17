@@ -17,7 +17,7 @@ export default function ReactivarOrdenModal({ isOpen, onClose, orden, onConfirma
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!justificacion.trim()) {
-      setError('Explica el motivo por el cual se reactiva esta orden (obligatorio).');
+      setError('Explique el motivo de la reactivación (obligatorio).');
       return;
     }
     onConfirmar(justificacion.trim());

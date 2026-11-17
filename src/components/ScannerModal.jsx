@@ -67,7 +67,7 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
       }
     } catch (err) {
       console.warn('No se pudo acceder a la cámara:', err);
-      setError('No se pudo activar la cámara (permiso requerido o conexión sin HTTPS). Escriba la placa directamente.');
+      setError('No se pudo activar la cámara. Escriba la placa directamente.');
       setMostrarQR(false);
     }
   }, [handleDetection]);

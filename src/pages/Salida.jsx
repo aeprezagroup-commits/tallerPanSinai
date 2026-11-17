@@ -12,6 +12,7 @@ import {
 } from '../icons';
 import { escucharOrdenes, cerrarOrden, marcarListoParaEntrega } from '../firebase/ordenesService';
 import { obtenerFotosBase, guardarFotosBase } from '../services/fotosVehiculoService';
+import { obtenerConductores } from '../services/vehiculosService';
 import { useToast } from '../components/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { filtrarOrdenesPorUsuario, apoyosDeOrden } from '../services/permisosService';
@@ -58,6 +59,7 @@ export default function Salida() {
   const { addToast, confirm } = useToast();
   const { currentUser, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const conductores = obtenerConductores();
 
   useEffect(() => {
     const unsubscribe = escucharOrdenes((data) => {
@@ -113,7 +115,7 @@ export default function Salida() {
       );
       if (errores.length > 0) {
         addToast(
-          `No se pudo actualizar: ${errores.join(', ')}. Se conservó la foto anterior.`,
+          `No se actualizó: ${errores.join(', ')}. Se conservó la foto anterior.`,
           'warning',
           7000
         );
@@ -144,7 +146,7 @@ export default function Salida() {
     }
 
     if (!personaRetira.trim()) {
-      addToast('Indica el nombre del motorista o conductor que recibe el vehículo', 'warning');
+      addToast('Indique el nombre del motorista que retira la unidad.', 'warning');
       return;
     }
 
@@ -152,7 +154,7 @@ export default function Salida() {
 
     const confirmado = await confirm({
       title: '¿Confirmar entrega y cierre de orden?',
-      message: `¿Estás seguro de cerrar la orden de la unidad "${ordenActual?.placa || ''}"? El vehículo quedará registrado como entregado a "${personaRetira.trim()}" por "${entregadoPor}" y la orden se archivará en el Historial.`,
+      message: `Se cerrará la orden de "${ordenActual?.placa || ''}" y quedará registrada como entregada a "${personaRetira.trim()}".`,
       confirmText: 'Sí, confirmar salida y cerrar orden',
       cancelText: 'Revisar datos',
       danger: false,
@@ -169,7 +171,7 @@ export default function Salida() {
         recomendaciones: recomendaciones.trim()
       });
 
-      addToast(`¡Vehículo ${ordenActual?.placa || ''} entregado y orden cerrada con éxito!`, 'success');
+      addToast(`Vehículo ${ordenActual?.placa || ''} entregado. Orden cerrada.`, 'success');
       navigate('/admin/historial');
     } catch (err) {
       console.error(err);
@@ -427,7 +429,7 @@ export default function Salida() {
                 alignItems: 'center',
                 gap: 8
               }}>
-                <TbAlertCircle /> Selecciona una unidad a la izquierda para comenzar el cierre.
+                <TbAlertCircle /> Selecciona una unidad para comenzar el cierre.
               </div>
             )}
 
@@ -438,13 +440,17 @@ export default function Salida() {
                   type="text"
                   className="form-input"
                   autoComplete="name"
-                  placeholder="Nombre del motorista que retira"
+                  list="lista-conductores-salida"
+                  placeholder="Seleccione o escriba el nombre del motorista"
                   value={personaRetira}
                   onChange={(e) => setPersonaRetira(
                     e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, '')
                   )}
                   required
                 />
+                <datalist id="lista-conductores-salida">
+                  {conductores.map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
             </div>
 

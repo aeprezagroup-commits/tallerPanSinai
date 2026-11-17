@@ -360,31 +360,31 @@ export default function Gastos() {
     if (form.cantidad !== '' && form.cantidad !== null && form.cantidad !== undefined) {
       const cantNum = Number(form.cantidad);
       if (isNaN(cantNum) || cantNum <= 0) {
-        addToast('La cantidad debe ser un valor numérico positivo mayor a 0', 'error');
+        addToast('La cantidad debe ser mayor a 0', 'error');
         return;
       }
     }
 
     const montoNum = parseFloat(form.monto);
     if (!esAlmacen && (isNaN(montoNum) || montoNum <= 0)) {
-      addToast('El monto del gasto debe ser una cifra positiva mayor a $0.00', 'error');
+      addToast('El monto debe ser mayor a $0.00', 'error');
       return;
     }
 
     const descNum = esAlmacen ? 0 : (parseFloat(form.descuento) || 0);
     if (!esAlmacen && (descNum < 0 || descNum >= montoNum)) {
-      addToast('El descuento no puede ser negativo ni igualar/superar el monto total del gasto', 'error');
+      addToast('El descuento no puede superar el monto del gasto', 'error');
       return;
     }
 
     const unidadLimpia = form.unidad.trim().toUpperCase();
     if (unidadLimpia && unidadLimpia.length < 3) {
-      addToast('La placa de la unidad debe tener al menos 3 caracteres alfanuméricos', 'error');
+      addToast('La placa debe tener al menos 3 caracteres', 'error');
       return;
     }
 
     if (!unidadLimpia && !form.centroCosto.trim()) {
-      addToast('Indica la placa de la unidad o el centro de costo asignado al gasto', 'error');
+      addToast('Indique la placa o el centro de costo del gasto', 'error');
       return;
     }
 
@@ -393,8 +393,8 @@ export default function Gastos() {
     const cantTxt = form.cantidad !== '' && form.cantidad !== null && form.cantidad !== undefined
       ? ` (${form.cantidad} repuestos)` : '';
     const mensajeAlmacen = editandoId
-      ? `Se actualizará el vale de almacén ${docPrevio || '(sin número)'} por ${detalle}${cantTxt}. El monto se controla en el almacén.`
-      : `Se registrará el vale de almacén ${docPrevio || '(sin número)'} por ${detalle}${cantTxt}. El costo lo controla el almacén.`;
+      ? `Se actualizará el vale ${docPrevio || '(sin número)'} por ${detalle}${cantTxt}. El monto lo controla el almacén.`
+      : `Se registrará el vale ${docPrevio || '(sin número)'} por ${detalle}${cantTxt}. El costo lo controla el almacén.`;
     const confirmadoGasto = await confirm({
       title: editandoId ? '¿Guardar cambios del gasto?' : '¿Registrar un gasto nuevo?',
       message: esAlmacen
@@ -448,18 +448,17 @@ export default function Gastos() {
 
   const handleEliminar = async (g) => {
     const doc = docRef(g);
-    const emisor = esAlmacenG(g) ? 'Vale Almacén' : (g.proveedor || 'Proveedor');
     const valor = montoTexto(g);
 
     const motivo = await confirm({
       title: '¿Eliminar registro de gasto?',
-      message: `¿Estás seguro de eliminar el gasto ${doc} (${emisor})${valor === '—' ? '' : ` por valor de ${valor}`}? Esta acción no se puede deshacer.`,
+      message: `Se eliminará el gasto ${doc}${valor === '—' ? '' : ` (${valor})`}. No se puede deshacer.`,
       confirmText: 'Sí, eliminar gasto',
       cancelText: 'Cancelar',
       danger: true,
       input: {
         label: 'Justificación de la eliminación *',
-        placeholder: 'Motivo de la eliminación (ej. Registro duplicado, captura errónea, comprobante anulado...)...',
+        placeholder: 'Motivo (ej. registro duplicado, captura errónea)...',
         minLength: 10,
         rows: 3
       }

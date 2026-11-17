@@ -26,7 +26,7 @@ import {
 } from '../services/usuariosService';
 import {
   obtenerFlotaVehiculos, registrarVehiculoCatalogo, eliminarVehiculoCatalogo,
-  generarPlantillaCSV, importarVehiculosCSV,
+  generarPlantillaCSV, importarVehiculosCSV, obtenerConductores,
   RUTAS_PREDETERMINADAS, DEPARTAMENTOS_EL_SALVADOR, centroCostoPorDepartamento,
   obtenerRutasPorDepartamento, ANIOS_VEHICULO, opcionesCatalogo
 } from '../services/vehiculosService';
@@ -182,9 +182,9 @@ export default function Admin({ seccion = 'personal' }) {
     const password = (nuevoUsuario.password || '').trim();
 
     if (!nombre || nombre.length < 3) {
-      errores.nombre = 'El nombre completo es obligatorio y debe tener al menos 3 caracteres.';
+      errores.nombre = 'El nombre debe tener al menos 3 caracteres.';
     } else if (!usuarioEditando && usuarios.some(u => u.nombre?.trim().toLowerCase() === nombre.toLowerCase())) {
-      errores.nombre = 'Ya existe un usuario o técnico registrado con este nombre.';
+      errores.nombre = 'Ya existe un usuario con este nombre.';
     }
 
     const cambiaPassword = usuarioEditando && password.length > 0;
@@ -195,7 +195,7 @@ export default function Admin({ seccion = 'personal' }) {
 
     if (Object.keys(errores).length > 0) {
       setErroresUsuario(errores);
-      addToast('Revisa los campos señalados antes de guardar el usuario.', 'error');
+      addToast('Revisa los campos marcados.', 'error');
       return;
     }
     setErroresUsuario({});
@@ -203,8 +203,8 @@ export default function Admin({ seccion = 'personal' }) {
     const confirmado = await confirm({
       title: usuarioEditando ? '¿Guardar cambios del usuario?' : '¿Crear un usuario nuevo?',
       message: usuarioEditando
-        ? `Se actualizarán los datos de "${nombre}" en el sistema.`
-        : `Se registrará a "${nombre}" con la contraseña genérica (${PASSWORD_GENERICA}). Podrá iniciar sesión de inmediato y se le pedirá cambiarla.`,
+        ? `Se actualizarán los datos de "${nombre}".`
+        : `Se registrará con la contraseña genérica (${PASSWORD_GENERICA}) y deberá cambiarla al ingresar.`,
       confirmText: usuarioEditando ? 'Sí, guardar cambios' : 'Sí, crear usuario',
       cancelText: 'Cancelar',
       danger: false
@@ -216,14 +216,14 @@ export default function Admin({ seccion = 'personal' }) {
         const cambios = { ...nuevoUsuario, nombre };
         if (!password) delete cambios.password;
         actualizarUsuario(usuarioEditando, cambios);
-        addToast(`Datos de "${nombre}" actualizados correctamente`, 'success');
+        addToast(`Datos de "${nombre}" actualizados.`, 'success');
       } else {
         agregarUsuario({
           ...nuevoUsuario,
           nombre,
           password: PASSWORD_GENERICA
         });
-        addToast(`Personal "${nombre}" registrado con éxito. Se asignó la contraseña genérica (${PASSWORD_GENERICA}) y se le solicitará cambiarla al ingresar.`, 'success', 6000);
+        addToast(`Personal registrado. Contraseña temporal: ${PASSWORD_GENERICA} (deberá cambiarla al ingresar).`, 'success', 6000);
       }
       setUsuarioEditando(null);
       setNuevoUsuario(FORM_USUARIO_VACIO);
@@ -238,13 +238,13 @@ export default function Admin({ seccion = 'personal' }) {
   const handleEliminarUsuario = async (id, nombre) => {
     const motivo = await confirm({
       title: '¿Eliminar personal del taller?',
-      message: `¿Estás seguro de que deseas eliminar permanentemente a "${nombre}"? Esta acción removerá sus credenciales de acceso al sistema.`,
+      message: `Se eliminará a "${nombre}" y sus credenciales de acceso.`,
       confirmText: 'Sí, eliminar personal',
       cancelText: 'Cancelar',
       danger: true,
       input: {
         label: 'Justificación de la eliminación *',
-        placeholder: 'Motivo de la eliminación (ej. Renuncia, fin de contrato, duplicidad de cuenta...)...',
+        placeholder: 'Motivo (ej. renuncia, fin de contrato, duplicidad)...',
         minLength: 10,
         rows: 3
       }
@@ -261,7 +261,7 @@ export default function Admin({ seccion = 'personal' }) {
     // Nadie puede inactivarse a sí mismo: si no, el usuario se bloquea su
     // propia cuenta y ya no puede volver a entrar (le pasó al tester).
     if (!activar && u.id === currentUser?.id) {
-      addToast('No puedes inactivar tu propia cuenta. Pide a otro administrador que lo haga.', 'error');
+      addToast('No puedes inactivar tu propia cuenta.', 'error');
       return;
     }
     const confirmado = await confirm({
@@ -283,7 +283,7 @@ export default function Admin({ seccion = 'personal' }) {
   const handleReiniciarPassword = async (u) => {
     const confirmado = await confirm({
       title: '¿Reiniciar la contraseña?',
-      message: `Se generará una contraseña temporal para "${u.nombre}". Su contraseña actual dejará de funcionar de inmediato y, al ingresar, el sistema le exigirá crear una nueva.`,
+      message: `Se generará una contraseña temporal para "${u.nombre}" y la actual dejará de funcionar.`,
       confirmText: 'Sí, reiniciar',
       cancelText: 'Cancelar',
       danger: true
@@ -309,7 +309,7 @@ export default function Admin({ seccion = 'personal' }) {
       await navigator.clipboard.writeText(reinicioPassword.temporal);
       addToast('Contraseña temporal copiada', 'success');
     } catch {
-      addToast('No se pudo copiar. Selecciona el texto y cópialo manualmente.', 'warning');
+      addToast('No se pudo copiar. Copie el texto manualmente.', 'warning');
     }
   };
 
@@ -345,7 +345,7 @@ export default function Admin({ seccion = 'personal' }) {
 
     if (Object.keys(errores).length > 0) {
       setErroresVehiculo(errores);
-      addToast('No se puede registrar el vehículo con datos faltantes. Revisa los campos marcados.', 'error');
+      addToast('Revisa los campos marcados.', 'error');
       return;
     }
     setErroresVehiculo({});
@@ -354,7 +354,7 @@ export default function Admin({ seccion = 'personal' }) {
     if (yaExiste) {
       const confirmarActualizacion = await confirm({
         title: 'Vehículo ya existente en flota',
-        message: `El vehículo con placa "${placa}" ya se encuentra registrado en el catálogo. ¿Deseas actualizar su información técnica con estos datos?`,
+        message: `La placa "${placa}" ya está registrada. ¿Actualizar sus datos técnicos?`,
         confirmText: 'Actualizar vehículo',
         cancelText: 'Cancelar',
         danger: false
@@ -381,7 +381,7 @@ export default function Admin({ seccion = 'personal' }) {
         anio,
         centroCosto: centroCostoPorDepartamento(nuevoVehiculo.departamento)
       });
-      addToast(`Vehículo ${placa} (${marca} ${modelo}) registrado exitosamente en la flota`, 'success');
+      addToast(`Vehículo ${placa} registrado en la flota.`, 'success');
       setNuevoVehiculo({
         placa: '',
         marca: '',
@@ -425,7 +425,7 @@ export default function Admin({ seccion = 'personal' }) {
         centroCosto: (asignacionVehiculo.centroCosto || '').trim().toUpperCase()
           || centroCostoPorDepartamento(asignacionVehiculo.departamento)
       });
-      addToast(`Asignación actualizada: ${asignacionVehiculo.placa} → ${asignacionVehiculo.ruta || 'Sin ruta'} (${centroCostoPorDepartamento(asignacionVehiculo.departamento) || 'S/CENTRO'})`, 'success');
+      addToast(`Asignación actualizada: ${asignacionVehiculo.placa} → ${asignacionVehiculo.ruta || 'Sin ruta'}.`, 'success');
       setAsignacionVehiculo(null);
       cargarDatos();
     } catch (err) {
@@ -468,7 +468,7 @@ export default function Admin({ seccion = 'personal' }) {
     } catch (err) {
       console.error(err);
       addToast(
-        `Vehículo ${placa} dado de baja, pero no se pudieron eliminar todas sus fotos: ${err.message}`,
+        `Baja registrada, pero no se pudieron eliminar todas las fotos: ${err.message}`,
         'warning',
         7000
       );
@@ -488,7 +488,7 @@ export default function Admin({ seccion = 'personal' }) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    addToast('Plantilla CSV descargada con formato seguro (UTF-8 con BOM)', 'success');
+    addToast('Plantilla CSV descargada.', 'success');
   };
 
   const handleSubirArchivoCSV = async (e) => {
@@ -497,7 +497,7 @@ export default function Admin({ seccion = 'personal' }) {
 
     const confirmado = await confirm({
       title: '¿Importar archivo de vehículos?',
-      message: `Se leerá "${file.name}" y se darán de alta las filas válidas en el catálogo. Los registros incompletos se omitirán por seguridad.`,
+      message: `Se leerá "${file.name}" y se registrarán las filas válidas. Las incompletas se omitirán.`,
       confirmText: 'Sí, importar archivo',
       cancelText: 'Cancelar',
       danger: false
@@ -511,9 +511,9 @@ export default function Admin({ seccion = 'personal' }) {
         const texto = event.target.result;
         const res = importarVehiculosCSV(texto);
         if (res.omitidos > 0) {
-          addToast(`Se importaron ${res.total} vehículos. Se omitieron ${res.omitidos} registros incompletos por seguridad.`, 'warning', 6500);
+          addToast(`Se importaron ${res.total} vehículos (${res.omitidos} omitidos).`, 'warning', 6500);
         } else {
-          addToast(`¡Éxito! Se importaron ${res.total} vehículos completos a la base de Pan Sinaí`, 'success');
+          addToast(`Se importaron ${res.total} vehículos a la flota.`, 'success');
         }
         cargarDatos();
       } catch (err) {
@@ -658,7 +658,7 @@ export default function Admin({ seccion = 'personal' }) {
                 }}>
                   <TbLock style={{ color: 'var(--color-accent)', flexShrink: 0 }} size={16} />
                   <span>
-                    Contraseña temporal asignada: <strong style={{ fontFamily: 'var(--font-mono)' }}>{PASSWORD_GENERICA}</strong>. Al iniciar sesión por primera vez, el sistema obligará al usuario a crear su propia contraseña confidencial.
+                    Contraseña temporal: <strong style={{ fontFamily: 'var(--font-mono)' }}>{PASSWORD_GENERICA}</strong>. El usuario deberá crear la suya al ingresar.
                   </span>
                 </div>
               )}
@@ -755,8 +755,8 @@ export default function Admin({ seccion = 'personal' }) {
                 </div>
                 <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                   {nuevoUsuario.departamento
-                    ? `Mostrando las rutas asignadas a ${nuevoUsuario.departamento}.`
-                    : 'Seleccione un departamento para filtrar las rutas específicas o asigne rutas generales.'}
+                    ? `Rutas de ${nuevoUsuario.departamento}.`
+                    : 'Seleccione un departamento para ver sus rutas.'}
                 </span>
               </div>
 
@@ -1037,13 +1037,17 @@ export default function Admin({ seccion = 'personal' }) {
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="Nombre del motorista asignado"
+                      list="lista-conductores-admin"
+                      placeholder="Seleccione o escriba el nombre del motorista"
                       value={nuevoVehiculo.conductorHabitual}
                       onChange={e => setNuevoVehiculo({
                         ...nuevoVehiculo,
                         conductorHabitual: e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, '')
                       })}
                     />
+                    <datalist id="lista-conductores-admin">
+                      {obtenerConductores().map(c => <option key={c} value={c} />)}
+                    </datalist>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Departamento / Ubicación</label>

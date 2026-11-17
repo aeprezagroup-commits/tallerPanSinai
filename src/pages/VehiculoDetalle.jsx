@@ -17,7 +17,7 @@ import ResumenErrores from '../components/ResumenErrores';
 import {
   obtenerFlotaVehiculos, actualizarVehiculoCatalogo, eliminarVehiculoCatalogo,
   RUTAS_PREDETERMINADAS, DEPARTAMENTOS_EL_SALVADOR, centroCostoPorDepartamento,
-  opcionesCatalogo, ANIOS_VEHICULO,
+  opcionesCatalogo, ANIOS_VEHICULO, obtenerConductores,
 } from '../services/vehiculosService';
 import {
   obtenerFotosBase, guardarFotosBase, eliminarFotosVehiculo
@@ -198,7 +198,7 @@ export default function VehiculoDetalle() {
 
     const confirmado = await confirm({
       title: '¿Guardar cambios de la ficha?',
-      message: `Se actualizarán los datos técnicos de la placa "${vehiculo.placa}" en el catálogo.`,
+      message: `Se guardarán los datos técnicos de ${vehiculo.placa}.`,
       confirmText: 'Sí, guardar cambios',
       cancelText: 'Cancelar',
       danger: false
@@ -248,7 +248,7 @@ export default function VehiculoDetalle() {
       const previos = fotos.hashes || {};
       const duplicada = Object.keys(previos).some(k => previos[k] && previos[k] === hash);
       if (duplicada) {
-        addToast('No se permite el ingreso de imágenes duplicadas: este archivo ya está adjunto a esta unidad.', 'error');
+        addToast('Esta imagen ya está adjunta a la unidad.', 'error');
         if (fotoInputRef.current) fotoInputRef.current.value = '';
         ladoPendienteRef.current = '';
         return;
@@ -258,8 +258,7 @@ export default function VehiculoDetalle() {
     if (fotos[lado]) {
       const ok = await confirm({
         title: `¿Reemplazar ${etiqueta.toLowerCase()}?`,
-        message: `La foto actual de ${etiqueta.toLowerCase()} será borrada y sustituida por la nueva. ` +
-          'La unidad siempre tendrá 4 fotos.',
+        message: 'La foto actual será reemplazada por la nueva. La unidad siempre tendrá 4 fotos.',
         confirmText: 'Sí, reemplazar',
         cancelText: 'Cancelar',
       });
@@ -296,8 +295,7 @@ export default function VehiculoDetalle() {
     const etiqueta = LADOS_FICHA.find(l => l.key === lado)?.label || lado;
     const ok = await confirm({
       title: `¿Eliminar la foto de ${etiqueta.toLowerCase()}?`,
-      message: `Se eliminará la fotografía ${etiqueta.toLowerCase()} de ${vehiculo.placa} de la base fotográfica. ` +
-        'Esta acción no se puede deshacer.',
+      message: `Se eliminará la foto de ${etiqueta.toLowerCase()} (${vehiculo.placa}). No se puede deshacer.`,
       confirmText: 'Sí, eliminar',
       cancelText: 'Cancelar',
       danger: true,
@@ -319,8 +317,7 @@ export default function VehiculoDetalle() {
   const handleBaja = async () => {
     const motivo = await confirm({
       title: '¿Dar de baja esta unidad?',
-      message: `Se retirará el vehículo ${vehiculo.placa} del catálogo de flota y SE ELIMINARÁN ` +
-        'sus 4 fotos de la base fotográfica. Esta acción no se puede deshacer.',
+      message: `Se retirará ${vehiculo.placa} del catálogo y se borrarán sus 4 fotos. No se puede deshacer.`,
       confirmText: 'Sí, dar de baja',
       cancelText: 'Cancelar',
       danger: true,
@@ -604,14 +601,20 @@ export default function VehiculoDetalle() {
               Conductor habitual
             </div>
             {editando ? (
-              <input
-                className="form-input"
-                value={form.conductorHabitual}
-                onChange={e => setCampo('conductorHabitual',
-                  e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, ''))}
-                placeholder="Nombre del motorista"
-                style={{ marginTop: 5, maxWidth: 340 }}
-              />
+              <>
+                <input
+                  className="form-input"
+                  value={form.conductorHabitual}
+                  onChange={e => setCampo('conductorHabitual',
+                    e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, ''))}
+                  list="lista-conductores-ficha"
+                  placeholder="Seleccione o escriba el nombre del motorista"
+                  style={{ marginTop: 5, maxWidth: 340 }}
+                />
+                <datalist id="lista-conductores-ficha">
+                  {obtenerConductores().map(c => <option key={c} value={c} />)}
+                </datalist>
+              </>
             ) : (
               <div style={{
                 fontSize: 18, fontWeight: 800, letterSpacing: -0.3, marginTop: 2,

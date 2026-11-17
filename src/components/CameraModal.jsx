@@ -58,8 +58,7 @@ export default function CameraModal({ isOpen, onClose, onFoto, titulo = 'Tomar f
         }
       } catch {
         if (vivo) {
-          setError('No se pudo activar la cámara (permiso denegado o dispositivo sin cámara). ' +
-            'Use "Subir" para elegir una foto del equipo.');
+          setError('No se pudo activar la cámara. Use "Subir" para elegir una foto.');
         }
       }
     })();

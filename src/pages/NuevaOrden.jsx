@@ -16,7 +16,7 @@ import {
 import { crearOrden, buscarPorPlaca, formatoOT } from '../firebase/ordenesService';
 import { ESTADOS_CONFIG } from '../components/StatusBadge';
 import { useToast } from '../components/ToastContext';
-import { buscarVehiculoCatalogo } from '../services/vehiculosService';
+import { buscarVehiculoCatalogo, obtenerConductores } from '../services/vehiculosService';
 import { AREAS_SELECT } from '../constants/areas';
 import {
   GRUPOS_MANTENIMIENTO,
@@ -83,6 +83,7 @@ export default function NuevaOrden() {
   const [ordenActiva, setOrdenActiva] = useState(null);
   const [historialPrevio, setHistorialPrevio] = useState([]);
   const [mecanicos] = useState(() => obtenerMecanicosActivos());
+  const [conductores] = useState(() => obtenerConductores());
   const [fechaIngresoTexto] = useState(() => new Date().toLocaleString('es-SV'));
   const [servicioMantenimiento, setServicioMantenimiento] = useState(''); 
   const [tareasMarcadas, setTareasMarcadas] = useState(() => new Set());
@@ -141,7 +142,7 @@ export default function NuevaOrden() {
       });
       setFotosLadosNuevas({});
       if (base.frontal || base.lateralIzquierdo || base.lateralDerecho || base.trasera) {
-        addToast('Base fotográfica del vehículo cargada: estado actual de los 4 costados', 'info');
+        addToast('Base fotográfica cargada (4 costados).', 'info');
       }
     } catch (e) {
       console.warn('Error cargando base fotográfica:', e);
@@ -222,7 +223,7 @@ export default function NuevaOrden() {
         ruta: vehiculo.ruta || prev.ruta,
         conductorEntrega: vehiculo.conductorHabitual || prev.conductorEntrega
       }));
-      addToast(`Vehículo detectado en catálogo. Asignado a ${vehiculo.departamento} (${vehiculo.ruta}).`, 'success');
+      addToast(`Vehículo detectado: ${vehiculo.departamento} (${vehiculo.ruta}).`, 'success');
     } else {
       setVehiculoDetectado(null);
     }
@@ -239,12 +240,12 @@ export default function NuevaOrden() {
         if (abierta) {
           setOrdenActiva(abierta);
           addToast(
-            `La placa ${placaABuscar} ya está en el taller con la orden ${formatoOT(abierta)} (${etiquetaEstadoOrden(abierta.estado)}). No puede ingresar la unidad de nuevo.`,
+            `La placa ${placaABuscar} ya está en el taller con la orden ${formatoOT(abierta)}.`,
             'error',
             9000
           );
         } else if (previas[0].kilometraje) {
-          addToast(`Se encontraron ${previas.length} ingresos previos de esta unidad en taller.`, 'info');
+          addToast(`Se encontraron ${previas.length} ingresos previos de esta unidad.`, 'info');
         }
       } else {
         setHistorialPrevio([]);
@@ -463,11 +464,11 @@ export default function NuevaOrden() {
       return;
     }
     if (!vehiculoDetectado) {
-      addToast('La unidad no está registrada en la flota. Registre el vehículo para poder continuar.', 'error');
+      addToast('La unidad no está en la flota. Registre el vehículo.', 'error');
       return;
     }
     if (ordenActiva) {
-      addToast(`Esta unidad ya tiene una orden abierta en el taller (${formatoOT(ordenActiva)}). No es posible ingresarla de nuevo.`, 'error');
+      addToast(`La unidad ya tiene una orden abierta (${formatoOT(ordenActiva)}).`, 'error');
       return;
     }
     if (modoAtencion === 'taller') {
@@ -476,7 +477,7 @@ export default function NuevaOrden() {
         return;
       }
       if (form.conductorEntrega.trim().length < 3) {
-        addToast('Indica el nombre completo del conductor (al menos 3 caracteres)', 'warning');
+        addToast('Indique el nombre completo del conductor', 'warning');
         return;
       }
     }
@@ -502,14 +503,14 @@ export default function NuevaOrden() {
       return;
     }
     if (tareasOmitidasFinales.some(t => !t.motivo)) {
-      addToast('Indique el motivo por el que se omite cada tarea de mantenimiento', 'warning');
+      addToast('Indique el motivo de omisión de cada tarea', 'warning');
       return;
     }
 
     if (form.kilometraje !== '' && form.kilometraje !== null && form.kilometraje !== undefined) {
       const kmNum = Number(form.kilometraje);
       if (isNaN(kmNum) || kmNum < 0) {
-        addToast('El kilometraje debe ser un valor numérico positivo mayor o igual a 0', 'error');
+        addToast('El kilometraje debe ser un número mayor o igual a 0', 'error');
         return;
       }
     }
@@ -517,7 +518,7 @@ export default function NuevaOrden() {
     if (form.tiempoEstimadoHoras !== '' && form.tiempoEstimadoHoras !== null && form.tiempoEstimadoHoras !== undefined) {
       const horasNum = parseFloat(form.tiempoEstimadoHoras);
       if (isNaN(horasNum) || horasNum < 0 || horasNum > 1000) {
-        addToast('El tiempo estimado en horas debe ser un número entre 0 y 1,000', 'error');
+        addToast('El tiempo estimado debe estar entre 0 y 1,000 horas', 'error');
         return;
       }
     }
@@ -534,7 +535,7 @@ export default function NuevaOrden() {
         addToast(
           `Falta${faltantes.length > 1 ? 'n' : ''} la${faltantes.length > 1 ? 's' : ''} foto${faltantes.length > 1 ? 's' : ''}: ` +
           `${faltantes.map((lado) => nombres[lado]).join(', ')}. ` +
-          'El ingreso al taller se registra únicamente con las 4 fotos del estado actual de la unidad.',
+          'El ingreso requiere las 4 fotos de la unidad.',
           'warning',
           9000
         );
@@ -549,7 +550,7 @@ export default function NuevaOrden() {
       const abiertaFresca = previasFrescas?.find(o => ESTADOS_EN_TALLER.includes(o.estado));
       if (abiertaFresca) {
         setOrdenActiva(abiertaFresca);
-        addToast(`Esta unidad ya tiene una orden abierta en el taller (${formatoOT(abiertaFresca)}). No es posible ingresarla de nuevo.`, 'error');
+        addToast(`La unidad ya tiene una orden abierta (${formatoOT(abiertaFresca)}).`, 'error');
         return;
       }
     } catch (err) {
@@ -559,7 +560,7 @@ export default function NuevaOrden() {
     const placaPreview = normalizarPlaca(form.placa) || 'sin placa';
     const confirmadoOrden = await confirm({
       title: modoAtencion === 'asistencia' ? '¿Registrar asistencia?' : '¿Crear orden de trabajo?',
-      message: `Se registrará la unidad "${placaPreview}"${form.marca ? ` (${form.marca}${form.modelo ? ` ${form.modelo}` : ''})` : ''} y la orden quedará visible para todo el taller.`,
+      message: `Se registrará la unidad "${placaPreview}"${form.marca ? ` (${form.marca}${form.modelo ? ` ${form.modelo}` : ''})` : ''} y quedará visible para el taller.`,
       confirmText: 'Sí, crear orden',
       cancelText: 'Cancelar',
       danger: false
@@ -583,12 +584,12 @@ export default function NuevaOrden() {
         );
         if (errores.length > 0) {
           addToast(
-            `No se pudo subir: ${errores.join(', ')}. Se conservaron las fotos anteriores.`,
+            `No se subieron: ${errores.join(', ')}. Se conservaron las fotos anteriores.`,
             'warning',
             7000
           );
         } else {
-          addToast('Fotos del vehículo actualizadas (las 4 de la base)', 'success');
+          addToast('Fotos de la unidad actualizadas.', 'success');
         }
       }
 
@@ -979,12 +980,16 @@ export default function NuevaOrden() {
                   name="conductorEntrega"
                   value={form.conductorEntrega}
                   onChange={handleChange}
-                  placeholder="Nombre completo del motorista"
+                  list="lista-conductores-orden"
+                  placeholder="Seleccione o escriba el nombre del motorista"
                   className="form-input"
                   autoComplete="name"
                   enterKeyHint="next"
                   required={modoAtencion === 'taller'}
                 />
+                <datalist id="lista-conductores-orden">
+                  {conductores.map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
               <div className="form-group">
                 <label className="form-label">
@@ -1644,9 +1649,9 @@ export default function NuevaOrden() {
             disabled={loading || camposBloqueados || Boolean(ordenActiva)}
             title={
               ordenActiva
-                ? 'Esta unidad ya tiene una orden abierta en el taller: no puede ingresar de nuevo'
+                ? 'La unidad ya tiene una orden abierta'
                 : camposBloqueados
-                  ? 'Debe registrar o escanear una placa registrada en la flota para ingresar la orden'
+                  ? 'Escriba o escanee una placa de la flota'
                   : ''
             }
           >

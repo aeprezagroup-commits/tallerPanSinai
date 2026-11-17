@@ -22,7 +22,7 @@ export default function Sidebar({
   const handleLogout = async () => {
     const salir = await confirm({
       title: '¿Cerrar sesión del sistema?',
-      message: `¿Estás seguro de que deseas salir del sistema, ${currentUser?.nombre || ''}? Tendrás que ingresar tus credenciales nuevamente para acceder.`,
+      message: `¿Salir del sistema, ${currentUser?.nombre || ''}? Tendrás que volver a ingresar tus credenciales.`,
       confirmText: 'Sí, salir del sistema',
       cancelText: 'Permanecer en el sistema',
       danger: true,

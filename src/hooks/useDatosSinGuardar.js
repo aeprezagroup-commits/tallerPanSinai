@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const AVISO_DATOS_SIN_GUARDAR =
-  'Hay datos sin guardar. Si sale ahora, se perderá lo que ha escrito. ¿Desea salir?';
+  'Hay datos sin guardar. Si sale, se perderá lo escrito. ¿Salir?';
 
 /**
  * Protege los formularios con datos sin guardar:

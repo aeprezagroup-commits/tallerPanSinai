@@ -42,7 +42,7 @@ export default function ControlSesion() {
       limpiar();
       avisoTimer = setTimeout(() => {
         addToastRef.current(
-          'La sesión se cerrará por inactividad en 1 minuto. Mueva el cursor o toque la pantalla para permanecer conectado.',
+          'La sesión se cerrará por inactividad en 1 minuto. Muévase o toque la pantalla para permanecer conectado.',
           'warning',
           10000
         );

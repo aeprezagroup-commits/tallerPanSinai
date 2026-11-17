@@ -99,7 +99,7 @@ export default function GuardiaSalida() {
       const salir = await confirmRef.current({
         title: '¿Abandonar esta pantalla?',
         message:
-          'Está por salir de un informe o detalle. Si continúa, se perderá el lugar que estaba revisando.',
+          'Está por salir de un informe. Si continúa, se perderá su lugar.',
         confirmText: 'Sí, salir',
         cancelText: 'Permanecer aquí',
         danger: true

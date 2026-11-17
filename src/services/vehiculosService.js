@@ -232,6 +232,20 @@ export function obtenerFlotaVehiculos() {
   }
 }
 
+export function obtenerConductores() {
+  const flota = obtenerFlotaVehiculos();
+  const vistos = new Set();
+  const lista = [];
+  flota.forEach(v => {
+    const nombre = (v.conductorHabitual || '').trim();
+    if (nombre && !vistos.has(nombre.toLowerCase())) {
+      vistos.add(nombre.toLowerCase());
+      lista.push(nombre);
+    }
+  });
+  return lista.sort((a, b) => a.localeCompare(b));
+}
+
 export function guardarFlotaVehiculos(flota) {
   try {
     repoVehiculos.reemplazar(flota);

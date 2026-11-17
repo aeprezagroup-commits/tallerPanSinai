@@ -141,7 +141,7 @@ export default function DetalleOrden() {
       setFotosBase(nuevo);
       if (errores.length > 0) {
         addToast(
-          `No se pudo subir: ${errores.join(', ')}. Se conservó la foto anterior.`,
+          `No se subió: ${errores.join(', ')}. Se conservó la foto anterior.`,
           'error',
           7000
         );
@@ -233,7 +233,7 @@ export default function DetalleOrden() {
     const modeloNorm = (formEdit.modelo || '').trim();
 
     if (!placaNorm || placaNorm.length < 3) {
-      addToast('La placa del vehículo es obligatoria (mínimo 3 caracteres).', 'error');
+      addToast('La placa es obligatoria (mínimo 3 caracteres).', 'error');
       return;
     }
     if (!marcaNorm) {
@@ -257,7 +257,7 @@ export default function DetalleOrden() {
     if (formEdit.kilometraje !== '' && formEdit.kilometraje !== null && formEdit.kilometraje !== undefined) {
       const kmNum = Number(formEdit.kilometraje);
       if (isNaN(kmNum) || kmNum < 0) {
-        addToast('El kilometraje debe ser un número positivo mayor o igual a 0', 'error');
+        addToast('El kilometraje debe ser mayor o igual a 0', 'error');
         return;
       }
     }
@@ -269,7 +269,7 @@ export default function DetalleOrden() {
     }
 
     if (isAdmin && formEdit.costoManoObra !== '' && parseFloat(formEdit.costoManoObra) < 0) {
-      addToast('El costo de mano de obra no puede ser una cifra negativa', 'error');
+      addToast('El costo de mano de obra no puede ser negativo', 'error');
       return;
     }
 
@@ -296,7 +296,7 @@ export default function DetalleOrden() {
         }));
 
       if (docsForm.some(d => parseFloat(d.total) < 0)) {
-        addToast('Los costos de facturas o repuestos no pueden ser negativos', 'error');
+        addToast('Los costos de facturas o repuestos no pueden ser negativos.', 'error');
         return;
       }
 
@@ -356,7 +356,7 @@ export default function DetalleOrden() {
 
     const confirmado = await confirm({
       title: '¿Eliminar orden de trabajo?',
-      message: `¿Estás seguro de eliminar permanentemente la orden ${ordenCodigo} (${placaVehiculo})? Esta acción borrará el registro y no se puede deshacer.`,
+      message: `Se eliminará la orden ${ordenCodigo} (${placaVehiculo}). No se puede deshacer.`,
       confirmText: 'Sí, eliminar orden',
       cancelText: 'Cancelar',
       danger: true
@@ -376,7 +376,7 @@ export default function DetalleOrden() {
 
   const handleCambiarEstado = async (nuevoEstado, motivo = '', nombreEtiqueta = '') => {
     if (!puedeCambiarEstadoActividad(orden, currentUser)) {
-      addToast('Solo el encargado de taller, administración o el mecánico asignado a esta OT puede cambiar los estados.', 'warning');
+      addToast('Solo el encargado, administración o el mecánico asignado pueden cambiar los estados.', 'warning');
       return;
     }
     try {
@@ -394,7 +394,7 @@ export default function DetalleOrden() {
 
   const handleFinalizarOrden = async (detalle) => {
     if (!puedeCambiarEstadoActividad(orden, currentUser)) {
-      addToast('Solo el encargado de taller, administración o el mecánico asignado a esta OT puede cambiar los estados.', 'warning');
+      addToast('Solo el encargado, administración o el mecánico asignado pueden cambiar los estados.', 'warning');
       setIsFinalizacionOpen(false);
       return;
     }
@@ -417,7 +417,7 @@ export default function DetalleOrden() {
     try {
       await reactivarOrden(id, currentUser?.nombre || 'Taller', justificacion);
       setIsReactivarOpen(false);
-      addToast('OT reactivada: la unidad volvió a En Proceso y sale de Entrega de Vehículo.', 'success');
+      addToast('OT reactivada: la unidad volvió a En Proceso.', 'success');
       cargarOrden();
     } catch (err) {
       console.error(err);
@@ -471,7 +471,7 @@ export default function DetalleOrden() {
     }
     const mins = Number(modalActividad.tiempoEstimadoMinutos);
     if (isNaN(mins) || mins <= 0 || mins > 10000) {
-      addToast('El tiempo estimado debe ser un número entero de minutos mayor a cero.', 'warning');
+      addToast('El tiempo estimado debe ser mayor a 0 (minutos).', 'warning');
       return;
     }
 
@@ -659,7 +659,7 @@ export default function DetalleOrden() {
                       if (trans === 'finalizado') {
                         if (currentUser?.rol === 'mecanico' && !ordenCompleta(orden)) {
                           addToast(
-                            'No puedes cerrar la OT: quedan actividades pendientes. Solo el encargado de taller puede cerrarla con justificación.',
+                            'Quedan actividades pendientes. Solo el encargado puede cerrar la OT.',
                             'warning'
                           );
                           return;
@@ -859,7 +859,7 @@ export default function DetalleOrden() {
                       borderRadius: 8,
                       textAlign: 'center'
                     }}>
-                      Sin documentos todavía. Agrega una <strong>Factura de Proveedor</strong> o un <strong>Vale de Almacén</strong> con los botones de arriba.
+                      Sin documentos todavía. Agrega una <strong>Factura de Proveedor</strong> o un <strong>Vale de Almacén</strong>.
                     </div>
                   )}
 
@@ -1590,7 +1590,7 @@ export default function DetalleOrden() {
                 e.preventDefault();
                 const motivoLimpio = String(modalTransicion.motivo || '').trim();
                 if (motivoLimpio.length < 5) {
-                  addToast('La justificación es obligatoria: describa el motivo de la transición antes de confirmar.', 'warning');
+                  addToast('Indique el motivo de la transición antes de confirmar.', 'warning');
                   return;
                 }
                 setModalTransicion(prev => ({ ...prev, guardando: true }));
@@ -1627,13 +1627,13 @@ export default function DetalleOrden() {
                     <textarea
                       className="form-textarea"
                       rows={3}
-                      placeholder="Indique el motivo técnico o nota de la transición (ej. Espera de repuesto en proveedor, pruebas aprobadas, etc.)..."
+                      placeholder="Motivo de la transición (ej. espera de repuesto, pruebas aprobadas)..."
                       value={modalTransicion.motivo}
                       onChange={(e) => setModalTransicion(prev => ({ ...prev, motivo: e.target.value }))}
                       autoFocus
                     />
                     <span style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'block', marginTop: 4 }}>
-                      Obligatoria: no se puede guardar sin ella. Quedará visible en el expediente de trazabilidad de la orden y en la bitácora.
+                      Obligatoria. Quedará registrada en la bitácora de la orden.
                     </span>
                   </div>
                 </div>

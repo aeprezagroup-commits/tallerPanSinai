@@ -95,7 +95,7 @@ export default function PanelCatalogos() {
   const eliminarRuta = async (i, valor) => {
     const confirmado = await confirm({
       title: '¿Eliminar la ruta?',
-      message: `Se quitará "${valor}" del catálogo y de los departamentos que la usen. Las personas que la tengan asignada quedarán sin esa ruta.`,
+      message: `Se quitará "${valor}" del catálogo y de las rutas que la usen.`,
       confirmText: 'Sí, eliminar',
       cancelText: 'Cancelar',
       danger: true,
@@ -156,7 +156,7 @@ export default function PanelCatalogos() {
   const eliminarArea = async (i, valor) => {
     const confirmado = await confirm({
       title: '¿Eliminar el área?',
-      message: `Se quitará "${valor}" del catálogo. Las órdenes guardadas con esa área la conservan en su historial.`,
+      message: `Se quitará "${valor}" del catálogo. Las órdenes guardadas la conservan en su historial.`,
       confirmText: 'Sí, eliminar',
       cancelText: 'Cancelar',
       danger: true,
@@ -215,7 +215,7 @@ export default function PanelCatalogos() {
   const eliminarTarea = async (fila) => {
     const confirmado = await confirm({
       title: '¿Eliminar la tarea?',
-      message: `Se quitará "${fila.descripcion}" del catálogo. Las órdenes en curso conservan las actividades que ya tengan cargadas.`,
+      message: `Se quitará "${fila.descripcion}" del catálogo. Las órdenes en curso conservan sus actividades.`,
       confirmText: 'Sí, eliminar',
       cancelText: 'Cancelar',
       danger: true,
@@ -274,7 +274,7 @@ export default function PanelCatalogos() {
     const pestanaActual = PESTANAS.find(p => p.id === pestana);
     const confirmado = await confirm({
       title: `¿Guardar el catálogo de ${pestanaActual.etiqueta.toLowerCase()}?`,
-      message: 'Los cambios se aplican de inmediato en todo el sistema (desplegables, filtros y checklists) y quedan registrados en la bitácora.',
+      message: 'Se aplican de inmediato en todo el sistema y quedan registrados en la bitácora.',
       confirmText: 'Sí, guardar',
       cancelText: 'Cancelar',
     });

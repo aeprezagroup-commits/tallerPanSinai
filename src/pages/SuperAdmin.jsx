@@ -165,7 +165,7 @@ export default function SuperAdmin() {
     setErrorSoporte('');
     const confirmado = await confirm({
       title: '¿Crear la cuenta de soporte?',
-      message: `Se creará el usuario "${nombreSoporte}" con rol super administrador: será la única cuenta que entre a /admin-secreto/bitacora y verá todo el sistema. Su contraseña no podrá reiniciarse desde Personal.`,
+      message: `Se creará "${nombreSoporte}" como super administrador: única cuenta con acceso a la bitácora.`,
       confirmText: 'Sí, crear la cuenta',
       cancelText: 'Cancelar',
     });
@@ -178,7 +178,7 @@ export default function SuperAdmin() {
       });
       setPassSoporte('');
       setFormSoporte(false);
-      addToast(`Cuenta de soporte "${creado.nombre}" creada. Entra con esa cuenta para usar la consola.`, 'success');
+      addToast(`Cuenta de soporte "${creado.nombre}" creada.`, 'success');
     } catch (err) {
       const mensaje = err?.message || 'No se pudo crear la cuenta de soporte.';
       setErrorSoporte(mensaje);
@@ -194,7 +194,7 @@ export default function SuperAdmin() {
     }
     const confirmado = await confirm({
       title: '¿Migrar contraseñas al formato seguro?',
-      message: `Se guardarán ${pendientes} contraseña(s) en formato hash. Los usuarios seguirán entrando con su misma contraseña: sólo cambia la forma en que se almacena.`,
+      message: `Se guardarán ${pendientes} contraseña(s) en hash. Los usuarios entrarán con su misma contraseña.`,
       confirmText: 'Sí, migrar',
       cancelText: 'Cancelar',
     });

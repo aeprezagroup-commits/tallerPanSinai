@@ -32,7 +32,7 @@ const MOTIVOS_PAUSA = [
   { id: 'fin_turno', label: 'Fin de turno o descanso programado' }
 ];
 
-const AVISO_ESTADOS = 'Solo el encargado de taller, administración o el mecánico asignado a esta OT puede cambiar los estados.';
+const AVISO_ESTADOS = 'Solo el encargado, administración o el mecánico asignado pueden cambiar los estados.';
 
 export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos = [], mostrarFooter = true }) {
   const [modalPausa, setModalPausa] = useState({
@@ -199,7 +199,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     if (isMecanico && !ordenCompleta(orden)) {
       const pendientes = (orden.actividades || []).filter(a => a.estado !== 'finalizado').length;
       addToast(
-        `No puedes cerrar la OT: quedan ${pendientes} actividad(es) pendiente(s). Solo el encargado de taller puede cerrarla con justificación.`,
+        `Quedan ${pendientes} actividad(es) sin finalizar. Solo el encargado puede cerrarla.`,
         'warning'
       );
       return;
@@ -212,7 +212,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     try {
       await reactivarOrden(orden.id, currentUser?.nombre || 'Taller', justificacion);
       setModalReactivar({ abierto: false, guardando: false });
-      addToast(`OT ${formatoOT(orden)} reactivada: la unidad ${orden.placa} volvió a En Proceso y sale de Entrega de Vehículo.`, 'success');
+      addToast(`OT ${formatoOT(orden)} reactivada: ${orden.placa} volvió a En Proceso.`, 'success');
     } catch (err) {
       console.error(err);
       addToast('Error al reactivar: ' + err.message, 'error');
@@ -245,7 +245,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
       const actPrevia = actividades[idx - 1];
       if (actPrevia && actPrevia.estado !== 'finalizado') {
         addToast(
-          `Control de secuencia: No es posible avanzar sin haber concluido el trabajo previo (#${idx}: "${actPrevia.descripcion}").`,
+          `Finalice primero la actividad #${idx} ("${actPrevia.descripcion}").`,
           'warning'
         );
         return;
@@ -255,7 +255,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     const otraActEnCurso = actividades.find(a => a.id !== act.id && a.estado === 'en_proceso');
     if (otraActEnCurso) {
       addToast(
-        `Ya se encuentra en curso la actividad #${actividades.findIndex(a => a.id === otraActEnCurso.id) + 1} ("${otraActEnCurso.descripcion}"). Debe pausarla o finalizarla antes de iniciar otra.`,
+        `La actividad #${actividades.findIndex(a => a.id === otraActEnCurso.id) + 1} ya está en curso. Pausela o finalícela antes de iniciar otra.`,
         'warning'
       );
       return;
@@ -309,7 +309,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     }
     const mins = Number(tiempoEstimadoMinutos);
     if (isNaN(mins) || mins <= 0 || mins > 10000) {
-      addToast('El tiempo estimado debe ser un número entero de minutos mayor a cero.', 'warning');
+      addToast('El tiempo estimado debe ser mayor a 0 (minutos).', 'warning');
       return;
     }
 
