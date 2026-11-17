@@ -1272,6 +1272,26 @@ input[type='password'],
   min-height: 34px;
 }
 
+/* Botones de estado de la OT (Iniciar / Pausar / Listo). */
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+  transform: none;
+}
+
+.acciones-ot {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-accion {
+  font-weight: 700;
+}
+
 @media (max-width: 767px) {
   .btn {
     min-height: 44px;
@@ -5012,6 +5032,19 @@ h3,
     min-height: 40px;
     font-size: 14px;
     padding: 8px 14px;
+  }
+
+  /* Acciones de la OT: en celular se estiran para tocarlas con el dedo
+     sin apuntar (antes llevaban tamano fijo en linea y quedaban diminutas). */
+  .acciones-ot {
+    width: 100%;
+  }
+
+  .btn-accion {
+    flex: 1 1 auto;
+    min-height: 44px;
+    font-size: 14px;
+    padding: 10px 14px;
   }
 
   .btn-icon {

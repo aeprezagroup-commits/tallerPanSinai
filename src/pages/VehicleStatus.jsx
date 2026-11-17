@@ -7,6 +7,7 @@ import {
   TbUser, TbMapPin, TbAlertCircle, TbFileText, TbX
 } from '../icons';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import IconoMascara from '../components/IconoMascara';
 
 const ETAPAS = [
@@ -21,6 +22,11 @@ export default function VehicleStatus() {
   const [query, setQuery] = useState('');
   const [vistaUnidades, setVistaUnidades] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
   const [ordenes, setOrdenes] = useState([]);
+  const { currentUser, isAdmin } = useAuth();
+
+  // El boton regresa al panel de trabajo, no al inicio, para no tener
+  // que salir del panel y volver a entrar.
+  const rutaPanel = !currentUser ? '/inicio' : isAdmin ? '/admin' : '/ordenes';
 
   useEffect(() => {
     const unsubscribe = escucharOrdenes((data) => {
@@ -116,8 +122,8 @@ export default function VehicleStatus() {
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link to="/inicio" className="btn btn-sm btn-secondary" style={{ fontSize: 11.5 }}>
-            Ir al Inicio
+          <Link to={rutaPanel} className="btn btn-sm btn-secondary" style={{ fontSize: 11.5 }}>
+            Ir al Panel
           </Link>
         </div>
       </div>

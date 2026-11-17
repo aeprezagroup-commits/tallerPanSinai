@@ -40,7 +40,8 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     orden: null,
     actividadId: null,
     motivo: 'esperando_repuestos',
-    observacion: ''
+    observacion: '',
+    guardando: false
   });
 
   const [modalNuevaActividad, setModalNuevaActividad] = useState({
@@ -69,6 +70,21 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
   const [modalReactivar, setModalReactivar] = useState({ abierto: false, guardando: false });
 
   const [ahora, setAhora] = useState(() => Date.now());
+
+  // Retroalimentacion visible (sobre todo en celular): mientras se guarda la
+  // accion, el boton tocado queda deshabilitado y muestra un indicador de
+  // carga, para que se note que el sistema esta trabajando.
+  const [accionPendiente, setAccionPendiente] = useState('');
+
+  const ejecutarBoton = async (clave, fn) => {
+    if (accionPendiente) return;
+    setAccionPendiente(clave);
+    try {
+      await fn();
+    } finally {
+      setAccionPendiente('');
+    }
+  };
 
   const { addToast, confirm } = useToast();
   const { isAdmin, isMecanico, currentUser } = useAuth();
@@ -158,17 +174,18 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
       orden: ordenCtx,
       actividadId,
       motivo: 'esperando_repuestos',
-      observacion: ''
+      observacion: '',
+      guardando: false
     });
   };
 
   const cerrarModalPausa = () => {
-    setModalPausa({ abierto: false, orden: null, actividadId: null, motivo: 'esperando_repuestos', observacion: '' });
+    setModalPausa({ abierto: false, orden: null, actividadId: null, motivo: 'esperando_repuestos', observacion: '', guardando: false });
   };
 
   const confirmarPausa = async () => {
     const { orden: ordenPausa, actividadId, motivo, observacion } = modalPausa;
-    if (!ordenPausa) return;
+    if (!ordenPausa || modalPausa.guardando) return;
 
     if (!puedeCambiarEstados) {
       cerrarModalPausa();
@@ -176,6 +193,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
       return;
     }
 
+    setModalPausa(prev => ({ ...prev, guardando: true }));
     try {
       if (actividadId) {
         await pausarActividad(ordenPausa.id, actividadId, motivo, observacion);
@@ -188,6 +206,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     } catch (err) {
       console.error(err);
       addToast('Error al pausar: ' + err.message, 'error');
+      setModalPausa(prev => ({ ...prev, guardando: false }));
     }
   };
 
@@ -603,30 +622,26 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
                   </span>
 
                   {!actFinalizada && (
-                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    <div className="acciones-ot">
                       {!actEnCurso ? (
                         <button
                           type="button"
-                          className="btn btn-primary btn-sm"
-                          disabled={iniciarBloqueado}
-                          style={{
-                            fontSize: 10,
-                            padding: '2px 8px',
-                            gap: 3,
-                            opacity: iniciarBloqueado ? 0.45 : 1,
-                            cursor: iniciarBloqueado ? 'not-allowed' : 'pointer'
-                          }}
-                          onClick={() => handleIniciarSubActividad(act, actIndex)}
+                          className="btn btn-primary btn-sm btn-accion"
+                          disabled={iniciarBloqueado || accionPendiente === `ini-${act.id}`}
+                          onClick={() => ejecutarBoton(`ini-${act.id}`, () => handleIniciarSubActividad(act, actIndex))}
                           title={motivoBloqueo}
                         >
-                          <TbPlayerPlay /> Iniciar
+                          {accionPendiente === `ini-${act.id}`
+                            ? <span className="spinner" style={{ width: 13, height: 13, borderWidth: 2 }} />
+                            : <TbPlayerPlay />}
+                          {accionPendiente === `ini-${act.id}` ? 'Iniciando...' : 'Iniciar'}
                         </button>
                       ) : (
                         <button
                           type="button"
-                          className="btn btn-secondary btn-sm"
+                          className="btn btn-secondary btn-sm btn-accion"
                           disabled={!puedeCambiarEstados}
-                          style={{ fontSize: 10, padding: '2px 8px', gap: 3, color: '#f59e0b', borderColor: '#f59e0b', opacity: !puedeCambiarEstados ? 0.45 : 1, cursor: !puedeCambiarEstados ? 'not-allowed' : 'pointer' }}
+                          style={{ color: '#f59e0b', borderColor: '#f59e0b' }}
                           onClick={() => abrirModalPausa(orden, act.id)}
                           title={!puedeCambiarEstados ? AVISO_ESTADOS : 'Pausar actividad con motivo justificado'}
                         >
@@ -635,13 +650,15 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
                       )}
                       <button
                         type="button"
-                        className="btn btn-success btn-sm"
-                        disabled={listoBloqueado}
-                        style={{ fontSize: 10, padding: '2px 8px', gap: 3, opacity: listoBloqueado ? 0.45 : 1, cursor: listoBloqueado ? 'not-allowed' : 'pointer' }}
-                        onClick={() => handleFinalizarSubActividad(act)}
+                        className="btn btn-success btn-sm btn-accion"
+                        disabled={listoBloqueado || accionPendiente === `lis-${act.id}`}
+                        onClick={() => ejecutarBoton(`lis-${act.id}`, () => handleFinalizarSubActividad(act))}
                         title={motivoListo}
                       >
-                        <TbCheck /> Listo
+                        {accionPendiente === `lis-${act.id}`
+                          ? <span className="spinner" style={{ width: 13, height: 13, borderWidth: 2 }} />
+                          : <TbCheck />}
+                        {accionPendiente === `lis-${act.id}` ? 'Guardando...' : 'Listo'}
                       </button>
                     </div>
                   )}
@@ -711,13 +728,16 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
             {orden.estado !== 'en_proceso' && orden.estado !== 'finalizado' && orden.estado !== 'listo_entrega' && orden.estado !== 'entregado' && (
               <button
                 type="button"
-                className="btn btn-sm btn-primary"
-                disabled={!puedeCambiarEstados}
-                style={{ flex: 1, minWidth: 120, opacity: !puedeCambiarEstados ? 0.45 : 1 }}
-                onClick={handleIniciarGeneral}
+                className="btn btn-sm btn-primary btn-accion"
+                disabled={!puedeCambiarEstados || accionPendiente === 'ini-general'}
+                style={{ flex: 1, minWidth: 120 }}
+                onClick={() => ejecutarBoton('ini-general', handleIniciarGeneral)}
                 title={!puedeCambiarEstados ? AVISO_ESTADOS : 'Iniciar el cronómetro general de esta OT'}
               >
-                <TbPlayerPlay /> Iniciar Todo
+                {accionPendiente === 'ini-general'
+                  ? <span className="spinner" style={{ width: 13, height: 13, borderWidth: 2 }} />
+                  : <TbPlayerPlay />}
+                {accionPendiente === 'ini-general' ? 'Iniciando...' : 'Iniciar Todo'}
               </button>
             )}
 
@@ -860,8 +880,14 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
                 <button type="button" className="btn btn-secondary" onClick={cerrarModalPausa}>
                   Cancelar
                 </button>
-                <button type="button" className="btn btn-warning" onClick={confirmarPausa}>
-                  Confirmar Pausa
+                <button
+                  type="button"
+                  className="btn btn-warning"
+                  onClick={confirmarPausa}
+                  disabled={modalPausa.guardando}
+                >
+                  {modalPausa.guardando && <span className="spinner" style={{ width: 13, height: 13, borderWidth: 2 }} />}
+                  {modalPausa.guardando ? 'Pausando...' : 'Confirmar Pausa'}
                 </button>
               </div>
             </div>
