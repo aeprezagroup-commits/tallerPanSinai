@@ -30,7 +30,8 @@ async function buildPublicado() {
     if (!respuesta.ok) return null;
     const html = await respuesta.text();
     const coincidencia = html.match(/assets\/index-[\w-]+\.js/);
-    return coincidencia ? coincidencia[0] : null;
+    // Se devuelve con la barra inicial para comparar contra el src real.
+    return coincidencia ? `/${coincidencia[0]}` : null;
   } catch {
     return null;
   }
@@ -85,7 +86,7 @@ export default function ActualizadorVersion() {
       setComprobando(true);
       try {
         const actual = buildActual();
-        const publicado = simular ? 'index-version-publicada.js' : await buildPublicado();
+        const publicado = simular ? '/index-version-publicada.js' : await buildPublicado();
         const nuevo = Boolean(publicado && actual && publicado !== actual);
 
         if (!nuevo) return { ok: true, nuevo: false, actual, publicado };
