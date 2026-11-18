@@ -27,6 +27,10 @@ export default function useDatosSinGuardar(activo, confirmar, mensaje) {
   useEffect(() => {
     if (!activo) return undefined;
 
+    // Señal global para el actualizador de versión: no recargar la pestaña
+    // mientras haya un formulario con datos sin guardar.
+    window.__formulariosSucios = (window.__formulariosSucios || 0) + 1;
+
     const avisarAlNavegador = (e) => {
       e.preventDefault();
       e.returnValue = '';
@@ -71,6 +75,7 @@ export default function useDatosSinGuardar(activo, confirmar, mensaje) {
     window.addEventListener('beforeunload', avisarAlNavegador);
     document.addEventListener('click', alHacerClic, true);
     return () => {
+      window.__formulariosSucios = Math.max(0, (window.__formulariosSucios || 1) - 1);
       window.removeEventListener('beforeunload', avisarAlNavegador);
       document.removeEventListener('click', alHacerClic, true);
     };

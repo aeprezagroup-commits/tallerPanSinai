@@ -2514,6 +2514,44 @@ input[type='password'],
   box-shadow: var(--shadow-lg);
 }
 
+/* Aviso de versión nueva: se muestra cuando la pestaña no puede
+   recargarse sola (datos sin guardar o modal abierto). */
+.aviso-actualizacion {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 999998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 14px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: fadeIn 0.25s ease;
+}
+
+.aviso-actualizacion-texto {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 640px) {
+  .aviso-actualizacion {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: none;
+    max-width: none;
+  }
+}
+
 .confirm-modal-backdrop {
   position: fixed;
   inset: 0;

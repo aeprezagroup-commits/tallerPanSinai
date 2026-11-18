@@ -9,6 +9,7 @@ import CambioPasswordObligatorio from './components/CambioPasswordObligatorio';
 import RutaConsolaSoporte from './components/RutaConsolaSoporte';
 import ControlSesion from './components/ControlSesion';
 import GuardiaSalida from './components/GuardiaSalida';
+import ActualizadorVersion from './components/ActualizadorVersion';
 
 import Login from './pages/Login';
 import Inicio from './pages/Inicio';
@@ -35,6 +36,7 @@ export default function App() {
             <Router>
               <ControlSesion />
               <GuardiaSalida />
+              <ActualizadorVersion />
               <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
