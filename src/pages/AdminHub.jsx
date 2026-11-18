@@ -7,6 +7,7 @@ import {
 } from '../icons';
 import IconoMascara from '../components/IconoMascara';
 import { useAuth } from '../context/AuthContext';
+import { aTitulo } from '../utils/formato';
 
 
 const MODULOS = [
@@ -95,7 +96,7 @@ export default function AdminHub() {
           <div>
             <h1 style={{ marginBottom: 2 }}>Panel de Administración</h1>
             <p style={{ margin: 0 }}>
-              Bienvenido, <strong>{currentUser?.nombre?.split(' ')[0] || 'Administrador'}</strong>
+              {currentUser?.sexo === 'mujer' ? 'Bienvenida' : 'Bienvenido'}, <strong>{aTitulo(currentUser?.nombre?.split(' ')[0] || 'Administrador')}</strong>
               
             </p>
           </div>

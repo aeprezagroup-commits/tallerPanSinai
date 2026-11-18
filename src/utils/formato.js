@@ -7,6 +7,14 @@ export function formatearDinero(n) {
   return `$${valor.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+// Nombre propio para saludos: primera letra de cada palabra en mayúscula
+// ("raquel pérez" → "Raquel Pérez").
+export function aTitulo(texto) {
+  return String(texto || '')
+    .toLowerCase()
+    .replace(/(^|[\s'’./-])([a-záéíóúüñ])/g, (m, separador, letra) => separador + letra.toUpperCase());
+}
+
 export function formatearMiles(n) {
   const valor = Number(n);
   if (!Number.isFinite(valor)) return '0';

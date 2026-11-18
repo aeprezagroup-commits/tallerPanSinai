@@ -61,6 +61,7 @@ export default function Admin({ seccion = 'personal' }) {
     password: '',
     rol: 'mecanico',
     cargo: '',
+    sexo: '',
     telefono: '',
     departamento: '',
     rutas: []
@@ -151,6 +152,7 @@ export default function Admin({ seccion = 'personal' }) {
       password: '',
       rol: u.rol || 'mecanico',
       cargo: u.cargo || '',
+      sexo: u.sexo || '',
       telefono: soloDigitos(u.telefono || ''),
       departamento: u.departamento || '',
       rutas: Array.isArray(u.rutas) ? u.rutas : []
@@ -685,6 +687,22 @@ export default function Admin({ seccion = 'personal' }) {
                   value={nuevoUsuario.cargo}
                   onChange={e => setNuevoUsuario({ ...nuevoUsuario, cargo: e.target.value })}
                 />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 9 }}>
+                <label className="form-label">Masculino o Femenino</label>
+                <select
+                  className="form-select"
+                  value={nuevoUsuario.sexo}
+                  onChange={e => setNuevoUsuario({ ...nuevoUsuario, sexo: e.target.value })}
+                >
+                  <option value="">— Sin especificar —</option>
+                  <option value="mujer">Femenino</option>
+                  <option value="hombre">Masculino</option>
+                </select>
+                <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                  Define el saludo del sistema ("Bienvenida" / "Bienvenido").
+                </span>
               </div>
 
               <div className="form-group" style={{ marginBottom: 9 }}>

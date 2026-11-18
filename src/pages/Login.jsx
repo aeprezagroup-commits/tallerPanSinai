@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../components/ToastContext';
 import { VERSION_TEXT } from '../version';
+import { aTitulo } from '../utils/formato';
 
 const ANIO_ACTUAL = new Date().getFullYear();
 
@@ -40,7 +41,10 @@ export default function Login() {
     setError('');
     try {
       const user = await login(usuario, password);
-      addToast(`Bienvenido, ${user.nombre} (${user.rol.toUpperCase()})`, 'success');
+      addToast(
+        `${user.sexo === 'mujer' ? 'Bienvenida' : 'Bienvenido'}, ${aTitulo(user.nombre)} (${user.rol.toUpperCase()})`,
+        'success'
+      );
       navigate(DESTINO_INICIO);
     } catch (err) {
       setError(err.message || 'Error de credenciales.');

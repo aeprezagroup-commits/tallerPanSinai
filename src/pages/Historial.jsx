@@ -120,6 +120,10 @@ export default function Historial() {
     });
   };
 
+  // Costo real de la orden; si es cero no se muestra monto (no hay dato).
+  const costoDe = (o) =>
+    Number(o.costoTotal) || (Number(o.costoRepuestos) || 0) + (Number(o.costoManoObra) || 0);
+
   const exportarExcel = () => {
     if (ordenesFiltradas.length === 0) return;
 
@@ -360,9 +364,16 @@ export default function Historial() {
                       <td className="placa">
                         <button
                           type="button"
-                          style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontWeight: 'bold' }}
-                          onClick={() => setFiltroTexto(ord.placa)}
-                          title="Filtrar el listado por esta placa"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: ord.placa ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                            cursor: ord.placa ? 'pointer' : 'default',
+                            fontWeight: 'bold'
+                          }}
+                          onClick={() => ord.placa && setFiltroTexto(ord.placa)}
+                          disabled={!ord.placa}
+                          title={ord.placa ? 'Filtrar el listado por esta placa' : 'La orden no tiene placa registrada'}
                         >
                           {ord.placa || 'S/P'}
                         </button>
@@ -384,7 +395,9 @@ export default function Historial() {
                       <td>{formatFecha(ord.fechaIngreso)}</td>
                       <td>{ord.mecanicoAsignado || '—'}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                        {formatearDinero(Number(ord.costoTotal) || 0)}
+                        {costoDe(ord) > 0 ? formatearDinero(costoDe(ord)) : (
+                          <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>—</span>
+                        )}
                       </td>
                       <td>
                         <StatusBadge estado={ord.estado} />
@@ -450,16 +463,22 @@ export default function Historial() {
                   </div>
                   <div className="order-card-info">
                     <TbReportMoney className="icon" />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
-                      {formatearDinero(Number(ord.costoTotal) || (Number(ord.costoRepuestos) || 0) + (Number(ord.costoManoObra) || 0))}
-                    </span>
+                    {costoDe(ord) > 0 ? (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#22c55e' }}>
+                        {formatearDinero(costoDe(ord))}
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--color-text-muted)' }}>Sin costo registrado</span>
+                    )}
                   </div>
                 </div>
                 <div className="order-card-footer">
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
-                    onClick={() => setFiltroTexto(ord.placa)}
+                    onClick={() => ord.placa && setFiltroTexto(ord.placa)}
+                    disabled={!ord.placa}
+                    title={ord.placa ? `Filtrar el listado por la placa ${ord.placa}` : 'La orden no tiene placa registrada'}
                   >
                     Filtrar por placa
                   </button>

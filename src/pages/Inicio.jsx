@@ -1,10 +1,12 @@
 import {  } from '../icons';
 import { useAuth } from '../context/AuthContext';
+import { aTitulo } from '../utils/formato';
 
 export default function Inicio() {
   const { currentUser, isAdmin, isEncargado, isMecanico } = useAuth();
 
-  const nombre = currentUser?.nombre?.split(' ')[0] || 'Usuario';
+  const nombre = aTitulo(currentUser?.nombre?.split(' ')[0] || 'Usuario');
+  const esMujer = currentUser?.sexo === 'mujer';
   const rol = isAdmin
     ? 'Administración'
     : isEncargado
@@ -17,7 +19,7 @@ export default function Inicio() {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1>Inicio</h1>
-        <p>Bienvenido, {nombre} — {rol}.</p>
+        <p>{esMujer ? 'Bienvenida' : 'Bienvenido'}, {nombre} — {rol}.</p>
       </div>
 
       <div

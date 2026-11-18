@@ -12,6 +12,7 @@ import {
 import { db, isFirebaseConfigured } from '../firebase/config';
 import { contarLectura, contarEscritura, aproximarBytes } from './metricasService';
 import { registrarBitacora, TIPOS_BITACORA } from './bitacoraService';
+import { formatearDinero } from '../utils/formato';
 
 const GASTOS_COLLECTION = 'gastos_vehiculo';
 const LOCAL_KEY = 'pan_sinai_gastos_v1';
@@ -80,7 +81,7 @@ export async function guardarGasto(gasto) {
     registrarBitacora({
       tipo: TIPOS_BITACORA.GASTO,
       accion: 'crear',
-      detalle: `Registró un gasto de ${limpio.proveedor || 'sin proveedor'} por $${Number(limpio.monto) || 0} (${limpio.unidad || 'sin unidad'})`,
+      detalle: `Registró un gasto de ${limpio.proveedor || 'sin proveedor'} por ${formatearDinero(limpio.monto)} (${limpio.unidad || 'sin unidad'})`,
       datos: { placa: limpio.unidad, proveedor: limpio.proveedor, monto: Number(limpio.monto) || 0 },
     });
   } else {

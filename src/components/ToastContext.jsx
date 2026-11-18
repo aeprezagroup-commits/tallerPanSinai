@@ -31,18 +31,22 @@ export function ToastProvider({ children }) {
 
   const addToast = useCallback((message, type = 'info', duration = 4200, title = null) => {
     const id = Date.now() + Math.random();
+    const tipo = ['success', 'error', 'warning', 'info'].includes(type) ? type : 'info';
     const newToast = {
       id,
       message,
-      type: ['success', 'error', 'warning', 'info'].includes(type) ? type : 'info',
+      type: tipo,
       duration,
       title
     };
 
     setToasts(prev => {
-      // Como máximo 3 avisos en pantalla a la vez.
-      const maximos = 3;
-      const slice = prev.length >= maximos ? prev.slice(prev.length - (maximos - 1)) : prev;
+      // Sin avisos repetidos: si el mismo mensaje ya está en pantalla se
+      // refresca (entra nuevo con su temporizador) en vez de apilar otro.
+      const sinRepetidos = prev.filter(t => !(t.message === message && t.type === tipo));
+      // Como máximo 3 avisos en pantalla (2 en celular: tapan el formulario).
+      const maximos = typeof window !== 'undefined' && window.innerWidth <= 640 ? 2 : 3;
+      const slice = sinRepetidos.length >= maximos ? sinRepetidos.slice(-(maximos - 1)) : sinRepetidos;
       return [...slice, newToast];
     });
 

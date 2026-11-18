@@ -13,8 +13,20 @@
 //    en Excel y las comas internas no rompen las columnas).
 // ---------------------------------------------------------------
 
+import { formatearDinero } from './formato';
+
 const MIME_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const MIME_CSV = 'text/csv;charset=utf-8;';
+
+// Columna contable: su encabezado identifica dinero. Esas celdas numéricas
+// se escriben con estilo de 2 decimales (#,##0.00) en el .xlsx y con
+// formatearDinero en el .csv. Un encabezado de más sólo afecta a celdas
+// de texto, que no reciben formato numérico.
+function esColumnaDinero(encabezado) {
+  const h = String(encabezado || '').trim();
+  return h.includes('$') ||
+    /^(costo|monto|descuento|total|precio|gasto|gastos|presupuesto|salario|pago)/i.test(h);
+}
 
 function descargar(nombreArchivo, contenido, mime) {
   const blob = contenido instanceof Blob ? contenido : new Blob([contenido], { type: mime });
@@ -35,8 +47,11 @@ export function escaparCampoCSV(v) {
 }
 
 export function contenidoCSV(encabezados, filas) {
+  const dinero = encabezados.map(esColumnaDinero);
+  const celda = (v, i) =>
+    dinero[i] && typeof v === 'number' && Number.isFinite(v) ? formatearDinero(v) : v;
   const lineas = [encabezados.map(escaparCampoCSV).join(',')];
-  for (const fila of filas) lineas.push(fila.map(escaparCampoCSV).join(','));
+  for (const fila of filas) lineas.push(fila.map((v, i) => escaparCampoCSV(celda(v, i))).join(','));
   return '\uFEFF' + lineas.join('\r\n');
 }
 
@@ -69,9 +84,11 @@ function nombreColumna(indice) {
 }
 
 function hojaXML(encabezados, filas) {
-  const celda = (ref, v) => {
+  // s="1" → estilo numérico con2 decimales (ver xl/styles.xml).
+  const estilos = encabezados.map(h => (esColumnaDinero(h) ? ' s="1"' : ''));
+  const celda = (ref, v, estilo = '') => {
     if (typeof v === 'number' && Number.isFinite(v)) {
-      return `<c r="${ref}"><v>${v}</v></c>`;
+      return `<c r="${ref}"${estilo}><v>${v}</v></c>`;
     }
     return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${escaparXML(v)}</t></is></c>`;
   };
@@ -79,7 +96,7 @@ function hojaXML(encabezados, filas) {
   filasXML.push(`<row r="1">${encabezados.map((h, i) => celda(`${nombreColumna(i)}1`, h)).join('')}</row>`);
   filas.forEach((fila, f) => {
     const r = f + 2;
-    filasXML.push(`<row r="${r}">${fila.map((v, i) => celda(`${nombreColumna(i)}${r}`, v)).join('')}</row>`);
+    filasXML.push(`<row r="${r}">${fila.map((v, i) => celda(`${nombreColumna(i)}${r}`, v, estilos[i] || '')).join('')}</row>`);
   });
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
@@ -186,7 +203,7 @@ function construirZIP(archivos) {
   return unir([...locales, ...centrales, eocd]);
 }
 
-// Paquete .xlsx mínimo y válido (5 partes OPC).
+// Paquete .xlsx mínimo y válido (6 partes OPC).
 export function construirXLSX(encabezados, filas, hoja = 'Reporte') {
   const encoder = new TextEncoder();
   const nombreHoja = String(hoja).replace(/[[\]:*?/\\]/g, '').slice(0, 31).trim() || 'Reporte';
@@ -197,6 +214,7 @@ export function construirXLSX(encabezados, filas, hoja = 'Reporte') {
     '<Default Extension="xml" ContentType="application/xml"/>' +
     '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
     '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
     '</Types>';
 
   const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -212,13 +230,30 @@ export function construirXLSX(encabezados, filas, hoja = 'Reporte') {
   const workbookRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
     '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
     '</Relationships>';
+
+  // Estilos de celda: s=0 → General; s=1 → número contable con2 decimales
+  // (numFmtId4 = "#,##0.00": separador de miles y dos decimales).
+  const estilos = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>' +
+    '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>' +
+    '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="2">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '</cellXfs>' +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+    '</styleSheet>';
 
   return construirZIP([
     { nombre: '[Content_Types].xml', bytes: encoder.encode(contenidoTypes) },
     { nombre: '_rels/.rels', bytes: encoder.encode(rels) },
     { nombre: 'xl/workbook.xml', bytes: encoder.encode(workbook) },
     { nombre: 'xl/_rels/workbook.xml.rels', bytes: encoder.encode(workbookRels) },
+    { nombre: 'xl/styles.xml', bytes: encoder.encode(estilos) },
     { nombre: 'xl/worksheets/sheet1.xml', bytes: encoder.encode(hojaXML(encabezados, filas)) },
   ]);
 }

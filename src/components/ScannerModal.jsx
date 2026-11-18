@@ -108,7 +108,7 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
         <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
           <div className="modal-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <IconoMascara src="/iconos/camara-de-video.png" size={20} estilo={{ color: 'var(--color-accent)' }} />
+              <IconoMascara src="/iconos/camara-fotografica.png" size={20} estilo={{ color: 'var(--color-accent)' }} />
               <h3 className="modal-title">Obtener Placa</h3>
             </div>
             <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">

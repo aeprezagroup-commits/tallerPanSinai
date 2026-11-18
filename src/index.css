@@ -1891,6 +1891,13 @@ input[type='password'],
   white-space: nowrap;
 }
 
+/* Aviso de desplazamiento horizontal de la tabla: se muestra sólo en
+   celular (ver media query 640px), donde la tabla se corta y hay que
+   deslizar para ver el resto de las columnas. */
+.tabla-scroll-hint {
+  display: none;
+}
+
 /* ---------------------------------------------------------------
    Tablas en laptops (hasta 1500px): se compactan para que todas las
    columnas quepan en pantalla sin recortarse. El scroll horizontal
@@ -2554,6 +2561,13 @@ input[type='password'],
   .toast-card {
     width: 100%;
     max-width: 340px;
+    padding: 9px 10px 11px;
+  }
+
+  /* En celular el título ocupa espacio que tapa el formulario: queda sólo
+     el icono con el mensaje (el color del icono indica el tipo). */
+  .toast-title {
+    display: none;
   }
 }
 
@@ -4699,6 +4713,13 @@ h3,
 }
 
 @media print {
+  /* Hoja vertical (portrait) por defecto en todas las impresiones del
+     sistema: el Acta de Taller se genera para papel en vertical. */
+  @page {
+    size: portrait;
+    margin: 10mm;
+  }
+
   body * {
     visibility: hidden;
   }
@@ -5254,6 +5275,34 @@ h3,
     padding: 12px 14px;
     font-size: 14px;
     white-space: nowrap;
+  }
+
+  /* Tabla de actividades: en celular se compacta para que los encabezados
+     se envuelvan (no queden cortados al borde) y quepan más columnas a la
+     vez. El padding va con !important porque viene en línea desde el JSX. */
+  .table.tabla-actividades {
+    min-width: 560px;
+  }
+
+  .table.tabla-actividades th {
+    white-space: normal;
+    padding: 8px 6px !important;
+    font-size: 10.5px;
+    letter-spacing: 0.3px;
+  }
+
+  .table.tabla-actividades td {
+    padding: 8px 6px !important;
+    font-size: 12px;
+  }
+
+  /* Aviso de desplazamiento: indica que la tabla sigue a la derecha. */
+  .tabla-scroll-hint {
+    display: block;
+    margin: -4px 0 8px;
+    font-size: 11px;
+    text-align: right;
+    color: var(--color-text-muted);
   }
 
   .modal-overlay,

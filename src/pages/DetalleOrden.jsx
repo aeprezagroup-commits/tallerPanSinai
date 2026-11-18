@@ -1281,6 +1281,12 @@ export default function DetalleOrden() {
           {ordenModificable ? ' Administración y encargado pueden añadir o editar tareas.' : ''}
         </p>
 
+        {(orden.actividades?.length || 0) > 0 && (
+          <p className="tabla-scroll-hint">
+            Desliza para ver todas las columnas →
+          </p>
+        )}
+
         {(!orden.actividades || orden.actividades.length === 0) ? (
           <div style={{ padding: '16px', background: 'var(--color-bg-input)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-secondary)', fontSize: 13, fontStyle: 'italic' }}>
             No se han registrado actividades desglosadas para esta orden. Se trabaja bajo el diagnóstico general: "{orden.diagnosticoInicial || 'Mantenimiento preventivo'}".

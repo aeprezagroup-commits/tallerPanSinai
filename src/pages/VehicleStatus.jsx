@@ -18,6 +18,14 @@ const ETAPAS = [
   { id: 'finalizado', label: 'Listo p/ Entrega', desc: 'Listo para despacho o retirado' },
 ];
 
+// fechaIngreso llega como Timestamp de Firestore: new Date(objeto) genera
+// "Invalid Date". Se acepta también string o milisegundos.
+const aFechaTexto = (ts) => {
+  if (!ts) return 'Hoy';
+  const d = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+};
+
 export default function VehicleStatus() {
   const [query, setQuery] = useState('');
   const [vistaUnidades, setVistaUnidades] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
@@ -329,7 +337,7 @@ export default function VehicleStatus() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                     <span style={{ color: 'var(--color-text-muted)' }}>Fecha de Ingreso:</span>
-                    <span>{ordenActual.fechaIngreso ? new Date(ordenActual.fechaIngreso).toLocaleString() : 'Hoy'}</span>
+                    <span>{aFechaTexto(ordenActual.fechaIngreso)}</span>
                   </div>
 
                   <div style={{ marginTop: 6, padding: 10, background: 'var(--color-bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
@@ -478,31 +486,6 @@ export default function VehicleStatus() {
             ))}
           </div>
         )}
-      </div>
-
-      <div style={{
-        marginTop: 24,
-        padding: '12px 16px',
-        background: 'var(--color-bg-card)',
-        borderRadius: 'var(--radius-sm)',
-        border: '1px solid var(--color-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 10
-      }}>
-        <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-          Accesos rápidos a otros módulos de trabajo:
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Link to="/taller" className="btn btn-sm btn-secondary" style={{ color: 'var(--color-accent)' }}>
-            <TbTools /> Taller
-          </Link>
-          <Link to="/ordenes" className="btn btn-sm btn-secondary" style={{ color: '#eab308' }}>
-            <TbFileText /> Órdenes de Trabajo
-          </Link>
-        </div>
       </div>
 
     </div>

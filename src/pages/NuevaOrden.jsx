@@ -671,7 +671,7 @@ export default function NuevaOrden() {
           onClick={() => setIsScannerOpen(true)}
           style={{ gap: 8, boxShadow: 'var(--shadow-glow)' }}
         >
-          <IconoMascara src="/iconos/camara-de-video.png" size={20} /> Obtener Placa
+          <IconoMascara src="/iconos/camara-fotografica.png" size={20} /> Obtener Placa
         </button>
       </div>
 
@@ -845,7 +845,7 @@ export default function NuevaOrden() {
                 letterSpacing: 1,
                 color: form.placa ? 'var(--color-text-primary)' : 'var(--color-text-muted)'
               }}>
-                <IconoMascara src="/iconos/camara-de-video.png" size={17} estilo={{ color: 'var(--color-accent)', flexShrink: 0 }} />
+                <IconoMascara src="/iconos/camara-fotografica.png" size={17} estilo={{ color: 'var(--color-accent)', flexShrink: 0 }} />
                 {form.placa || 'Sin placa'}
               </div>
               <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>

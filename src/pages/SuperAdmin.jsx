@@ -17,6 +17,7 @@ import {
   obtenerPersonalVisible, obtenerUsuarios, crearCuentaSoporte, esSuperAdmin, migrarPasswordsAHash,
 } from '../services/usuariosService';
 import { esHashBcrypt } from '../utils/passwords';
+import { formatearDinero } from '../utils/formato';
 import { obtenerFlotaVehiculos } from '../services/vehiculosService';
 import { db, isFirebaseConfigured } from '../firebase/config';
 import { getCountFromServer, collection } from 'firebase/firestore';
@@ -606,7 +607,14 @@ export default function SuperAdmin() {
                           {ev.datos && Object.keys(ev.datos).length > 0 && (
                             <div style={{ fontSize: 11, opacity: 0.55, marginTop: 3 }}>
                               {Object.entries(ev.datos)
-                                .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
+                                .map(([k, v]) => {
+                                  const esDinero = typeof v === 'number' &&
+                                    /(monto|costo|total|descuento|precio|gasto|presupuesto|salario|pago)/i.test(k);
+                                  const texto = esDinero
+                                    ? formatearDinero(v)
+                                    : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+                                  return `${k}: ${texto}`;
+                                })
                                 .join(' · ')
                                 .slice(0, 160)}
                             </div>
