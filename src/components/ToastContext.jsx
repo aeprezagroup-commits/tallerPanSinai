@@ -40,7 +40,9 @@ export function ToastProvider({ children }) {
     };
 
     setToasts(prev => {
-      const slice = prev.length >= 4 ? prev.slice(prev.length - 3) : prev;
+      // Como máximo 3 avisos en pantalla a la vez.
+      const maximos = 3;
+      const slice = prev.length >= maximos ? prev.slice(prev.length - (maximos - 1)) : prev;
       return [...slice, newToast];
     });
 

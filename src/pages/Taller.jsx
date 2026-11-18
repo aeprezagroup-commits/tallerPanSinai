@@ -9,6 +9,7 @@ import StatusBadge from '../components/StatusBadge';
 import { formatearMiles } from '../utils/formato';
 import OrdenOperativa from '../components/OrdenOperativa';
 import BotonVolver from '../components/BotonVolver';
+import { ordenarOrdenes, ORDENES_POR_PAGINA } from '../utils/ordenarOrdenes';
 
 export default function Taller() {
   const [ordenes, setOrdenes] = useState([]);
@@ -18,8 +19,15 @@ export default function Taller() {
   const [estadoFiltro, setEstadoFiltro] = useState('activos');
   const [vista, setVista] = useState('fila');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
+  // Cuántas órdenes están desplegadas; el resto se pide con el botón
+  // "Cargar órdenes antiguas" (el administrador maneja una lista larga).
+  const [visibles, setVisibles] = useState(ORDENES_POR_PAGINA);
 
   const { isMecanico, currentUser } = useAuth();
+
+  useEffect(() => {
+    setVisibles(ORDENES_POR_PAGINA);
+  }, [mecanicoFiltro, estadoFiltro]);
 
   const toggleOrden = (id) => setOrdenAbierta((prev) => (prev === id ? null : id));
 
@@ -40,7 +48,7 @@ export default function Taller() {
 
   const ordenesVisibles = visiblesParaTaller(ordenes, currentUser);
 
-  const ordenesFiltradas = ordenesVisibles.filter((o) => {
+  const filtradas = ordenesVisibles.filter((o) => {
     if (estadoFiltro === 'activos' && o.estado === 'entregado') return false;
     if (estadoFiltro !== 'todos' && estadoFiltro !== 'activos' && o.estado !== estadoFiltro) return false;
     if (mecanicoFiltro !== 'Todos') {
@@ -50,6 +58,13 @@ export default function Taller() {
     }
     return true;
   });
+
+  // Orden por estado del flujo del taller (ingresado → … → entregado)
+  // y, dentro de cada estado, de la más nueva a la más vieja.
+  const ordenesFiltradas = ordenarOrdenes(filtradas);
+
+  const ordenesMostradas = ordenesFiltradas.slice(0, visibles);
+  const pendientesCargar = ordenesFiltradas.length - ordenesMostradas.length;
 
   if (loading) {
     return (
@@ -152,7 +167,7 @@ export default function Taller() {
               </tr>
             </thead>
             <tbody>
-              {ordenesFiltradas.map((orden, index) => {
+              {ordenesMostradas.map((orden, index) => {
                 const apoyos = apoyosDeOrden(orden).filter(Boolean);
                 return (
                   <Fragment key={orden.id}>
@@ -246,7 +261,7 @@ export default function Taller() {
         </div>
       ) : (
         <div className="order-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(360px, 100%), 1fr))', gap: 20 }}>
-          {ordenesFiltradas.map((orden, index) => (
+          {ordenesMostradas.map((orden, index) => (
             <div key={orden.id} className={`order-card estado-${orden.estado}`} style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="order-card-header">
                 <div>
@@ -298,6 +313,19 @@ export default function Taller() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {pendientesCargar > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setVisibles(v => v + ORDENES_POR_PAGINA)}
+            title={`Desplegar ${pendientesCargar} órdenes más (de la más nueva a la más vieja)`}
+          >
+            Cargar órdenes antiguas ({pendientesCargar})
+          </button>
         </div>
       )}
     </div>

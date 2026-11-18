@@ -152,13 +152,14 @@ export default function NuevaOrden() {
         trasera: base.trasera || ''
       });
       setFotosLadosNuevas({});
+      // Sin aviso: las 4 fotos se ven recién cargadas en las tarjetas.
       if (base.frontal || base.lateralIzquierdo || base.lateralDerecho || base.trasera) {
-        addToast('Base fotográfica cargada (4 costados).', 'info');
+        console.info('Base fotográfica cargada (4 costados).');
       }
     } catch (e) {
       console.warn('Error cargando base fotográfica:', e);
     }
-  }, [addToast]);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

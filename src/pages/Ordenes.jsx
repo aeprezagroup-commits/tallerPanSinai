@@ -13,6 +13,7 @@ import StatusBadge from '../components/StatusBadge';
 import OrdenOperativa from '../components/OrdenOperativa';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import { AREAS_TRABAJO_CON_TODAS as AREAS } from '../constants/areas';
+import { ordenarOrdenes, ORDENES_POR_PAGINA } from '../utils/ordenarOrdenes';
 
 const aFecha = (ts) => {
   if (!ts) return null;
@@ -36,6 +37,13 @@ export default function Ordenes() {
   const [ordenCertificado, setOrdenCertificado] = useState(null);
   const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'tabla');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
+  // Cuántas órdenes están desplegadas; el resto se pide con el botón
+  // "Cargar órdenes antiguas" (la lista del administrador es muy larga).
+  const [visibles, setVisibles] = useState(ORDENES_POR_PAGINA);
+
+  useEffect(() => {
+    setVisibles(ORDENES_POR_PAGINA);
+  }, [busqueda, filtroEstado, filtroArea, filtroMecanico, fechaDesde, fechaHasta]);
 
   useEffect(() => {
     const unsubscribe = escucharOrdenes((data) => {
@@ -46,8 +54,8 @@ export default function Ordenes() {
   }, []);
 
   const ordenesFiltradas = useMemo(() => {
-    const visibles = isMecanico ? visiblesParaTaller(ordenes, currentUser) : filtrarOrdenesPorUsuario(ordenes, currentUser);
-    return visibles.filter(o => {
+    const listaBase = isMecanico ? visiblesParaTaller(ordenes, currentUser) : filtrarOrdenesPorUsuario(ordenes, currentUser);
+    const filtradas = listaBase.filter(o => {
       const busquedaNorm = busqueda.trim().toLowerCase();
       const busquedaDigitos = busqueda.replace(/\D/g, '');
       const matchBusqueda =
@@ -81,7 +89,13 @@ export default function Ordenes() {
 
       return matchBusqueda && matchEstado && matchArea && matchMecanico && matchDesde && matchHasta;
     });
+    // Orden por estado del flujo del taller y, dentro de cada estado,
+    // de la más nueva a la más vieja.
+    return ordenarOrdenes(filtradas);
   }, [ordenes, currentUser, isMecanico, busqueda, filtroEstado, filtroArea, filtroMecanico, fechaDesde, fechaHasta]);
+
+  const ordenesMostradas = ordenesFiltradas.slice(0, visibles);
+  const pendientesCargar = ordenesFiltradas.length - ordenesMostradas.length;
 
   const toggleOrden = (id) => {
     setOrdenAbierta(prev => (prev === id ? null : id));
@@ -249,7 +263,7 @@ export default function Ordenes() {
               </tr>
             </thead>
             <tbody>
-              {ordenesFiltradas.map(orden => (
+              {ordenesMostradas.map(orden => (
                 <Fragment key={orden.id}>
                   <tr
                     onClick={() => toggleOrden(orden.id)}
@@ -334,7 +348,7 @@ export default function Ordenes() {
         </div>
       ) : (
         <div className="order-cards-grid">
-          {ordenesFiltradas.map(orden => (
+          {ordenesMostradas.map(orden => (
             <div
               key={orden.id}
               className={`order-card estado-${orden.estado}`}
@@ -426,6 +440,20 @@ export default function Ordenes() {
           ))}
         </div>
       )}
+
+      {pendientesCargar > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setVisibles(v => v + ORDENES_POR_PAGINA)}
+            title={`Desplegar ${pendientesCargar} órdenes más (de la más nueva a la más vieja)`}
+          >
+            Cargar órdenes antiguas ({pendientesCargar})
+          </button>
+        </div>
+      )}
+
       <InspectionCertificateModal
         isOpen={Boolean(ordenCertificado)}
         orden={ordenCertificado}
