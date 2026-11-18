@@ -4540,10 +4540,24 @@ h3,
 
 .cert-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+/* Columna izquierda (logo + titulos): crece y se comprime para que la
+   columna derecha (foto frontal + fecha) quepa en la misma linea.
+   Sin esto, el encabezado se partia en dos lineas y la foto caia
+   debajo del logo. */
+.cert-header > :first-child {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.cert-header > :last-child {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .cert-logo-seal {
