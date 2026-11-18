@@ -1287,7 +1287,7 @@ export default function DetalleOrden() {
           </div>
         ) : (
           <div className="table-container">
-            <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <table className="table tabla-actividades" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: 11, textTransform: 'uppercase' }}>
                   <th style={{ padding: '10px 12px' }}>Actividad / Labor</th>

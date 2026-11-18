@@ -46,12 +46,24 @@ function HojaActa({ orden, cert, fotoFrontal, conRef }) {
           </div>
         </div>
 
-        <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
-          <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-            FECHA: {cert.fechaCertificacion}
-          </div>
-          <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 700 }}>
-            ● DOCUMENTO VERIFICADO
+        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          {fotoFrontal ? (
+            <div className="cert-foto-header">
+              <img src={fotoFrontal} alt="Foto frontal del vehículo" />
+              <span>FOTO FRONTAL</span>
+            </div>
+          ) : (
+            <div className="cert-foto-header cert-foto-header-vacia">
+              <span>Sin foto frontal</span>
+            </div>
+          )}
+          <div style={{ fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+              FECHA: {cert.fechaCertificacion}
+            </div>
+            <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 700 }}>
+              ● DOCUMENTO VERIFICADO
+            </div>
           </div>
         </div>
       </div>
@@ -102,15 +114,6 @@ function HojaActa({ orden, cert, fotoFrontal, conRef }) {
         <div className="cert-data-box">
           <span className="label">FECHA INGRESO</span>
           <span className="val">{formatFecha(orden.fechaIngreso)}</span>
-        </div>
-
-        <div className="cert-data-box cert-foto-box">
-          <span className="label">FOTO FRONTAL</span>
-          {fotoFrontal ? (
-            <img className="cert-foto-frontal" src={fotoFrontal} alt="Foto frontal del vehículo" />
-          ) : (
-            <span className="val" style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Sin foto registrada</span>
-          )}
         </div>
       </div>
 
