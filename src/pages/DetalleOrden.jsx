@@ -2,6 +2,7 @@ import BotonVolver from '../components/BotonVolver';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizarPlaca } from '../utils/placas';
 import { useParams, useNavigate } from 'react-router-dom';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 import {
   TbPencil,
   TbTrash,
@@ -109,6 +110,67 @@ export default function DetalleOrden() {
   const [ladoPendiente, setLadoPendiente] = useState(null);
   const baseInputRef = useRef(null);
   const [camaraLado, setCamaraLado] = useState('');
+  // Copia de la actividad al abrir el modal: detecta cambios reales.
+  const [actividadBase, setActividadBase] = useState(null);
+
+  const CLAVES_ACTIVIDAD = ['descripcion', 'area', 'mecanicoAsignado', 'tiempoEstimadoMinutos', 'estado', 'observaciones'];
+  const sucioEdicionOrden =
+    editando &&
+    Boolean(orden) &&
+    Object.keys(formEdit).some(
+      k => JSON.stringify(formEdit[k] ?? '') !== JSON.stringify(orden[k] ?? '')
+    );
+  const sucioTransicion =
+    modalTransicion.abierto && Boolean(String(modalTransicion.motivo || '').trim());
+  const sucioActividad =
+    modalActividad.abierto &&
+    Boolean(actividadBase) &&
+    CLAVES_ACTIVIDAD.some(
+      k => JSON.stringify(modalActividad[k] ?? '') !== JSON.stringify(actividadBase[k] ?? '')
+    );
+  useDatosSinGuardar(sucioEdicionOrden || sucioTransicion || sucioActividad, confirm);
+
+  const cerrarTransicion = async () => {
+    if (sucioTransicion) {
+      const ok = await confirm({
+        title: '¿Cerrar la transición?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
+    setModalTransicion(prev => ({ ...prev, abierto: false }));
+  };
+
+  const cerrarActividad = async () => {
+    if (sucioActividad) {
+      const ok = await confirm({
+        title: '¿Cerrar la actividad?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
+    setModalActividad(prev => ({ ...prev, abierto: false }));
+    setActividadBase(null);
+  };
+
+  // Sale del modo de edición (botón superior o "Cancelar" inferior).
+  const cancelarEdicion = async () => {
+    if (sucioEdicionOrden) {
+      const ok = await confirm({
+        title: '¿Cancelar la edición?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
+    setEditando(false);
+    setFormEdit(orden);
+  };
 
   useEffect(() => {
     let cancelado = false;
@@ -433,7 +495,7 @@ export default function DetalleOrden() {
   };
 
   const abrirNuevaActividad = () => {
-    setModalActividad({
+    const base = {
       abierto: true,
       modo: 'nueva',
       actividadId: null,
@@ -444,11 +506,13 @@ export default function DetalleOrden() {
       estado: 'pendiente',
       observaciones: '',
       guardando: false
-    });
+    };
+    setModalActividad(base);
+    setActividadBase({ ...base });
   };
 
   const abrirEditarActividad = (act) => {
-    setModalActividad({
+    const base = {
       abierto: true,
       modo: 'editar',
       actividadId: act.id,
@@ -459,7 +523,9 @@ export default function DetalleOrden() {
       estado: act.estado || 'pendiente',
       observaciones: act.observaciones || '',
       guardando: false
-    });
+    };
+    setModalActividad(base);
+    setActividadBase({ ...base });
   };
 
   const guardarActividad = async (e) => {
@@ -584,7 +650,7 @@ export default function DetalleOrden() {
 
           {puedeModificar ? (
             <>
-              <button onClick={() => setEditando(!editando)} className="btn btn-secondary">
+              <button onClick={() => { if (editando) cancelarEdicion(); else setEditando(true); }} className="btn btn-secondary">
                 <TbPencil /> {editando ? 'Cancelar Edición' : 'Editar'}
               </button>
               <button onClick={handleEliminar} className="btn btn-danger">
@@ -1564,7 +1630,7 @@ export default function DetalleOrden() {
 
       {editando && (
         <div className="btn-group" style={{ justifyContent: 'flex-end', marginTop: 24, marginBottom: 20 }}>
-          <button className="btn btn-secondary btn-lg" onClick={() => { setEditando(false); setFormEdit(orden); }}>
+          <button className="btn btn-secondary btn-lg" onClick={cancelarEdicion}>
             Cancelar
           </button>
           <button className="btn btn-primary btn-lg" onClick={handleGuardar}>
@@ -1575,7 +1641,7 @@ export default function DetalleOrden() {
 
       {modalTransicion.abierto && (
         <ModalPortal>
-          <div className="modal-backdrop" onClick={() => !modalTransicion.guardando && setModalTransicion(prev => ({ ...prev, abierto: false }))}>
+          <div className="modal-backdrop" onClick={() => { if (!modalTransicion.guardando) cerrarTransicion(); }}>
             <div className="modal-content" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, fontSize: 16 }}>
@@ -1585,7 +1651,7 @@ export default function DetalleOrden() {
                   type="button"
                   className="btn-icon"
                   disabled={modalTransicion.guardando}
-                  onClick={() => setModalTransicion(prev => ({ ...prev, abierto: false }))}
+                  onClick={cerrarTransicion}
                 >
                   <TbX />
                 </button>
@@ -1646,7 +1712,7 @@ export default function DetalleOrden() {
                     type="button"
                     className="btn btn-secondary"
                     disabled={modalTransicion.guardando}
-                    onClick={() => setModalTransicion(prev => ({ ...prev, abierto: false }))}
+                    onClick={cerrarTransicion}
                   >
                     Cancelar
                   </button>
@@ -1666,7 +1732,7 @@ export default function DetalleOrden() {
 
       {modalActividad.abierto && (
         <ModalPortal>
-          <div className="modal-backdrop" onClick={() => !modalActividad.guardando && setModalActividad(prev => ({ ...prev, abierto: false }))}>
+          <div className="modal-backdrop" onClick={() => { if (!modalActividad.guardando) cerrarActividad(); }}>
             <div className="modal-content" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, fontSize: 16 }}>
@@ -1679,7 +1745,7 @@ export default function DetalleOrden() {
                   type="button"
                   className="btn-icon"
                   disabled={modalActividad.guardando}
-                  onClick={() => setModalActividad(prev => ({ ...prev, abierto: false }))}
+                  onClick={cerrarActividad}
                 >
                   <TbX />
                 </button>
@@ -1785,7 +1851,7 @@ export default function DetalleOrden() {
                     type="button"
                     className="btn btn-secondary"
                     disabled={modalActividad.guardando}
-                    onClick={() => setModalActividad(prev => ({ ...prev, abierto: false }))}
+                    onClick={cerrarActividad}
                   >
                     Cancelar
                   </button>

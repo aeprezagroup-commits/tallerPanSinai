@@ -8,6 +8,7 @@ import {
 } from '../icons';
 import PanelCatalogos from '../components/PanelCatalogos';
 import { useToast } from '../components/ToastContext';
+import useDatosSinGuardar from '../hooks/useDatosSinGuardar';
 import { useAuth } from '../context/AuthContext';
 import {
   leerBitacora, contarBitacora, colaPendiente, podarBitacora,
@@ -160,6 +161,9 @@ export default function SuperAdmin() {
   const haySoporte = obtenerUsuarios().some(esSuperAdmin);
   const modoInstalacion = !isSuperAdmin && !haySoporte;
   const passPendientes = obtenerUsuarios().filter((u) => u && u.password && !esHashBcrypt(u.password)).length;
+
+  // Aviso si la cuenta de soporte quedó a medias por escribir.
+  useDatosSinGuardar(formSoporte && Boolean(nombreSoporte.trim() || passSoporte), confirm);
 
   const crearSoporte = async (e) => {
     e.preventDefault();

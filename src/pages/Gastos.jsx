@@ -13,6 +13,7 @@ import {
 import { obtenerFlotaVehiculos, centroCostoPorDepartamento, opcionesCatalogo } from '../services/vehiculosService';
 import { escucharOrdenes, formatoOT } from '../firebase/ordenesService';
 import { useToast } from '../components/ToastContext';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 import ModalPortal from '../components/ModalPortal';
 
 const FORM_VACIO = {
@@ -108,6 +109,8 @@ export default function Gastos() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [form, setForm] = useState(FORM_VACIO);
+  // Copia de los valores originales al abrir el modal (nuevo o edición).
+  const [formBase, setFormBase] = useState(null);
   const [guardando, setGuardando] = useState(false);
 
   const [flota, setFlota] = useState(() => {
@@ -254,7 +257,9 @@ export default function Gastos() {
 
   const abrirNuevo = () => {
     setEditandoId(null);
-    setForm({ ...FORM_VACIO, fecha: new Date().toISOString().slice(0, 10) });
+    const base = { ...FORM_VACIO, fecha: new Date().toISOString().slice(0, 10) };
+    setForm(base);
+    setFormBase({ ...base });
     setModalAbierto(true);
   };
 
@@ -263,7 +268,7 @@ export default function Gastos() {
     const mes = (g.fecha || FORM_VACIO.fecha).slice(0, 7);
     const otsValidas = calcularOtsDelMes(ordenes, g.unidad, mes);
     const ordenId = (g.ordenId && otsValidas.some(o => o.id === g.ordenId)) ? g.ordenId : '';
-    setForm({
+    const base = {
       fecha: g.fecha || FORM_VACIO.fecha,
       tipo: esAlmacenG(g) ? 'almacen' : 'proveedor',
       dte: g.dte ?? g.ccf ?? '',
@@ -277,14 +282,35 @@ export default function Gastos() {
       estado: g.estado || 'por_pagar',
       unidad: g.unidad || '',
       ordenId
-    });
+    };
+    setForm(base);
+    setFormBase({ ...base });
     setModalAbierto(true);
   };
 
-  const cerrarModal = () => {
+  const sucioGasto = Boolean(
+    modalAbierto &&
+    formBase &&
+    Object.keys(formBase).some(
+      k => JSON.stringify(form[k] ?? '') !== JSON.stringify(formBase[k] ?? '')
+    )
+  );
+  useDatosSinGuardar(sucioGasto, confirm);
+
+  const cerrarModal = async () => {
     if (guardando) return;
+    if (sucioGasto) {
+      const ok = await confirm({
+        title: '¿Cerrar el gasto?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
     setModalAbierto(false);
     setEditandoId(null);
+    setFormBase(null);
   };
 
   const handleChange = (e) => {

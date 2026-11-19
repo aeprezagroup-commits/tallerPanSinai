@@ -13,6 +13,7 @@ import { escucharOrdenes, cerrarOrden, marcarListoParaEntrega } from '../firebas
 import { obtenerFotosBase, guardarFotosBase } from '../services/fotosVehiculoService';
 import { obtenerConductores } from '../services/vehiculosService';
 import { useToast } from '../components/ToastContext';
+import useDatosSinGuardar from '../hooks/useDatosSinGuardar';
 import { useAuth } from '../context/AuthContext';
 import { filtrarOrdenesPorUsuario, apoyosDeOrden } from '../services/permisosService';
 import StatusBadge from '../components/StatusBadge';
@@ -58,6 +59,9 @@ export default function Salida() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const conductores = obtenerConductores();
+
+  // Aviso si hay datos escritos en "Datos de Cierre y Retiro" sin guardar.
+  useDatosSinGuardar(Boolean(personaRetira.trim() || observacionesFinales.trim()), confirm);
 
   useEffect(() => {
     const unsubscribe = escucharOrdenes((data) => {

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { TbCircleCheck, TbX, TbAlertTriangle } from '../icons';
 import ModalPortal from './ModalPortal';
+import { useToast } from './ToastContext';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 
 export default function FinalizacionOrdenModal(props) {
   if (!props.isOpen) return null;
@@ -10,6 +12,23 @@ export default function FinalizacionOrdenModal(props) {
 function FinalizacionModalContent({ onClose, orden, onConfirmar, guardando = false, incompleta = false }) {
   const [justificacionCierre, setJustificacionCierre] = useState('');
   const [error, setError] = useState('');
+
+  const { confirm } = useToast();
+  const sucio = incompleta && Boolean(justificacionCierre.trim());
+  useDatosSinGuardar(sucio, confirm);
+
+  const cerrar = async () => {
+    if (sucio) {
+      const ok = await confirm({
+        title: '¿Cerrar la finalización?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
+    onClose();
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -29,13 +48,13 @@ function FinalizacionModalContent({ onClose, orden, onConfirmar, guardando = fal
 
   return (
     <ModalPortal>
-      <div className="modal-backdrop" onClick={guardando ? undefined : onClose}>
+      <div className="modal-backdrop" onClick={guardando ? undefined : cerrar}>
         <div className="modal-content" style={{ maxWidth: 500 }} onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#22c55e', fontSize: 16, fontWeight: 800, margin: 0 }}>
               <TbCircleCheck /> Finalización de Orden de Trabajo
             </h3>
-            <button type="button" className="modal-close" onClick={onClose} disabled={guardando} aria-label="Cerrar">
+            <button type="button" className="modal-close" onClick={cerrar} disabled={guardando} aria-label="Cerrar">
               <TbX />
             </button>
           </div>
@@ -117,7 +136,7 @@ function FinalizacionModalContent({ onClose, orden, onConfirmar, guardando = fal
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={onClose} disabled={guardando}>
+              <button type="button" className="btn btn-secondary" onClick={cerrar} disabled={guardando}>
                 Cancelar
               </button>
               <button type="submit" className="btn btn-success" disabled={guardando}>

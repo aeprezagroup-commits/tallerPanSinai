@@ -4,6 +4,7 @@ import {
   TbAlertCircle, TbRefresh, TbSearch,
 } from '../icons';
 import { useToast } from './ToastContext';
+import useDatosSinGuardar from '../hooks/useDatosSinGuardar';
 import { useAuth } from '../context/AuthContext';
 import { DEPARTAMENTOS_EL_SALVADOR, obtenerEditorRutas } from '../services/vehiculosService';
 import { obtenerEditorTareas } from '../services/catalogoTareasService';
@@ -246,6 +247,16 @@ export default function PanelCatalogos() {
 
   const [nuevaTarea, setNuevaTarea] = useState('');
   const [areaNuevaTarea, setAreaNuevaTarea] = useState('Motor');
+
+  // Aviso si hay catálogos editados o texto escrito sin agregar/guardar.
+  useDatosSinGuardar(
+    Boolean(
+      sucio.rutas || sucio.areas || sucio.tareas ||
+      nuevaRuta.trim() || nuevaArea.trim() || nuevaTarea.trim()
+    ),
+    confirm
+  );
+
   const agregarTarea = () => {
     const valor = nuevaTarea.trim();
     if (!valor) return;

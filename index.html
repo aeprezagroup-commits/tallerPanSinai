@@ -34,5 +34,21 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // El navegador puede restaurar una pestaña vieja desde su caché de
+      // retroceso (bfcache) y quedar en una versión anterior del sistema.
+      // Al detectar esa restauración se recarga la página una sola vez.
+      window.addEventListener('pageshow', function (evento) {
+        if (!evento.persisted) {
+          try { sessionStorage.removeItem('pan_sinai_recarga_cache'); } catch (e) { /* sin memoria */ }
+          return;
+        }
+        try {
+          if (sessionStorage.getItem('pan_sinai_recarga_cache') === '1') return;
+          sessionStorage.setItem('pan_sinai_recarga_cache', '1');
+        } catch (e) { /* sin memoria: se recarga igual */ }
+        window.location.reload();
+      });
+    </script>
   </body>
 </html>

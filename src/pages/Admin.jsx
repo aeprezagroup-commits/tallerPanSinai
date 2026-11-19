@@ -68,6 +68,9 @@ export default function Admin({ seccion = 'personal' }) {
   };
   const [nuevoUsuario, setNuevoUsuario] = useState(FORM_USUARIO_VACIO);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
+  // Copia de los valores originales al abrir la edición: sirve para detectar
+  // cambios reales y avisar si se intenta salir sin guardar.
+  const [usuarioBase, setUsuarioBase] = useState(null);
 
   const [verFormUsuario, setVerFormUsuario] = useState(false);
   const [verFormVehiculo, setVerFormVehiculo] = useState(false);
@@ -93,14 +96,49 @@ export default function Admin({ seccion = 'personal' }) {
     Object.keys(FORM_USUARIO_VACIO).some(
       k => JSON.stringify(nuevoUsuario[k]) !== JSON.stringify(FORM_USUARIO_VACIO[k])
     );
+  // Edición de un usuario existente: se compara contra los valores originales.
+  const sucioEdicionUsuario =
+    verFormUsuario &&
+    Boolean(usuarioEditando) &&
+    Boolean(usuarioBase) &&
+    Object.keys(FORM_USUARIO_VACIO).some(
+      k => JSON.stringify(nuevoUsuario[k]) !== JSON.stringify(usuarioBase[k])
+    );
   const sucioNuevoVehiculo =
     verFormVehiculo &&
     Object.keys(VEHICULO_INICIAL).some(
       k => String(nuevoVehiculo[k] ?? '') !== String(VEHICULO_INICIAL[k] ?? '')
     );
-  useDatosSinGuardar(sucioNuevoUsuario || sucioNuevoVehiculo, confirm);
 
   const [asignacionVehiculo, setAsignacionVehiculo] = useState(null);
+  const [asignacionBase, setAsignacionBase] = useState(null);
+  const sucioAsignacion = Boolean(
+    asignacionVehiculo &&
+    asignacionBase &&
+    ['ruta', 'departamento', 'centroCosto'].some(
+      k => (asignacionVehiculo[k] || '') !== (asignacionBase[k] || '')
+    )
+  );
+
+  useDatosSinGuardar(
+    sucioNuevoUsuario || sucioEdicionUsuario || sucioNuevoVehiculo || sucioAsignacion,
+    confirm
+  );
+
+  // Cierra la ventana de asignación pidiendo confirmación si hubo cambios.
+  const cerrarAsignacion = async () => {
+    if (sucioAsignacion) {
+      const ok = await confirm({
+        title: '¿Cerrar la asignación?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
+    setAsignacionVehiculo(null);
+    setAsignacionBase(null);
+  };
 
   const cargarDatos = () => {
     setUsuarios(obtenerPersonalVisible());
@@ -147,7 +185,7 @@ export default function Admin({ seccion = 'personal' }) {
 
   const handleEditarUsuario = (u) => {
     setUsuarioEditando(u.id);
-    setNuevoUsuario({
+    const base = {
       nombre: u.nombre || '',
       password: '',
       rol: u.rol || 'mecanico',
@@ -156,13 +194,16 @@ export default function Admin({ seccion = 'personal' }) {
       telefono: soloDigitos(u.telefono || ''),
       departamento: u.departamento || '',
       rutas: Array.isArray(u.rutas) ? u.rutas : []
-    });
+    };
+    setNuevoUsuario(base);
+    setUsuarioBase({ ...base, rutas: [...base.rutas] });
     setVerFormUsuario(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancelarEdicion = () => {
     setUsuarioEditando(null);
+    setUsuarioBase(null);
     setNuevoUsuario(FORM_USUARIO_VACIO);
     setVerFormUsuario(false);
   };
@@ -228,6 +269,7 @@ export default function Admin({ seccion = 'personal' }) {
         addToast(`Personal registrado. Contraseña temporal: ${PASSWORD_GENERICA} (deberá cambiarla al ingresar).`, 'success', 6000);
       }
       setUsuarioEditando(null);
+      setUsuarioBase(null);
       setNuevoUsuario(FORM_USUARIO_VACIO);
       setVerFormUsuario(false);
       cargarDatos();
@@ -429,6 +471,7 @@ export default function Admin({ seccion = 'personal' }) {
       });
       addToast(`Asignación actualizada: ${asignacionVehiculo.placa} → ${asignacionVehiculo.ruta || 'Sin ruta'}.`, 'success');
       setAsignacionVehiculo(null);
+      setAsignacionBase(null);
       cargarDatos();
     } catch (err) {
       console.error(err);
@@ -572,7 +615,7 @@ export default function Admin({ seccion = 'personal' }) {
           type="button"
           className={`btn ${formularioAbierto ? 'btn-secondary' : 'btn-primary'}`}
           onClick={async () => {
-            if (formularioAbierto && (sucioNuevoUsuario || sucioNuevoVehiculo)) {
+            if (formularioAbierto && (sucioNuevoUsuario || sucioEdicionUsuario || sucioNuevoVehiculo)) {
               const ok = await confirm({
                 title: '¿Cerrar el formulario?',
                 message: AVISO_DATOS_SIN_GUARDAR,
@@ -787,7 +830,18 @@ export default function Admin({ seccion = 'personal' }) {
                   type="button"
                   className="btn btn-secondary"
                   style={{ width: '100%', marginTop: 8 }}
-                  onClick={handleCancelarEdicion}
+                  onClick={async () => {
+                    if (sucioEdicionUsuario) {
+                      const ok = await confirm({
+                        title: '¿Cancelar la edición?',
+                        message: AVISO_DATOS_SIN_GUARDAR,
+                        confirmText: 'Sí, salir',
+                        cancelText: 'Seguir aquí',
+                      });
+                      if (!ok) return;
+                    }
+                    handleCancelarEdicion();
+                  }}
                 >
                   <TbX /> Cancelar Edición
                 </button>
@@ -1190,10 +1244,11 @@ export default function Admin({ seccion = 'personal' }) {
                         <button
                           type="button"
                           className="btn btn-sm btn-secondary"
-                          onClick={() => setAsignacionVehiculo({
-                            ...v,
-                            centroCosto: v.centroCosto || centroCostoPorDepartamento(v.departamento) || ''
-                          })}
+                          onClick={() => {
+                            const obj = { ...v, centroCosto: v.centroCosto || centroCostoPorDepartamento(v.departamento) || '' };
+                            setAsignacionVehiculo(obj);
+                            setAsignacionBase({ ...obj });
+                          }}
                           title="Cambiar ruta, ubicación y centro de costo (reubicación de la unidad)"
                           style={{ padding: '3px 8px', fontSize: 11 }}
                         >
@@ -1229,13 +1284,13 @@ export default function Admin({ seccion = 'personal' }) {
 
       {asignacionVehiculo && (
         <ModalPortal>
-          <div className="modal-overlay" onClick={() => setAsignacionVehiculo(null)}>
+          <div className="modal-overlay" onClick={cerrarAsignacion}>
             <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h3 className="modal-title">
                   Asignación de Unidad • <span style={{ fontFamily: 'var(--font-mono)' }}>{asignacionVehiculo.placa}</span>
                 </h3>
-                <button className="modal-close" onClick={() => setAsignacionVehiculo(null)}><TbX /></button>
+                <button className="modal-close" onClick={cerrarAsignacion}><TbX /></button>
               </div>
               <div className="modal-body">
                 <p style={{ fontSize: 12.5, color: 'var(--color-text-muted)', marginBottom: 14 }}>
@@ -1297,7 +1352,7 @@ export default function Admin({ seccion = 'personal' }) {
                   </div>
 
                   <div className="modal-form-acciones" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
-                    <button type="button" className="btn btn-secondary" onClick={() => setAsignacionVehiculo(null)}>
+                    <button type="button" className="btn btn-secondary" onClick={cerrarAsignacion}>
                       Cancelar
                     </button>
                     <button type="submit" className="btn btn-primary">

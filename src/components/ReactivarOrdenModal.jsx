@@ -1,14 +1,29 @@
 import { useState } from 'react';
 import { TbRotateClockwise, TbX } from '../icons';
 import ModalPortal from './ModalPortal';
+import { useToast } from './ToastContext';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 
 export default function ReactivarOrdenModal({ isOpen, onClose, orden, onConfirmar, guardando = false }) {
   const [justificacion, setJustificacion] = useState('');
   const [error, setError] = useState('');
 
+  const { confirm } = useToast();
+  const sucio = isOpen && Boolean(justificacion.trim());
+  useDatosSinGuardar(sucio, confirm);
+
   if (!isOpen) return null;
 
-  const handleCerrar = () => {
+  const handleCerrar = async () => {
+    if (sucio) {
+      const ok = await confirm({
+        title: '¿Cerrar la reactivación?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
     setJustificacion('');
     setError('');
     onClose();

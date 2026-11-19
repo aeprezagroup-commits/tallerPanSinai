@@ -3,6 +3,8 @@ import { normalizarPlaca } from '../utils/placas';
 import { TbX, TbCheck, TbAlertCircle, TbHash, TbBarcode } from '../icons';
 import ModalPortal from './ModalPortal';
 import IconoMascara from './IconoMascara';
+import { useToast } from './ToastContext';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 
 export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
   const [error, setError] = useState('');
@@ -12,6 +14,24 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
   const streamRef = useRef(null);
   const manualInputRef = useRef(null);
   const detectorRef = useRef(null);
+
+  const { confirm } = useToast();
+  const sucio = isOpen && Boolean(placaManual.trim());
+  useDatosSinGuardar(sucio, confirm);
+
+  // Cierre manual del modal: avisa si se escribió una placa sin usar.
+  const cerrar = async () => {
+    if (sucio) {
+      const ok = await confirm({
+        title: '¿Cerrar Obtener Placa?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
+    onClose();
+  };
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -104,14 +124,14 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
 
   return (
     <ModalPortal>
-      <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-overlay" onClick={cerrar}>
         <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
           <div className="modal-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <IconoMascara src="/iconos/camara-fotografica.png" size={20} estilo={{ color: 'var(--color-accent)' }} />
               <h3 className="modal-title">Obtener Placa</h3>
             </div>
-            <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">
+            <button type="button" className="modal-close" onClick={cerrar} aria-label="Cerrar">
               <TbX />
             </button>
           </div>

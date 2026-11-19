@@ -17,6 +17,7 @@ import {
   formatoOT
 } from '../firebase/ordenesService';
 import { useToast } from './ToastContext';
+import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 import { AREAS_SELECT, opcionesArea } from '../constants/areas';
 import { useAuth } from '../context/AuthContext';
 import { esColaRecepcion, puedeAsignarPersonal, ordenCompleta, puedeReactivarOrden, puedeCambiarEstadoActividad, apoyosDeOrden } from '../services/permisosService';
@@ -86,6 +87,35 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
   };
 
   const { addToast, confirm } = useToast();
+
+  // Copia de la actividad al abrir el modal: detecta cambios reales.
+  const [actividadBase, setActividadBase] = useState(null);
+
+  const sucioPausa = modalPausa.abierto && Boolean(
+    String(modalPausa.observacion || '').trim() || modalPausa.motivo !== 'esperando_repuestos'
+  );
+  const sucioActividadNueva =
+    modalNuevaActividad.abierto &&
+    Boolean(actividadBase) &&
+    ['descripcion', 'area', 'mecanicoAsignado', 'tiempoEstimadoMinutos'].some(
+      k => JSON.stringify(modalNuevaActividad[k] ?? '') !== JSON.stringify(actividadBase[k] ?? '')
+    );
+  useDatosSinGuardar(sucioPausa || sucioActividadNueva, confirm);
+
+  // Cierre de "Nueva Actividad" pidiendo confirmación si hay cambios.
+  const cerrarActividadNueva = async () => {
+    if (sucioActividadNueva) {
+      const ok = await confirm({
+        title: '¿Cerrar la actividad?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
+    setModalNuevaActividad(prev => ({ ...prev, abierto: false }));
+    setActividadBase(null);
+  };
   const { isMecanico, currentUser } = useAuth();
   const puedeAsignar = puedeAsignarPersonal(currentUser);
   const puedeCambiarEstados = puedeCambiarEstadoActividad(orden, currentUser);
@@ -178,7 +208,21 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     });
   };
 
-  const cerrarModalPausa = () => {
+  const cerrarModalPausa = async () => {
+    if (sucioPausa) {
+      const ok = await confirm({
+        title: '¿Cerrar la pausa?',
+        message: AVISO_DATOS_SIN_GUARDAR,
+        confirmText: 'Sí, salir',
+        cancelText: 'Seguir aquí',
+      });
+      if (!ok) return;
+    }
+    setModalPausa({ abierto: false, orden: null, actividadId: null, motivo: 'esperando_repuestos', observacion: '', guardando: false });
+  };
+
+  // Cierre directo (sin confirmar) para cuando el guardado ya fue exitoso.
+  const cerrarModalPausaSinAviso = () => {
     setModalPausa({ abierto: false, orden: null, actividadId: null, motivo: 'esperando_repuestos', observacion: '', guardando: false });
   };
 
@@ -201,7 +245,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         await pausarTrabajo(ordenPausa.id, Number(ordenPausa.tiempoRealMinutos) || 0, motivo);
         addToast(`Trabajo pausado para ${ordenPausa.placa} (${motivo})`, 'warning');
       }
-      cerrarModalPausa();
+      cerrarModalPausaSinAviso();
     } catch (err) {
       console.error(err);
       addToast('Error al pausar: ' + err.message, 'error');
@@ -348,6 +392,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
         tiempoEstimadoMinutos: mins
       });
       addToast('Nueva actividad añadida a la orden de trabajo', 'success');
+      setActividadBase(null);
       setModalNuevaActividad({
         abierto: false,
         ordenId: null,
@@ -511,15 +556,19 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
           {puedeAsignar && (
             <button
               type="button"
-              onClick={() => setModalNuevaActividad({
-                abierto: true,
-                ordenId: orden.id,
-                placa: orden.placa,
-                descripcion: '',
-                area: orden.areaPrincipal || AREAS_SELECT[0],
-                mecanicoAsignado: orden.mecanicoAsignado || '',
-                tiempoEstimadoMinutos: 60
-              })}
+              onClick={() => {
+                const base = {
+                  abierto: true,
+                  ordenId: orden.id,
+                  placa: orden.placa,
+                  descripcion: '',
+                  area: orden.areaPrincipal || AREAS_SELECT[0],
+                  mecanicoAsignado: orden.mecanicoAsignado || '',
+                  tiempoEstimadoMinutos: 60
+                };
+                setModalNuevaActividad(base);
+                setActividadBase({ ...base });
+              }}
               className="btn btn-secondary btn-sm"
               style={{ fontSize: 11, padding: '2px 8px', gap: 4 }}
             >
@@ -900,7 +949,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
                 <button
                   type="button"
                   className="btn-icon"
-                  onClick={() => setModalNuevaActividad(prev => ({ ...prev, abierto: false }))}
+                  onClick={cerrarActividadNueva}
                 >
                   <TbX />
                 </button>
@@ -973,7 +1022,7 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => setModalNuevaActividad(prev => ({ ...prev, abierto: false }))}
+                    onClick={cerrarActividadNueva}
                   >
                     Cancelar
                   </button>

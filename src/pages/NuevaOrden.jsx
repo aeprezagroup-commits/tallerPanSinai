@@ -9,7 +9,6 @@ import {
   TbX,
   TbCircleCheck,
   TbCheck,
-  TbPlus,
   TbLock,
   TbAlertTriangle,
   TbTrash,
@@ -98,7 +97,6 @@ export default function NuevaOrden() {
   const [tareasMarcadas, setTareasMarcadas] = useState(() => new Set());
   const [tareasManuales, setTareasManuales] = useState([]);
   const [tareasOmitidasMotivos, setTareasOmitidasMotivos] = useState({});
-  const [nuevaActividad, setNuevaActividad] = useState('');
 
   const [fotosLados, setFotosLados] = useState({
     frontal: '',
@@ -135,6 +133,12 @@ export default function NuevaOrden() {
     form.placa ||
     form.motivoIngreso ||
     form.kilometraje ||
+    form.diagnosticoInicial ||
+    form.tiempoEstimadoHoras ||
+    // Se excluyen los valores que el sistema llena solo (conductor habitual
+    // del vehículo y receptor automático) para no avisar sin motivo.
+    (form.conductorEntrega && form.conductorEntrega !== (vehiculoDetectado?.conductorHabitual || '')) ||
+    (form.mecanicoReceptor && form.mecanicoReceptor !== (currentUser?.nombre || '')) ||
     tareasMarcadas.size ||
     tareasManuales.length ||
     areasSeleccionadas.size ||
@@ -448,16 +452,6 @@ export default function NuevaOrden() {
       setTareasMarcadas(new Set(todas.map(t => t.id)));
     }
     setTareasOmitidasMotivos({});
-  };
-
-  const agregarActividadManual = () => {
-    const desc = nuevaActividad.trim();
-    if (!desc) {
-      addToast('Escribe una descripción antes de agregar la actividad', 'warning');
-      return;
-    }
-    setTareasManuales(prev => [...prev, { id: `manual-${Date.now()}-${prev.length}`, descripcion: desc }]);
-    setNuevaActividad('');
   };
 
   const quitarActividadManual = (id) => {
@@ -1403,33 +1397,6 @@ export default function NuevaOrden() {
                 </div>
               </div>
             )}
-
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
-                ¿Falta una tarea? Agréguela (opcional):
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ flex: 1 }}
-                  value={nuevaActividad}
-                  onChange={(e) => setNuevaActividad(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); agregarActividadManual(); } }}
-                  placeholder="Descripción de la tarea a agregar..."
-                  enterKeyHint="done"
-                />
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={agregarActividadManual}
-                  title="Agregar esta actividad a la OT"
-                  style={{ padding: '10px 16px', fontSize: 18, lineHeight: 1, flexShrink: 0 }}
-                >
-                  <TbPlus />
-                </button>
-              </div>
-            </div>
 
             <div className="form-section-title" ref={seccionFotosRef}>
               <IconoMascara className="icon" src="/iconos/camara-fotografica.png" size={16} /> Inspección Perimetral 360° (Estado Actual de la Unidad)
