@@ -95,7 +95,6 @@ export default function NuevaOrden() {
   const [fechaIngresoTexto] = useState(() => new Date().toLocaleString('es-SV'));
   const [servicioMantenimiento, setServicioMantenimiento] = useState(''); 
   const [tareasMarcadas, setTareasMarcadas] = useState(() => new Set());
-  const [tareasManuales, setTareasManuales] = useState([]);
   const [tareasOmitidasMotivos, setTareasOmitidasMotivos] = useState({});
 
   const [fotosLados, setFotosLados] = useState({
@@ -140,7 +139,6 @@ export default function NuevaOrden() {
     (form.conductorEntrega && form.conductorEntrega !== (vehiculoDetectado?.conductorHabitual || '')) ||
     (form.mecanicoReceptor && form.mecanicoReceptor !== (currentUser?.nombre || '')) ||
     tareasMarcadas.size ||
-    tareasManuales.length ||
     areasSeleccionadas.size ||
     Object.values(fotosLadosNuevas).some(Boolean)
   );
@@ -328,14 +326,7 @@ export default function NuevaOrden() {
   })();
 
   const tareasFinales = [
-    ...tareasCatalogo.filter(t => tareasMarcadas.has(t.id)),
-    ...tareasManuales.map(t => ({
-      id: t.id,
-      _manual: true,
-      descripcion: t.descripcion,
-      area: areaDefecto,
-      tiempoEstimadoMinutos: 60
-    }))
+    ...tareasCatalogo.filter(t => tareasMarcadas.has(t.id))
   ];
 
   const tareasOmitidasFinales = modoMantenimiento
@@ -422,6 +413,9 @@ export default function NuevaOrden() {
   // Tras elegir el tipo de atención, la vista lleva a verificar el vehículo
   // y registrar el kilometraje antes de seguir con la recepción.
   const seleccionarTipoAtencion = (modo) => {
+    // Concordancia con el resto del formulario: se decide el tipo de
+    // atención hasta registrar una placa válida en la flota.
+    if (!vehiculoDetectado) return;
     setModoAtencion(modo);
     setTimeout(() => {
       datosVehiculoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -452,14 +446,6 @@ export default function NuevaOrden() {
       setTareasMarcadas(new Set(todas.map(t => t.id)));
     }
     setTareasOmitidasMotivos({});
-  };
-
-  const quitarActividadManual = (id) => {
-    setTareasManuales(prev => prev.filter(a => a.id !== id));
-  };
-
-  const quitarTareaCatalogo = (id) => {
-    setTareasMarcadas(prev => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   const handleSubmit = async (e) => {
@@ -690,18 +676,21 @@ export default function NuevaOrden() {
             <button
               type="button"
               className="option-card"
+              disabled={camposBloqueados}
               onClick={() => seleccionarTipoAtencion('taller')}
               style={{
                 textAlign: 'left',
                 padding: '16px 18px',
                 borderRadius: 'var(--radius-md)',
-                cursor: 'pointer',
-                border: `1.5px solid ${modoAtencion === 'taller' ? 'var(--color-accent)' : 'var(--color-border)'}`,
-                background: modoAtencion === 'taller' ? 'rgba(134,153,46,0.10)' : 'var(--color-bg-card)',
+                cursor: camposBloqueados ? 'not-allowed' : 'pointer',
+                border: `1.5px solid ${modoAtencion === 'taller' && !camposBloqueados ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                background: modoAtencion === 'taller' && !camposBloqueados ? 'rgba(134,153,46,0.10)' : 'var(--color-bg-card)',
                 color: 'var(--color-text-primary)',
                 display: 'flex',
                 gap: 12,
-                alignItems: 'flex-start'
+                alignItems: 'flex-start',
+                opacity: camposBloqueados ? 0.45 : 1,
+                transition: 'opacity 0.25s ease'
               }}
             >
               <IconoMascara src="/iconos/llave-inglesa.png" size={22} estilo={{ color: 'var(--color-accent)', marginTop: 2 }} />
@@ -716,18 +705,21 @@ export default function NuevaOrden() {
             <button
               type="button"
               className="option-card"
+              disabled={camposBloqueados}
               onClick={() => seleccionarTipoAtencion('asistencia')}
               style={{
                 textAlign: 'left',
                 padding: '16px 18px',
                 borderRadius: 'var(--radius-md)',
-                cursor: 'pointer',
-                border: `1.5px solid ${modoAtencion === 'asistencia' ? '#f59e0b' : 'var(--color-border)'}`,
-                background: modoAtencion === 'asistencia' ? 'rgba(245, 158, 11, 0.10)' : 'var(--color-bg-card)',
+                cursor: camposBloqueados ? 'not-allowed' : 'pointer',
+                border: `1.5px solid ${modoAtencion === 'asistencia' && !camposBloqueados ? '#f59e0b' : 'var(--color-border)'}`,
+                background: modoAtencion === 'asistencia' && !camposBloqueados ? 'rgba(245, 158, 11, 0.10)' : 'var(--color-bg-card)',
                 color: 'var(--color-text-primary)',
                 display: 'flex',
                 gap: 12,
-                alignItems: 'flex-start'
+                alignItems: 'flex-start',
+                opacity: camposBloqueados ? 0.45 : 1,
+                transition: 'opacity 0.25s ease'
               }}
             >
               <IconoMascara src="/iconos/ubicacion-taller.png" size={22} estilo={{ color: '#f59e0b', marginTop: 2 }} />
@@ -740,7 +732,13 @@ export default function NuevaOrden() {
             </button>
           </div>
 
-          {modoAtencion === 'asistencia' && currentUser?.nombre && (
+          {camposBloqueados && (
+            <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--color-text-muted)' }}>
+              Bloqueado hasta registrar placa válida.
+            </p>
+          )}
+
+          {modoAtencion === 'asistencia' && !camposBloqueados && currentUser?.nombre && (
             <div className="form-bloque" style={{
               marginTop: 14,
               padding: '10px 14px',
@@ -1295,77 +1293,6 @@ export default function NuevaOrden() {
               <p className="form-bloque" style={{ fontSize: 12.5, color: 'var(--color-text-muted)', padding: '10px 12px', background: 'var(--color-bg-input)', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-md)', margin: 0 }}>
                 Seleccione la pauta de kilometraje para cargar las actividades correspondientes.
               </p>
-            )}
-
-            {tareasFinales.length > 0 && (
-              <div className="form-bloque" style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
-                  Actividades que se crearán ({tareasFinales.length}):
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {tareasFinales.map((a, i) => (
-                    <div
-                      key={a.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        padding: '8px 10px',
-                        background: 'var(--color-bg-card)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: 13
-                      }}
-                    >
-                      <span style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 11,
-                        fontWeight: 800,
-                        color: 'var(--color-accent)',
-                        background: 'var(--color-accent-light)',
-                        borderRadius: 4,
-                        padding: '2px 6px',
-                        flexShrink: 0
-                      }}>
-                        #{i + 1}
-                      </span>
-                      <span style={{ flex: 1, color: 'var(--color-text-primary)' }}>{a.descripcion}</span>
-                      <span style={{
-                        fontSize: 10.5,
-                        fontWeight: 600,
-                        color: 'var(--color-text-secondary)',
-                        background: 'var(--color-bg-input)',
-                        borderRadius: 4,
-                        padding: '2px 6px',
-                        flexShrink: 0
-                      }}>
-                        {a.area}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => (a._manual ? quitarActividadManual(a.id) : quitarTareaCatalogo(a.id))}
-                        title="Quitar actividad"
-                        style={{
-                          background: 'rgba(239,68,68,0.1)',
-                          border: '1px solid rgba(239,68,68,0.3)',
-                          color: '#ef4444',
-                          borderRadius: 4,
-                          width: 24,
-                          height: 24,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          padding: 0,
-                          flexShrink: 0
-                        }}
-                      >
-                        <TbX size={13} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
             )}
 
             {tareasOmitidasFinales.length > 0 && (
