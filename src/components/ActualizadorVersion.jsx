@@ -54,6 +54,8 @@ function recargarConservandoPosicion() {
   } catch {
     /* sin memoria disponible: se recarga en el inicio de la página */
   }
+  // Recarga automática: GuardiaSalida no pide confirmación nativa.
+  window.__recargaVersion = true;
   window.location.reload();
 }
 

@@ -41,6 +41,9 @@ export default function GuardiaSalida() {
   useEffect(() => {
     if (!usuarioId) return;
     const avisarAlNavegador = (e) => {
+      // Recargas automáticas del sistema (actualizador o restauración de
+      // pestaña): no se interrumpe con el diálogo nativo de salida.
+      if (window.__recargaVersion) return;
       e.preventDefault();
       e.returnValue = '';
     };

@@ -45,8 +45,12 @@
         }
         try {
           if (sessionStorage.getItem('pan_sinai_recarga_cache') === '1') return;
+          // Con datos sin guardar no se recarga: se respeta lo escrito.
+          if ((window.__formulariosSucios || 0) > 0) return;
           sessionStorage.setItem('pan_sinai_recarga_cache', '1');
         } catch (e) { /* sin memoria: se recarga igual */ }
+        // Recarga automática: GuardiaSalida no pide confirmación nativa.
+        window.__recargaVersion = true;
         window.location.reload();
       });
     </script>
