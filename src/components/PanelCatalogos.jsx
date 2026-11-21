@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   TbTruck, TbList, TbClipboardList, TbPlus, TbTrash, TbDeviceFloppy,
   TbAlertCircle, TbRefresh, TbSearch,
@@ -48,7 +48,7 @@ function filasDeGrupo(grupo, area, editor) {
   return [...empresa, ...genericas];
 }
 
-export default function PanelCatalogos() {
+export default function PanelCatalogos({ soloRutas = false }) {
   const { currentUser } = useAuth();
   const { addToast, confirm } = useToast();
 
@@ -56,6 +56,11 @@ export default function PanelCatalogos() {
   const [info, setInfo] = useState(estadoCatalogos());
   const [sucio, setSucio] = useState({ rutas: false, areas: false, tareas: false });
   const [guardando, setGuardando] = useState(false);
+
+  // El administrador común sólo administra rutas; áreas y tareas quedan
+  // reservadas a la consola de soporte.
+  const pestanas = soloRutas ? PESTANAS.filter(p => p.id === 'rutas') : PESTANAS;
+  const pestanaActiva = pestanas.some(p => p.id === pestana) ? pestana : 'rutas';
 
   const [rutas, setRutas] = useState(() => obtenerEditorRutas());
   const [areas, setAreas] = useState(copiaAreas);
@@ -81,15 +86,44 @@ export default function PanelCatalogos() {
     setSucio({ rutas: false, areas: false, tareas: false });
   }, []);
 
+  const sucioRef = useRef(sucio);
+  useEffect(() => {
+    sucioRef.current = sucio;
+  }, [sucio]);
+
   useEffect(() => suscribirCatalogos((estado) => {
     setInfo(estado);
-    reiniciar();
+    // Si hay ediciones sin guardar en cualquier pestaña, no se reescribe
+    // el borrador local: sólo se actualiza la información del catálogo.
+    const haySucio = Object.values(sucioRef.current).some(Boolean);
+    if (!haySucio) reiniciar();
   }), [reiniciar]);
+
+  // Reinicia sólo la pestaña que acaba de guardarse (las demás conservan
+  // sus ediciones sin guardar).
+  const reiniciarPestana = (id) => {
+    if (id === 'rutas') setRutas(obtenerEditorRutas());
+    else if (id === 'areas') setAreas(copiaAreas());
+    else if (id === 'tareas') setTareas(obtenerEditorTareas());
+    setSucio(s => ({ ...s, [id]: false }));
+  };
 
   const marcar = (quien) => setSucio(s => ({ ...s, [quien]: true }));
 
   const editarRuta = (i, valor) => {
-    setRutas(r => ({ ...r, predeterminadas: r.predeterminadas.map((x, j) => (j === i ? valor : x)) }));
+    setRutas(r => {
+      const vieja = r.predeterminadas[i];
+      const predeterminadas = r.predeterminadas.map((x, j) => (j === i ? valor : x));
+      // El renombre se propaga a los departamentos que la usaban, para que
+      // la ruta no pierda sus asignaciones al guardar.
+      const porDepartamento = Object.fromEntries(
+        Object.entries(r.porDepartamento).map(([d, lista]) => [
+          d,
+          (Array.isArray(lista) ? lista : []).map(x => (x === vieja ? valor : x)),
+        ]),
+      );
+      return { ...r, predeterminadas, porDepartamento };
+    });
     marcar('rutas');
   };
 
@@ -282,7 +316,7 @@ export default function PanelCatalogos() {
   };
 
   const guardar = async () => {
-    const pestanaActual = PESTANAS.find(p => p.id === pestana);
+    const pestanaActual = pestanas.find(p => p.id === pestanaActiva);
     const confirmado = await confirm({
       title: `¿Guardar el catálogo de ${pestanaActual.etiqueta.toLowerCase()}?`,
       message: 'Se aplican de inmediato en todo el sistema y quedan registrados en la bitácora.',
@@ -294,15 +328,20 @@ export default function PanelCatalogos() {
     setGuardando(true);
     try {
       const por = currentUser?.nombre || 'Soporte';
-      if (pestana === 'rutas') {
+      if (pestanaActiva === 'rutas') {
         const maestras = rutas.predeterminadas.map(r => r.trim()).filter(Boolean);
+        if (maestras.length === 0) {
+          addToast('Debe quedar al menos una ruta en el catálogo', 'warning');
+          return;
+        }
+        // Se conservan también los departamentos sin rutas: si se omiten,
+        // el sistema los rellena con todas las rutas del catálogo.
         const porDepartamento = Object.fromEntries(
           Object.entries(rutas.porDepartamento)
-            .map(([d, lista]) => [d, (Array.isArray(lista) ? lista : []).filter(r => maestras.includes(r))])
-            .filter(([, lista]) => lista.length > 0),
+            .map(([d, lista]) => [d, (Array.isArray(lista) ? lista : []).filter(r => maestras.includes(r))]),
         );
         await guardarCatalogoRutas({ predeterminadas: maestras, porDepartamento, por });
-      } else if (pestana === 'areas') {
+      } else if (pestanaActiva === 'areas') {
         const lista = areas.areas.map(a => a.trim()).filter(Boolean);
         const codigos = Object.fromEntries(
           lista.map(n => [n, (areas.codigos[n] || '').trim()]),
@@ -311,6 +350,7 @@ export default function PanelCatalogos() {
       } else {
         await guardarCatalogoTareas({ ...tareas, por });
       }
+      reiniciarPestana(pestanaActiva);
       addToast(`Catálogo de ${pestanaActual.etiqueta.toLowerCase()} guardado`, 'success');
     } catch (e) {
       console.error('Error guardando el catálogo:', e);
@@ -320,9 +360,8 @@ export default function PanelCatalogos() {
     }
   };
 
-  const hayCambios = sucio[pestana];
-  const puedeGuardar = hayCambios || info.origen !== 'firestore';
-  const caja = { background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 12 };
+  const hayCambios = sucio[pestanaActiva];
+  const puedeGuardar = hayCambios || info.origen !== 'firestore';  const caja = { background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 12 };
 
   return (
     <section style={{ ...caja, padding: '18px 18px 20px', marginBottom: 20 }}>
@@ -352,11 +391,11 @@ export default function PanelCatalogos() {
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        {PESTANAS.map(p => (
+        {pestanas.map(p => (
           <button
             key={p.id}
             type="button"
-            className={`btn btn-sm ${pestana === p.id ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn btn-sm ${pestanaActiva === p.id ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setPestana(p.id)}
           >
             {p.icono} <span style={{ marginLeft: 6 }}>{p.etiqueta}</span>
@@ -364,7 +403,7 @@ export default function PanelCatalogos() {
         ))}
       </div>
 
-      {pestana === 'rutas' && (
+      {pestanaActiva === 'rutas' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 18 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
@@ -372,7 +411,7 @@ export default function PanelCatalogos() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxHeight: 320, overflowY: 'auto', paddingRight: 4 }}>
               {rutas.predeterminadas.map((ruta, i) => (
-                <div key={`${i}-${ruta}`} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+                <div key={`ruta-${i}`} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                   <input
                     className="form-input"
                     value={ruta}
@@ -447,7 +486,7 @@ export default function PanelCatalogos() {
         </div>
       )}
 
-      {pestana === 'areas' && (
+      {pestanaActiva === 'areas' && (
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
             ÁREAS DEL TALLER ({areas.areas.length})
@@ -458,7 +497,7 @@ export default function PanelCatalogos() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxHeight: 340, overflowY: 'auto', paddingRight: 4 }}>
             {areas.areas.map((area, i) => (
-              <div key={`${i}-${area}`} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+              <div key={`area-${i}`} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                 <input
                   className="form-input"
                   value={area}
@@ -496,7 +535,7 @@ export default function PanelCatalogos() {
         </div>
       )}
 
-      {pestana === 'tareas' && (
+      {pestanaActiva === 'tareas' && (
         <div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
             <select

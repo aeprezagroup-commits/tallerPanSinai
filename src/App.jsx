@@ -21,6 +21,7 @@ import Taller from './pages/Taller';
 import Historial from './pages/Historial';
 import Salida from './pages/Salida';
 import Admin from './pages/Admin';
+import Catalogos from './pages/Catalogos';
 import VehiculoDetalle from './pages/VehiculoDetalle';
 import AdminHub from './pages/AdminHub';
 import Gastos from './pages/Gastos';
@@ -72,6 +73,7 @@ export default function App() {
                     <Route path="reportes" element={<Dashboard />} />
                     <Route path="personal" element={<Admin seccion="personal" />} />
                     <Route path="vehiculos" element={<Admin seccion="vehiculos" />} />
+                    <Route path="catalogos" element={<Catalogos />} />
                     <Route path="vehiculos/:placa" element={<VehiculoDetalle />} />
                     <Route path="gastos" element={<Gastos />} />
                     <Route path="historial" element={<Historial />} />

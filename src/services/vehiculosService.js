@@ -114,11 +114,15 @@ export function aplicarRutas(predeterminadas, porDepartamento) {
 
   if (porDepartamento && typeof porDepartamento === 'object') {
     Object.keys(RUTAS_POR_DEPARTAMENTO).forEach(k => delete RUTAS_POR_DEPARTAMENTO[k]);
+    // Base: todos los departamentos empiezan sin rutas; sólo se llenan los
+    // que vengan en el documento guardado. Así, un departamento ausente (o
+    // vaciado) no cae al respaldo con todas las rutas.
+    DEPARTAMENTOS_EL_SALVADOR.forEach(d => { RUTAS_POR_DEPARTAMENTO[d] = []; });
     Object.entries(porDepartamento).forEach(([depto, rutas]) => {
       const limpias = (Array.isArray(rutas) ? rutas : [])
         .map(r => String(r || '').trim())
         .filter(Boolean);
-      if (limpias.length) RUTAS_POR_DEPARTAMENTO[depto] = limpias;
+      RUTAS_POR_DEPARTAMENTO[depto] = limpias;
     });
   }
 }
@@ -276,7 +280,10 @@ export function buscarVehiculoCatalogo(query) {
   return flota.find(v => v.placa.replace(/[^A-Z0-9]/g, '').toUpperCase().includes(qClean)) || null;
 }
 
-export function registrarVehiculoCatalogo(vehiculo) {
+// Valida y normaliza un vehículo del catálogo. La comparten el formulario
+// individual y la carga masiva CSV, para que ambas apliquen las mismas
+// reglas (auditoría S2–S3).
+function sanitizarVehiculoCatalogo(vehiculo) {
   if (!vehiculo) {
     throw new Error('No se proporcionaron datos para el vehículo.');
   }
@@ -325,20 +332,33 @@ export function registrarVehiculoCatalogo(vehiculo) {
     throw new Error(errorVin);
   }
 
-  const vehiculoSanitizado = {
+  const departamentoNorm = (vehiculo.departamento || '').trim();
+
+  return {
     ...vehiculo,
     placa: placaNorm,
     marca: marcaNorm,
     modelo: modeloNorm,
     tipo: (vehiculo.tipo || 'Camión de Reparto').trim(),
-    numMotor: (vehiculo.numMotor || '').trim().toUpperCase(),
+    numMotor: motorNorm.toUpperCase(),
     vin: vinNorm,
     anio: anioValido,
     conductorHabitual: (vehiculo.conductorHabitual || '').trim(),
-    departamento: (vehiculo.departamento || '').trim(),
+    departamento: departamentoNorm,
     ruta: (vehiculo.ruta || '').trim(),
-    observaciones: (vehiculo.observaciones || '').trim()
+    observaciones: (vehiculo.observaciones || '').trim(),
+    // Centro de costo derivado del departamento (igual que en el formulario).
+    centroCosto: (vehiculo.centroCosto || '').trim()
+      || centroCostoPorDepartamento(departamentoNorm)
   };
+}
+
+export function registrarVehiculoCatalogo(vehiculo) {
+  const vehiculoSanitizado = sanitizarVehiculoCatalogo(vehiculo);
+  const placaNorm = vehiculoSanitizado.placa;
+  const marcaNorm = vehiculoSanitizado.marca;
+  const modeloNorm = vehiculoSanitizado.modelo;
+  const anioValido = vehiculoSanitizado.anio;
 
   const flota = obtenerFlotaVehiculos();
   const idx = flota.findIndex(v => normalizarPlaca(v.placa) === placaNorm);
@@ -401,75 +421,186 @@ export function eliminarVehiculoCatalogo(placa, motivo = '') {
   });
 }
 
+// ---------------------------------------------------------------
+// CSV de flota: plantilla descargable e importación. El parser es
+// RFC 4180 (comillas, comas y saltos de línea dentro de campos) y
+// las columnas se reconocen por nombre, no por posición.
+// ---------------------------------------------------------------
+const COLUMNAS_CSV = [
+  ['placa', ['PLACA']],
+  ['marca', ['MARCA']],
+  ['modelo', ['MODELO']],
+  ['numMotor', ['NUMERO_MOTOR', 'NUM MOTOR', 'MOTOR']],
+  ['anio', ['ANIO', 'AÑO']],
+  ['tipo', ['TIPO_UNIDAD', 'TIPO']],
+  ['conductorHabitual', ['CONDUCTOR_HABITUAL', 'CONDUCTOR']],
+  ['vin', ['VIN']],
+  ['departamento', ['DEPARTAMENTO']],
+  ['ruta', ['RUTA']],
+  ['observaciones', ['OBSERVACIONES']],
+];
+
+// Placa de la fila de ejemplo: se reconoce y no se importa.
+const PLACA_EJEMPLO = 'EJEMPLO';
+
+function parsearCSV(texto) {
+  const crudo = String(texto || '').replace(/^\uFEFF/, '');
+  const filas = [];
+  let fila = [];
+  let campo = '';
+  let entreComillas = false;
+
+  for (let i = 0; i < crudo.length; i++) {
+    const c = crudo[i];
+    if (entreComillas) {
+      if (c === '"') {
+        if (crudo[i + 1] === '"') { campo += '"'; i++; }
+        else entreComillas = false;
+      } else campo += c;
+    } else if (c === '"') {
+      entreComillas = true;
+    } else if (c === ',') {
+      fila.push(campo); campo = '';
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && crudo[i + 1] === '\n') i++;
+      fila.push(campo); campo = '';
+      filas.push(fila); fila = [];
+    } else {
+      campo += c;
+    }
+  }
+  if (campo !== '' || fila.length > 0) {
+    fila.push(campo);
+    filas.push(fila);
+  }
+
+  // Filas sin ningún dato (p. ej. la última línea en blanco).
+  return filas.filter(f => f.some(c => String(c).trim() !== ''));
+}
+
+function encabezadoNormalizado(valor) {
+  return String(valor || '')
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 export function generarPlantillaCSV() {
-  const encabezados = 'PLACA,MARCA,MODELO,NUMERO_MOTOR,ANIO,TIPO_UNIDAD,CONDUCTOR_HABITUAL,OBSERVACIONES\n';
-  return encabezados;
+  const encabezados = [
+    'PLACA', 'MARCA', 'MODELO', 'NUMERO_MOTOR', 'ANIO', 'TIPO_UNIDAD',
+    'CONDUCTOR_HABITUAL', 'VIN', 'DEPARTAMENTO', 'RUTA', 'OBSERVACIONES',
+  ].join(',');
+  // Fila de ejemplo: la importación la omite (placa EJEMPLO).
+  const ejemplo = [
+    PLACA_EJEMPLO, 'Hino', '300', 'HN012345', '2022', 'Camión de Reparto',
+    'Juan Pérez', '1HGBH41JXMN109188', 'La Libertad',
+    'Ruta 03 - Santa Tecla / Antiguo Cuscatlán / Lourdes',
+    '"Transporte de materia prima y harina"',
+  ].join(',');
+  return `${encabezados}\n${ejemplo}\n`;
 }
 
 export function importarVehiculosCSV(textoCSV) {
-  const lineas = textoCSV.split(/\r?\n/).filter(linea => linea.trim().length > 0);
-  if (lineas.length <= 1) {
+  const filas = parsearCSV(textoCSV);
+  if (filas.length <= 1) {
     throw new Error('El archivo CSV está vacío o no contiene filas de datos.');
   }
 
+  const encabezados = filas[0].map(encabezadoNormalizado);
+  const indice = {};
+  COLUMNAS_CSV.forEach(([campo, nombres]) => {
+    const opciones = nombres.map(encabezadoNormalizado);
+    const i = encabezados.findIndex(h => opciones.includes(h));
+    if (i !== -1) indice[campo] = i;
+  });
+  if (indice.placa === undefined || indice.marca === undefined || indice.modelo === undefined) {
+    throw new Error('El archivo no tiene las columnas obligatorias PLACA, MARCA y MODELO.');
+  }
+
   const vehiculosImportados = [];
-  let omitidosPorIncompletos = 0;
+  const motivos = [];
+  let omitidos = 0;
 
-  for (let i = 1; i < lineas.length; i++) {
-    const columnas = lineas[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
-    if (columnas.length >= 3) {
-      const placa = normalizarPlaca(columnas[0]);
-      const marca = (columnas[1] || '').trim();
-      const modelo = (columnas[2] || '').trim();
+  for (let i = 1; i < filas.length; i++) {
+    const fila = filas[i];
+    const leer = (campo) => (
+      indice[campo] !== undefined ? String(fila[indice[campo]] ?? '').trim() : ''
+    );
 
-      if (!placa || placa.length < 3 || !marca || !modelo) {
-        omitidosPorIncompletos++;
-        continue;
-      }
+    const placa = normalizarPlaca(leer('placa'));
+    // Fila de ejemplo de la plantilla: se salta sin contarla como omitida.
+    if (placa.startsWith(PLACA_EJEMPLO)) continue;
 
-      const numMotor = (columnas[3] || '').trim().toUpperCase();
-      let anio = (columnas[4] || '').trim();
-      const anioNum = parseInt(anio, 10);
-      if (isNaN(anioNum) || anioNum < 1970 || anioNum > new Date().getFullYear() + 1) {
-        anio = '';
-      }
+    const candidato = {
+      placa,
+      marca: leer('marca'),
+      modelo: leer('modelo'),
+      numMotor: leer('numMotor'),
+      anio: leer('anio'),
+      tipo: leer('tipo'),
+      conductorHabitual: leer('conductorHabitual'),
+      vin: leer('vin'),
+      departamento: leer('departamento'),
+      ruta: leer('ruta'),
+      observaciones: leer('observaciones'),
+    };
 
-      const tipo = (columnas[5] || 'Camión de Reparto').trim();
-      const conductorHabitual = (columnas[6] || '').trim();
-      const observaciones = (columnas[7] || '').trim();
+    if (!candidato.placa || !candidato.marca || !candidato.modelo) {
+      omitidos++;
+      if (motivos.length < 3) motivos.push(`fila ${i + 1}: faltan placa, marca o modelo`);
+      continue;
+    }
 
-      vehiculosImportados.push({
-        placa,
-        marca,
-        modelo,
-        numMotor,
-        anio,
-        tipo,
-        conductorHabitual,
-        observaciones
-      });
-    } else {
-      omitidosPorIncompletos++;
+    try {
+      vehiculosImportados.push(sanitizarVehiculoCatalogo(candidato));
+    } catch (e) {
+      omitidos++;
+      if (motivos.length < 3) motivos.push(`fila ${i + 1}: ${e.message}`);
     }
   }
 
   if (vehiculosImportados.length === 0) {
     throw new Error(
-      `No se encontraron vehículos válidos con datos completos (Placa, Marca y Modelo son obligatorios). Se omitieron ${omitidosPorIncompletos} registros incompletos.`
+      `No se encontraron vehículos válidos (placa, marca y modelo son obligatorios).`
+      + ` Omitidos: ${omitidos}.${motivos.length ? ` ${motivos.join('; ')}.` : ''}`
     );
   }
 
   const flotaActual = obtenerFlotaVehiculos();
   const mapa = new Map();
   flotaActual.forEach(v => mapa.set(normalizarPlaca(v.placa), v));
-  vehiculosImportados.forEach(v => mapa.set(normalizarPlaca(v.placa), v));
 
-  const nuevaFlota = Array.from(mapa.values());
-  guardarFlotaVehiculos(nuevaFlota);
-  vehiculosImportados.forEach((v) => repoVehiculos.persistirUno(v));
+  let altas = 0;
+  const persistibles = vehiculosImportados.map((v) => {
+    const previo = mapa.get(v.placa);
+    if (!previo) altas++;
+    // Se conservan campos extra del registro previo (fotos, QR, etc.).
+    const registro = { ...previo, ...v };
+    mapa.set(v.placa, registro);
+    return registro;
+  });
+
+  guardarFlotaVehiculos(Array.from(mapa.values()));
+  persistibles.forEach((v) => repoVehiculos.persistirUno(v));
+
+  registrarBitacora({
+    tipo: TIPOS_BITACORA.VEHICULO,
+    accion: 'importar',
+    detalle: `Importó ${vehiculosImportados.length} unidad(es) desde la plantilla CSV (${omitidos} omitida(s))`,
+    datos: {
+      altas,
+      actualizaciones: vehiculosImportados.length - altas,
+      omitidos,
+      archivo: 'plantilla_vehiculos_pan_sinai.csv',
+    },
+  });
 
   return {
     total: vehiculosImportados.length,
-    omitidos: omitidosPorIncompletos
+    omitidos,
+    altas,
+    actualizaciones: vehiculosImportados.length - altas,
   };
 }

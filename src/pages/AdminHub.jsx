@@ -36,6 +36,14 @@ const MODULOS = [
     badge: null,
   },
   {
+    to: '/admin/catalogos',
+    icono: <IconoMascara src="/iconos/ubicacion-taller.png" size={26} />,
+    titulo: 'Rutas de Camiones',
+    desc: 'Alta, edición y departamentos autorizados.',
+    colorVar: '#e0a300',
+    badge: null,
+  },
+  {
     to: '/admin/gastos',
     icono: <IconoMascara src="/iconos/llave-inglesa.png" size={26} />,
     titulo: 'Gastos por Vehículo',
