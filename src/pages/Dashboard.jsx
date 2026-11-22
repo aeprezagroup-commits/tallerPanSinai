@@ -593,15 +593,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div style={{ marginBottom: 24, padding: '12px 16px', background: 'var(--color-bg-input)', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-md)' }}>
-        <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--color-accent)', marginBottom: 4 }}>
-          ¿Qué es el año lectivo?
-        </div>
-        <div style={{ fontSize: 12.5, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
-          Es el período anual del <strong>1 de enero al 31 de diciembre</strong> del año seleccionado (<strong>{anioLectivo}</strong>).
-          Las tarjetas anteriores suman únicamente las órdenes de trabajo ingresadas en ese período, para que sepas
-          exactamente cuánto del <strong>presupuesto anual</strong> se ha ejecutado hasta ahora y cuánto queda por ejecutar.
-        </div>
+      <div style={{ marginBottom: 24, fontSize: 12, color: 'var(--color-text-muted)' }}>
+        Año lectivo: período anual del <strong>1 de enero al 31 de diciembre</strong> del año seleccionado (<strong>{anioLectivo}</strong>).
       </div>
 
       <div id="rep-estados" className="card" style={{ marginBottom: 24 }}>
