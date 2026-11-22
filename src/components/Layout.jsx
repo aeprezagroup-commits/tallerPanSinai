@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   TbMenu,
@@ -15,6 +15,10 @@ import { useToast } from './ToastContext';
 import { VERSION_TEXT } from '../version';
 import CommandPalette from './CommandPalette';
 import Sidebar from './Sidebar';
+
+// memo evita que alternar el menú re-renderice la página abierta: sólo
+// cambian las clases del contenedor, no la ruta ni el contexto.
+const OutletMemo = memo(Outlet);
 
 
 export default function Layout() {
@@ -220,7 +224,7 @@ export default function Layout() {
 
         <div className="page-body-container">
           <div key={location.pathname} className="route-transition-wrapper">
-            <Outlet />
+            <OutletMemo />
           </div>
         </div>
 

@@ -262,6 +262,27 @@ img {
 @media (max-width: 767px) {
   .main-content {
     margin-left: 0 !important;
+    will-change: auto;
+  }
+
+  /* Celulares: sin blur (era el mayor costo de pintado) ni capa de
+     composición permanente; el fondo sólido da la misma legibilidad. */
+  .sidebar {
+    background: var(--color-bg-card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .sidebar.open {
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .sidebar-overlay {
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
   }
 }
 
