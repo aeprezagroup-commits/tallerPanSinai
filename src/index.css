@@ -265,12 +265,10 @@ img {
     will-change: auto;
   }
 
-  /* Celulares: sin blur (era el mayor costo de pintado) ni capa de
-     composición permanente; el fondo sólido da la misma legibilidad. */
+  /* Celulares: el blur (costoso de pintar) no se declara siquiera y el
+     fondo sólido da la misma legibilidad. Animación más corta. */
   .sidebar {
     background: var(--color-bg-card);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
     transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -280,8 +278,6 @@ img {
 
   .sidebar-overlay {
     background: rgba(0, 0, 0, 0.62);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
     transition: opacity 0.2s ease, visibility 0.2s ease;
   }
 }
@@ -293,8 +289,6 @@ img {
   width: var(--sidebar-width);
   height: 100vh;
   background: var(--color-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid var(--color-glass-border);
   display: flex;
   flex-direction: column;
@@ -303,6 +297,14 @@ img {
   overflow-y: auto;
   transform: translateX(-100%);
   will-change: transform;
+}
+
+/* El efecto cristal es sólo de escritorio: en móvil ya está anulado arriba. */
+@media (min-width: 768px) {
+  .sidebar {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 }
 
 .sidebar.open {
@@ -558,13 +560,11 @@ img {
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.62);
   z-index: 999;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.3s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
   pointer-events: none;
 }
 
@@ -3818,13 +3818,20 @@ h3,
   gap: 12px;
   padding: 8px 20px;
   background: var(--color-glass);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 90;
   min-height: 52px;
+}
+
+/* Sólo escritorio: en móvil el blur se recalcula en cada scroll y es
+   costoso en celulares antiguos. */
+@media (min-width: 768px) {
+  .enterprise-topbar {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
 }
 
 .topbar-left {
