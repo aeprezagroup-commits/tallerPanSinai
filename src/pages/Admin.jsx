@@ -26,7 +26,7 @@ import {
 } from '../services/usuariosService';
 import {
   obtenerFlotaVehiculos, registrarVehiculoCatalogo, eliminarVehiculoCatalogo,
-  generarPlantillaCSV, importarVehiculosCSV, obtenerConductores,
+  generarPlantillaCSV, importarVehiculosCSV, decodificarCSVBuffer, obtenerConductores,
   RUTAS_PREDETERMINADAS, DEPARTAMENTOS_EL_SALVADOR, centroCostoPorDepartamento,
   obtenerRutasPorDepartamento, ANIOS_VEHICULO, opcionesCatalogo
 } from '../services/vehiculosService';
@@ -553,7 +553,8 @@ export default function Admin({ seccion = 'personal' }) {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const texto = event.target.result;
+        // UTF-8 con respaldo Windows-1252: Excel en español puede exportar en ANSI.
+        const texto = decodificarCSVBuffer(event.target.result);
         const res = importarVehiculosCSV(texto);
         if (res.omitidos > 0) {
           addToast(`Se importaron ${res.total} vehículos (${res.omitidos} omitidos).`, 'warning', 6500);
@@ -565,7 +566,7 @@ export default function Admin({ seccion = 'personal' }) {
         addToast(`Error al procesar CSV: ${err.message}`, 'error', 6500);
       }
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   };
 
   const flotaFiltrada = flota.filter(v =>

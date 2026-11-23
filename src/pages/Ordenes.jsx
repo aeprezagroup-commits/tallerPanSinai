@@ -38,11 +38,16 @@ export default function Ordenes() {
   const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'tabla');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
   // Cuántas órdenes están desplegadas; el resto se pide con el botón
-  // "Cargar órdenes antiguas" (la lista del administrador es muy larga).
+  // "Cargar más órdenes" (la lista del administrador es muy larga).
   const [visibles, setVisibles] = useState(ORDENES_POR_PAGINA);
+  // Las entregadas y canceladas quedan detrás de "Ver órdenes antiguas":
+  // al entrar se ve primero lo activo del taller y no una sábana.
+  const [mostrarAntiguas, setMostrarAntiguas] = useState(false);
 
   useEffect(() => {
     setVisibles(ORDENES_POR_PAGINA);
+    // Si el filtro pedido es "Despachado / Entregado" sí se listan ya.
+    setMostrarAntiguas(filtroEstado === 'entregado');
   }, [busqueda, filtroEstado, filtroArea, filtroMecanico, fechaDesde, fechaHasta]);
 
   useEffect(() => {
@@ -94,8 +99,15 @@ export default function Ordenes() {
     return ordenarOrdenes(filtradas);
   }, [ordenes, currentUser, isMecanico, busqueda, filtroEstado, filtroArea, filtroMecanico, fechaDesde, fechaHasta]);
 
-  const ordenesMostradas = ordenesFiltradas.slice(0, visibles);
-  const pendientesCargar = ordenesFiltradas.length - ordenesMostradas.length;
+  // Activas primero: entregadas y canceladas quedan detrás del botón
+  // "Ver órdenes antiguas" para que la lista no sea una sábana.
+  const esOrdenAntigua = (o) => o.estado === 'entregado' || o.estado === 'cancelado';
+  const activas = ordenesFiltradas.filter((o) => !esOrdenAntigua(o));
+  const antiguas = ordenesFiltradas.filter(esOrdenAntigua);
+  // Al pedir el filtro "Despachado / Entregado" se listan las antiguas ya.
+  const listadoBase = mostrarAntiguas || filtroEstado === 'entregado' ? ordenesFiltradas : activas;
+  const ordenesMostradas = listadoBase.slice(0, visibles);
+  const pendientesCargar = listadoBase.length - ordenesMostradas.length;
 
   const toggleOrden = (id) => {
     setOrdenAbierta(prev => (prev === id ? null : id));
@@ -138,8 +150,8 @@ export default function Ordenes() {
           <h1>{isMecanico ? 'Mis Órdenes de Trabajo' : 'Registro de Órdenes de Trabajo'}</h1>
           <p>
             {isMecanico
-              ? `Toca una unidad para gestionar sus actividades (${ordenesFiltradas.length} órdenes)`
-              : `Órdenes de servicio mecánico (${ordenesFiltradas.length} órdenes)`}
+              ? `Toca una unidad para gestionar sus actividades (${activas.length} activas${antiguas.length > 0 ? ` · ${antiguas.length} antiguas ocultas` : ''})`
+              : `Órdenes de servicio mecánico (${activas.length} activas${antiguas.length > 0 ? ` · ${antiguas.length} antiguas ocultas` : ''})`}
           </p>
         </div>
         <Link to="/nueva-orden" className="btn btn-primary">
@@ -241,11 +253,15 @@ export default function Ordenes() {
         </div>
       </div>
 
-      {ordenesFiltradas.length === 0 ? (
+      {listadoBase.length === 0 ? (
         <div className="empty-state">
           <TbStack2 className="empty-state-icon" />
-          <h3>No se encontraron registros</h3>
-          <p>Ajusta los filtros de búsqueda o registra una nueva orden de servicio.</p>
+          <h3>{antiguas.length > 0 ? 'Sin órdenes activas' : 'No se encontraron registros'}</h3>
+          <p>
+            {antiguas.length > 0
+              ? 'Todas las órdenes de este filtro ya fueron finalizadas.'
+              : 'Ajusta los filtros de búsqueda o registra una nueva orden de servicio.'}
+          </p>
         </div>
       ) : vista === 'tabla' ? (
         <div className="table-container">
@@ -441,16 +457,34 @@ export default function Ordenes() {
         </div>
       )}
 
-      {pendientesCargar > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setVisibles(v => v + ORDENES_POR_PAGINA)}
-            title={`Desplegar ${pendientesCargar} órdenes más (de la más nueva a la más vieja)`}
-          >
-            Cargar órdenes antiguas ({pendientesCargar})
-          </button>
+      {(pendientesCargar > 0 || (antiguas.length > 0 && filtroEstado !== 'entregado')) && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
+          {antiguas.length > 0 && filtroEstado !== 'entregado' && (
+            <button
+              type="button"
+              className={`btn ${mostrarAntiguas ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => {
+                setMostrarAntiguas(v => !v);
+                if (!mostrarAntiguas) setVisibles(ORDENES_POR_PAGINA);
+              }}
+              title={mostrarAntiguas
+                ? 'Volver a mostrar sólo las órdenes activas'
+                : `Mostrar ${antiguas.length} órdenes finalizadas o canceladas`}
+            >
+              <TbChevronDown /> {mostrarAntiguas ? 'Ocultar órdenes antiguas' : `Ver órdenes antiguas (${antiguas.length})`}
+            </button>
+          )}
+
+          {pendientesCargar > 0 && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setVisibles(v => v + ORDENES_POR_PAGINA)}
+              title={`Desplegar ${pendientesCargar} órdenes más (de la más nueva a la más vieja)`}
+            >
+              Cargar más órdenes ({pendientesCargar})
+            </button>
+          )}
         </div>
       )}
 

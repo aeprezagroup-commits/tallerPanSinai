@@ -38,3 +38,5 @@ fotos/
 .sa-*.json
 .respaldomanifiesto.json
 MANIFIESTO.csv
+
+opencode.json

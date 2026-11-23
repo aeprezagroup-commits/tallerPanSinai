@@ -443,8 +443,30 @@ const COLUMNAS_CSV = [
 // Placa de la fila de ejemplo: se reconoce y no se importa.
 const PLACA_EJEMPLO = 'EJEMPLO';
 
+// Excel en español guarda el CSV con ";" y Excel en inglés o Google Sheets
+// con ",". El separador se detecta en la línea de encabezados para que la
+// misma plantilla funcione en cualquier caso.
+function detectarSeparador(texto) {
+  let linea = '';
+  let entreComillas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (c === '"') { entreComillas = !entreComillas; continue; }
+    if (!entreComillas && (c === '\n' || c === '\r')) break;
+    linea += c;
+  }
+  const cuenta = (sep) => linea.split(sep).length - 1;
+  const comas = cuenta(',');
+  const puntosYComa = cuenta(';');
+  const tabulador = cuenta('\t');
+  if (puntosYComa > comas && puntosYComa >= tabulador) return ';';
+  if (tabulador > comas && tabulador > puntosYComa) return '\t';
+  return ',';
+}
+
 function parsearCSV(texto) {
   const crudo = String(texto || '').replace(/^\uFEFF/, '');
+  const separador = detectarSeparador(crudo);
   const filas = [];
   let fila = [];
   let campo = '';
@@ -459,7 +481,7 @@ function parsearCSV(texto) {
       } else campo += c;
     } else if (c === '"') {
       entreComillas = true;
-    } else if (c === ',') {
+    } else if (c === separador) {
       fila.push(campo); campo = '';
     } else if (c === '\n' || c === '\r') {
       if (c === '\r' && crudo[i + 1] === '\n') i++;
@@ -487,19 +509,44 @@ function encabezadoNormalizado(valor) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+// Separador de la plantilla descargada: ";" es el que Excel en español usa
+// al guardar CSV, así la plantilla se abre en columnas listas para llenar.
+// (El importador detecta ";" o "," automáticamente en cualquier caso.)
+const SEPARADOR_PLANTILLA = ';';
+
 export function generarPlantillaCSV() {
   const encabezados = [
     'PLACA', 'MARCA', 'MODELO', 'NUMERO_MOTOR', 'ANIO', 'TIPO_UNIDAD',
     'CONDUCTOR_HABITUAL', 'VIN', 'DEPARTAMENTO', 'RUTA', 'OBSERVACIONES',
-  ].join(',');
-  // Fila de ejemplo: la importación la omite (placa EJEMPLO).
-  const ejemplo = [
+  ].join(SEPARADOR_PLANTILLA);
+  // Filas de ejemplo: la importación las omite (placas que empiezan con
+  // EJEMPLO). Una completa y otra sólo con lo obligatorio.
+  const ejemploCompleto = [
     PLACA_EJEMPLO, 'Hino', '300', 'HN012345', '2022', 'Camión de Reparto',
     'Juan Pérez', '1HGBH41JXMN109188', 'La Libertad',
     'Ruta 03 - Santa Tecla / Antiguo Cuscatlán / Lourdes',
-    '"Transporte de materia prima y harina"',
-  ].join(',');
-  return `${encabezados}\n${ejemplo}\n`;
+    'Transporte de materia prima y harina',
+  ].join(SEPARADOR_PLANTILLA);
+  const ejemploMinimo = [
+    'EJEMPLO-REQUERIDO', 'Toyota', 'Hilux', '', '', '', '', '', '', '', '',
+  ].join(SEPARADOR_PLANTILLA);
+  return `${encabezados}\n${ejemploCompleto}\n${ejemploMinimo}\n`;
+}
+
+// Los archivos se guardan como UTF-8, pero Excel en español puede exportar
+// en ANSI (Windows-1252). Se intenta UTF-8 estricto y, si hay bytes
+// inválidos, se vuelve a decodificar como Windows-1252 para no corromper
+// los acentos de marca, ruta u observaciones.
+export function decodificarCSVBuffer(buffer) {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+  } catch {
+    try {
+      return new TextDecoder('windows-1252').decode(buffer);
+    } catch {
+      return new TextDecoder('utf-8').decode(buffer);
+    }
+  }
 }
 
 export function importarVehiculosCSV(textoCSV) {

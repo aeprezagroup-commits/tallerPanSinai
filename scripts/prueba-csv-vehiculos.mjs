@@ -59,7 +59,7 @@ const archivoTmp = path.join(raiz, 'scripts', '.tmp-csv-vehiculos.mjs');
 fs.writeFileSync(archivoTmp, codigo, 'utf8');
 
 const mod = await import(`file:///${archivoTmp.replace(/\\/g, '/')}`);
-const { generarPlantillaCSV, importarVehiculosCSV, flotaRef, persistidos, bitacoras } = mod;
+const { generarPlantillaCSV, importarVehiculosCSV, decodificarCSVBuffer, flotaRef, persistidos, bitacoras } = mod;
 
 let fallos = 0;
 function ok(cond, etiqueta) {
@@ -76,7 +76,7 @@ ok(
     .every((c) => encabezado.includes(c)),
   'encabezados completos (incluye VIN, DEPARTAMENTO y RUTA)',
 );
-ok(lineas.length === 2, `encabezado + fila de ejemplo (${lineas.length} línea(s))`);
+ok(lineas.length === 3, `encabezado + 2 filas de ejemplo (${lineas.length} línea(s))`);
 
 console.log('\n2. La fila de ejemplo no se importa');
 try {
@@ -87,7 +87,9 @@ try {
 }
 
 console.log('\n3. Round-trip: plantilla + fila válida (comillas y comas dentro de campos)');
-const filaValida = 'P20376,Hino,500,HN998877,2021,Camión de Reparto,"Monge, David",1HGBH41JXMN109188,La Libertad,Ruta 03 - Santa Tecla / Antiguo Cuscatlán / Lourdes,"Mantención preventiva, cada 5,000 km"';
+// La plantilla usa ";" (Excel es-SV): las filas que se agregan van con el
+// mismo separador; las comas dentro de campos van entre comillas.
+const filaValida = 'P20376;Hino;500;HN998877;2021;Camión de Reparto;"Monge, David";1HGBH41JXMN109188;La Libertad;Ruta 03 - Santa Tecla / Antiguo Cuscatlán / Lourdes;"Mantención preventiva, cada 5,000 km"';
 const res = importarVehiculosCSV(plantilla + filaValida + '\n');
 ok(res.total === 1 && res.altas === 1 && res.actualizaciones === 0 && res.omitidos === 0,
   `total=1 altas=1 omitidos=0 (obtuvo ${JSON.stringify(res)})`);
@@ -103,11 +105,11 @@ ok(bitacoras.length === 1 && bitacoras[0].accion === 'importar', 'bitácora regi
 
 console.log('\n4. Validaciones equivalentes al formulario individual');
 const filasMalas = [
-  'AB123,Hino 500,X,HN1,2020,,,,,,',                 // marca con números
-  'AB124,Hino,300!,HN1,2020,,,,,,',                  // modelo con carácter especial
-  'AB125,Hino,300,HN1,1899,,,,,,',                   // año inválido
-  'AB126,Hino,300,HN1,2020,,,1HGBH41JXMN10918I,,',   // VIN con letra I
-  ',Hino,300,,,,,,,,',                               // sin placa
+  'AB123;Hino 500;X;HN1;2020;;;;;;;',                 // marca con números
+  'AB124;Hino;300!;HN1;2020;;;;;;',                  // modelo con carácter especial
+  'AB125;Hino;300;HN1;1899;;;;;;',                   // año inválido
+  'AB126;Hino;300;HN1;2020;;;1HGBH41JXMN10918I;;;',   // VIN con letra I
+  ';Hino;300;;;;;;;;',                               // sin placa
 ];
 try {
   importarVehiculosCSV(encabezado + '\n' + filasMalas.join('\n') + '\n');
@@ -144,6 +146,28 @@ const v2 = flotaRef().find((x) => x.placa === 'P20376');
 ok(res4.total === 1 && res4.altas === 0 && res4.actualizaciones === 1,
   `detecta actualización (${JSON.stringify(res4)})`);
 ok(v2 && v2.qrGenerado === true && v2.fotos === 3, 'conserva campos extra del registro previo');
+
+console.log('\n8. Separador detectado: punto y coma (Excel es-SV) y coma (Excel EN)');
+const conPuntoYComa = 'PLACA;MARCA;MODELO\nP88888;Hino;300\n';
+const r8 = importarVehiculosCSV(conPuntoYComa);
+const v888 = flotaRef().find((x) => x.placa === 'P88888');
+ok(r8.total === 1 && v888 && v888.marca === 'Hino', `separador ";" importa (${JSON.stringify(r8)})`);
+
+const conComa = 'PLACA,MARCA,MODELO\nP88889,Hino,500\n';
+const r9 = importarVehiculosCSV(conComa);
+const v889 = flotaRef().find((x) => x.placa === 'P88889');
+ok(r9.total === 1 && v889 && v889.modelo === '500', `separador "," importa (${JSON.stringify(r9)})`);
+
+console.log('\n9. Decodificación UTF-8 con respaldo Windows-1252 (Excel en ANSI)');
+const ansi = Buffer.from('PLACA,MARCA,MODELO\nP99991,Cami\xf3n,Reparto\n', 'latin1');
+const utf8 = Buffer.from('PLACA,MARCA,MODELO\nP99992,Camión,Reparto\n', 'utf8');
+const tAnsi = decodificarCSVBuffer(ansi);
+const tUtf8 = decodificarCSVBuffer(utf8);
+ok(tAnsi.includes('Camión'), `ANSI se lee sin romper acentos ("${tAnsi.split('\n')[1]}")`);
+ok(tUtf8.includes('Camión'), 'UTF-8 se lee directo');
+const rAnsi = importarVehiculosCSV(tAnsi);
+const vAnsi = flotaRef().find((x) => x.placa === 'P99991');
+ok(rAnsi.total === 1 && vAnsi && vAnsi.marca === 'Camión', 'archivo ANSI importa con acentos correctos');
 
 fs.unlinkSync(archivoTmp);
 console.log(`\n${fallos === 0 ? 'TODO OK' : `${fallos} FALLO(S)`}\n`);

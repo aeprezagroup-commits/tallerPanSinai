@@ -18,35 +18,32 @@ const formatFecha = (timestamp) => {
 
 // Contenido del acta. Se renderiza dos veces: la copia visible en pantalla
 // y una segunda oculta que solo aparece al imprimir (2 copias: taller y cliente).
+// Los estilos van en clases (.cert-*) para que @media print pueda compactar
+// cada hoja y quepa completa en una sola página.
 function HojaActa({ orden, cert, fotoFrontal, conRef }) {
   const observaciones = orden.observacionesFinales || orden.recomendaciones || 'Sin comentarios técnicos';
 
   return (
-    <div
-      className={`modal-body cert-sheet${conRef ? '' : ' cert-sheet-copia'}`}
-      style={conRef
-        ? { overflowY: 'auto', padding: '32px 40px', background: 'var(--color-bg-card)' }
-        : { padding: '32px 40px', background: 'var(--color-bg-card)' }}
-    >
+    <div className={`modal-body cert-sheet cert-hoja${conRef ? '' : ' cert-sheet-copia'}`}>
       <div className="cert-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div className="cert-empresa">
           <div className="cert-logo-empresa">
             <img src="/logo-sinai.png" alt="Pan Sinaí" />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, letterSpacing: 0.5, color: 'var(--color-text-primary)' }}>
+            <h2 className="cert-titulo">
               PAN SINAÍ S.A. DE C.V.
             </h2>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)', textTransform: 'uppercase' }}>
+            <div className="cert-subtitulo">
               CONTROL Y GESTIÓN DE FLOTA VEHICULAR
             </div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+            <div className="cert-bajada">
               Documento oficial de ingreso, reparación y entrega de unidad
             </div>
           </div>
         </div>
 
-        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+        <div className="cert-encabezado-derecha">
           {fotoFrontal ? (
             <div className="cert-foto-header">
               <img src={fotoFrontal} alt="Foto frontal del vehículo" />
@@ -57,23 +54,23 @@ function HojaActa({ orden, cert, fotoFrontal, conRef }) {
               <span>Sin foto frontal</span>
             </div>
           )}
-          <div style={{ fontFamily: 'var(--font-mono)' }}>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+          <div className="cert-fecha-emision">
+            <div className="cert-fecha">
               FECHA: {cert.fechaCertificacion}
             </div>
-            <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 700 }}>
+            <div className="cert-verificado">
               ● DOCUMENTO VERIFICADO
             </div>
           </div>
         </div>
       </div>
 
-      <hr style={{ border: 'none', borderTop: '2px solid var(--color-border)', margin: '20px 0' }} />
+      <hr className="cert-hr" />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 14, marginBottom: 20 }}>
+      <div className="cert-datos">
         <div className="cert-data-box">
           <span className="label">PLACA</span>
-          <span className="val" style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--color-accent)' }}>
+          <span className="val cert-placa">
             {orden.placa}
           </span>
         </div>
@@ -85,7 +82,7 @@ function HojaActa({ orden, cert, fotoFrontal, conRef }) {
 
         <div className="cert-data-box">
           <span className="label">SERIE MOTOR / VIN</span>
-          <span className="val" style={{ fontFamily: 'var(--font-mono)' }}>{orden.numMotor || 'N/D'}</span>
+          <span className="val cert-mono">{orden.numMotor || 'N/D'}</span>
         </div>
 
         <div className="cert-data-box">
@@ -117,23 +114,23 @@ function HojaActa({ orden, cert, fotoFrontal, conRef }) {
         </div>
       </div>
 
-      <div style={{ marginBottom: 20, padding: 16, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--color-border)' }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div className="cert-diagnostico">
+        <div className="cert-diag-titulo">
           <TbClipboardList /> DIAGNÓSTICO Y TRABAJO REALIZADO
         </div>
-        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: 'var(--color-text-primary)' }}>
+        <p className="cert-diag-texto">
           {orden.diagnosticoInicial || 'Inspección periódica conforme a manual del fabricante. Unidad verificada en área de reparación.'}
         </p>
-        <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--color-border)', fontSize: 12, color: 'var(--color-text-secondary)' }}>
+        <div className="cert-diag-observaciones">
           <strong>Observaciones de Salida: </strong> {observaciones}
         </div>
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-text-secondary)', textTransform: 'uppercase', marginBottom: 10 }}>
+      <div className="cert-checklist-bloque">
+        <div className="cert-checklist-titulo">
           VERIFICACIÓN DE SEGURIDAD OPERACIONAL (CHECKLIST 360°)
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 10, fontSize: 11 }}>
+        <div className="cert-checklist">
           <div className="cert-check-item"><TbCircleCheck style={{ color: '#22c55e' }} /> Sistema de Frenos ABS / Tambor</div>
           <div className="cert-check-item"><TbCircleCheck style={{ color: '#22c55e' }} /> Dirección y Alineación</div>
           <div className="cert-check-item"><TbCircleCheck style={{ color: '#22c55e' }} /> Suspensión y Amortiguadores</div>
@@ -146,33 +143,33 @@ function HojaActa({ orden, cert, fotoFrontal, conRef }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 24, marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--color-border)' }}>
-        <div style={{ textAlign: 'center' }}>
+      <div className="cert-firmas">
+        <div className="cert-firma">
           <div className="signature-line" />
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+          <div className="cert-firma-nombre">
             {orden.mecanicoAsignado || 'Técnico Especialista'}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Mecánico Responsable</div>
+          <div className="cert-firma-rol">Mecánico Responsable</div>
         </div>
 
-        <div style={{ textAlign: 'center' }}>
+        <div className="cert-firma">
           <div className="signature-line" />
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+          <div className="cert-firma-nombre">
             {orden.encargadoTaller || 'Supervisión de Taller'}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Jefatura de Taller & Flota</div>
+          <div className="cert-firma-rol">Jefatura de Taller &amp; Flota</div>
         </div>
 
-        <div style={{ textAlign: 'center' }}>
+        <div className="cert-firma">
           <div className="signature-line" />
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+          <div className="cert-firma-nombre">
             {orden.personaRetira || orden.conductorEntrega || 'Conductor Autorizado'}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Recepción Conforme</div>
+          <div className="cert-firma-rol">Recepción Conforme</div>
         </div>
       </div>
 
-      <div style={{ marginTop: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)', paddingTop: 14, borderTop: '1px dashed var(--color-border)', flexWrap: 'wrap', gap: 8 }}>
+      <div className="cert-pie">
         <div>
           ACTA DE TALLER: <strong>{cert.codigoCertificado}</strong>
         </div>
@@ -187,6 +184,14 @@ function HojaActa({ orden, cert, fotoFrontal, conRef }) {
 export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
   const printAreaRef = useRef(null);
   const [fotoFrontal, setFotoFrontal] = useState('');
+
+  // Mientras el acta está abierta se marca el body para que, al imprimir,
+  // sólo salga el acta (el resto de la app se oculta con display).
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    document.body.classList.add('acta-abierta');
+    return () => document.body.classList.remove('acta-abierta');
+  }, [isOpen]);
 
   // Foto frontal del vehículo para el acta (base de fotos de la flota).
   useEffect(() => {

@@ -4740,6 +4740,178 @@ h3,
   width: 140px;
 }
 
+/* ---------------------------------------------------------------
+   Acta de Taller: bloques en clases (antes estilos inline) para que
+   @media print pueda compactarlos y cada hoja quepa en 1 página.
+   --------------------------------------------------------------- */
+.cert-hoja {
+  padding: 32px 40px;
+  background: var(--color-bg-card);
+}
+
+.cert-empresa {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cert-titulo {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: var(--color-text-primary);
+}
+
+.cert-subtitulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-accent);
+  text-transform: uppercase;
+}
+
+.cert-bajada {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.cert-encabezado-derecha {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.cert-fecha-emision {
+  font-family: var(--font-mono);
+}
+
+.cert-fecha {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.cert-verificado {
+  font-size: 10px;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.cert-hr {
+  border: none;
+  border-top: 2px solid var(--color-border);
+  margin: 20px 0;
+}
+
+.cert-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.cert-data-box .cert-placa {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--color-accent);
+}
+
+.cert-data-box .cert-mono {
+  font-family: var(--font-mono);
+}
+
+.cert-diagnostico {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.cert-diag-titulo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.cert-diag-texto {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+
+.cert-diag-observaciones {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.cert-checklist-bloque {
+  margin-bottom: 24px;
+}
+
+.cert-checklist-titulo {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.cert-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 10px;
+  font-size: 11px;
+}
+
+.cert-firmas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 24px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.cert-firma {
+  text-align: center;
+}
+
+.cert-firma-nombre {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.cert-firma-rol {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.cert-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--color-border);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+}
+
 @media print {
   /* Hoja vertical (portrait) por defecto en todas las impresiones del
      sistema: el Acta de Taller se genera para papel en vertical. */
@@ -4750,6 +4922,22 @@ h3,
 
   body * {
     visibility: hidden;
+  }
+
+  /* Con el acta abierta, el resto de la aplicación no se imprime.
+     Ocultarlo sólo con visibility dejaría su espacio ocupado y el acta
+     empezaría en una página posterior; por eso se anula con display. */
+  body.acta-abierta #root {
+    display: none !important;
+  }
+
+  body.acta-abierta {
+    overflow: visible !important;
+  }
+
+  /* Degradado decorativo fijo del fondo: no va en papel. */
+  body::before {
+    display: none !important;
   }
 
   .sidebar,
@@ -4812,10 +5000,28 @@ h3,
     display: none !important;
   }
 
+  /* El contenedor del modal pasa a flujo normal: con position:fixed y
+     height:100vh la impresión recortaba el acta a una sola pantalla. */
+  .modal-overlay.cert-modal-parent {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    background: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    overflow: visible !important;
+    animation: none !important;
+    z-index: auto !important;
+  }
+
   .cert-modal {
-    position: absolute;
-    left: 0;
-    top: 0;
+    position: static !important;
+    left: auto;
+    top: auto;
     width: 100% !important;
     max-width: 100% !important;
     max-height: none !important;
@@ -4827,6 +5033,7 @@ h3,
     box-shadow: none !important;
     display: block !important;
     overflow: visible !important;
+    animation: none !important;
   }
 
   .cert-print-wrap,
@@ -4835,11 +5042,16 @@ h3,
     max-height: none !important;
   }
 
+  /* Cada hoja (copia y duplicado) se imprime completa: nunca se parte
+     a la mitad entre dos páginas. */
   .cert-sheet {
     background: white !important;
     color: black !important;
-    padding: 20px !important;
+    padding: 16px 20px !important;
     border: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
   }
 
   /* 2 copias del acta al imprimir: taller y cliente. */
@@ -4854,6 +5066,153 @@ h3,
     background: #f8fafc !important;
     border-color: #cbd5e1 !important;
     color: black !important;
+  }
+
+  /* -------------------------------------------------------
+     Compactación de la hoja impresa: Letter vertical con
+     @page margin 10mm deja ≈ 980px útiles de alto. Cada bloque
+     se reduce para que el acta complete (sin cortes) en 1 página.
+     ------------------------------------------------------- */
+  .cert-header {
+    gap: 8px !important;
+  }
+
+  .cert-empresa {
+    gap: 10px !important;
+  }
+
+  .cert-logo-empresa img {
+    height: 40px !important;
+  }
+
+  .cert-titulo {
+    font-size: 16px !important;
+  }
+
+  .cert-subtitulo {
+    font-size: 10px !important;
+  }
+
+  .cert-bajada {
+    font-size: 9px !important;
+  }
+
+  .cert-encabezado-derecha {
+    gap: 4px !important;
+  }
+
+  .cert-foto-header {
+    width: 110px !important;
+    padding: 3px !important;
+  }
+
+  .cert-foto-header img {
+    height: 64px !important;
+  }
+
+  .cert-foto-header-vacia {
+    min-height: 78px !important;
+  }
+
+  .cert-fecha {
+    font-size: 9px !important;
+  }
+
+  .cert-verificado {
+    font-size: 8px !important;
+  }
+
+  .cert-hr {
+    margin: 10px 0 !important;
+  }
+
+  .cert-datos {
+    gap: 6px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .cert-data-box {
+    padding: 5px 8px !important;
+  }
+
+  .cert-data-box .label {
+    font-size: 8px !important;
+    margin-bottom: 1px !important;
+  }
+
+  .cert-data-box .val {
+    font-size: 11px !important;
+  }
+
+  .cert-data-box .cert-placa {
+    font-size: 14px !important;
+  }
+
+  .cert-diagnostico {
+    margin-bottom: 10px !important;
+    padding: 8px 10px !important;
+  }
+
+  .cert-diag-titulo {
+    font-size: 10px !important;
+    margin-bottom: 3px !important;
+  }
+
+  .cert-diag-texto {
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+
+  .cert-diag-observaciones {
+    margin-top: 6px !important;
+    padding-top: 5px !important;
+    font-size: 10px !important;
+  }
+
+  .cert-checklist-bloque {
+    margin-bottom: 10px !important;
+  }
+
+  .cert-checklist-titulo {
+    font-size: 10px !important;
+    margin-bottom: 5px !important;
+  }
+
+  /* 9 puntos en 5 columnas: dos filas en lugar de tres. */
+  .cert-checklist {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 4px !important;
+    font-size: 9px !important;
+  }
+
+  .cert-check-item {
+    padding: 3px 5px !important;
+    gap: 4px !important;
+    font-size: 9px !important;
+  }
+
+  .cert-firmas {
+    gap: 12px !important;
+    margin-top: 16px !important;
+    padding-top: 10px !important;
+  }
+
+  .signature-line {
+    margin-bottom: 4px !important;
+  }
+
+  .cert-firma-nombre {
+    font-size: 10px !important;
+  }
+
+  .cert-firma-rol {
+    font-size: 8px !important;
+  }
+
+  .cert-pie {
+    margin-top: 10px !important;
+    padding-top: 6px !important;
+    font-size: 8px !important;
   }
 }
 
