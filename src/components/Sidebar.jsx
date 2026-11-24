@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from './ToastContext';
+import { reintentarLogo } from '../utils/logoSinai';
 
 export default function Sidebar({
   sidebarOpen,
@@ -43,7 +44,7 @@ export default function Sidebar({
       <div className="sidebar-logo">
         <Link to="/inicio" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div className="sidebar-logo-icon">
-            <img src="/logo-sinai.png" alt="Logo Pan Sinaí" />
+            <img src="/logo-sinai.png" alt="Logo Pan Sinaí" onError={reintentarLogo} />
           </div>
           <div className="sidebar-logo-text">
             <h2>Pan Sinaí</h2>

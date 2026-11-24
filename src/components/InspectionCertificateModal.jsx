@@ -4,6 +4,7 @@ import { generarCertificadoAuditoria } from '../services/diagnosticService';
 import { apoyosDeOrden } from '../services/permisosService';
 import { obtenerFotosBase } from '../services/fotosVehiculoService';
 import ModalPortal from './ModalPortal';
+import { reintentarLogo } from '../utils/logoSinai';
 
 const formatFecha = (timestamp) => {
   if (!timestamp) return '—';
@@ -28,7 +29,7 @@ function HojaActa({ orden, cert, fotoFrontal, conRef }) {
       <div className="cert-header">
         <div className="cert-empresa">
           <div className="cert-logo-empresa">
-            <img src="/logo-sinai.png" alt="Pan Sinaí" />
+            <img src="/logo-sinai.png" alt="Pan Sinaí" onError={reintentarLogo} />
           </div>
           <div>
             <h2 className="cert-titulo">

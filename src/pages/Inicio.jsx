@@ -1,6 +1,7 @@
 import {  } from '../icons';
 import { useAuth } from '../context/AuthContext';
 import { aTitulo } from '../utils/formato';
+import { reintentarLogo } from '../utils/logoSinai';
 
 export default function Inicio() {
   const { currentUser, isAdmin, isEncargado, isMecanico } = useAuth();
@@ -53,6 +54,7 @@ export default function Inicio() {
           <img
             src="/logo-sinai.png"
             alt="Logo Pan Sinaí"
+            onError={reintentarLogo}
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         </span>

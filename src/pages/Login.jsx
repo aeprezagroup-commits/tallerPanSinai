@@ -12,6 +12,7 @@ import {
 } from '../icons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { reintentarLogo } from '../utils/logoSinai';
 import { useToast } from '../components/ToastContext';
 import { VERSION_TEXT } from '../version';
 import { aTitulo } from '../utils/formato';
@@ -113,6 +114,7 @@ export default function Login() {
           <img
             src="/logo-sinai.png"
             alt="Logo Pan Sinaí"
+            onError={reintentarLogo}
             style={{
               width: 38,
               height: 38,
@@ -191,6 +193,7 @@ export default function Login() {
                 <img
                   src="/logo-sinai.png"
                   alt="Pan Sinaí"
+                  onError={reintentarLogo}
                   style={{ width: 46, height: 46, objectFit: 'contain' }}
                 />
               </div>

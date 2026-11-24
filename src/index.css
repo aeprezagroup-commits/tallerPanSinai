@@ -5043,12 +5043,19 @@ h3,
   }
 
   /* Cada hoja (copia y duplicado) se imprime completa: nunca se parte
-     a la mitad entre dos páginas. */
+     a la mitad entre dos páginas. La hoja es un flex column que llena
+     la página útil (Letter − 10mm ≈ 980px): los bloques se reparten
+     con space-between y el pie queda al fondo, sin media hoja en
+     blanco. 966px por hoja: 2 hojas = 1932 ≤ 1960 = 2 páginas. */
   .cert-sheet {
     background: white !important;
     color: black !important;
-    padding: 16px 20px !important;
+    padding: 24px 30px !important;
     border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    min-height: 966px !important;
     break-inside: avoid;
     page-break-inside: avoid;
     box-shadow: none !important;
@@ -5056,7 +5063,7 @@ h3,
 
   /* 2 copias del acta al imprimir: taller y cliente. */
   .cert-sheet-copia {
-    display: block !important;
+    display: flex !important;
     page-break-before: always;
     break-before: page;
   }
@@ -5069,150 +5076,152 @@ h3,
   }
 
   /* -------------------------------------------------------
-     Compactación de la hoja impresa: Letter vertical con
-     @page margin 10mm deja ≈ 980px útiles de alto. Cada bloque
-     se reduce para que el acta complete (sin cortes) en 1 página.
+     Distribución de la hoja impresa: Letter vertical con
+     @page margin 10mm deja ≈ 980px útiles de alto. Los
+     márgenes entre bloques se anulan (el espacio lo reparte
+     space-between) y los tamaños quedan casi de pantalla con
+     holgura para diagnósticos largos: el acta llena la página.
      ------------------------------------------------------- */
   .cert-header {
-    gap: 8px !important;
+    gap: 12px !important;
   }
 
   .cert-empresa {
-    gap: 10px !important;
+    gap: 12px !important;
   }
 
   .cert-logo-empresa img {
-    height: 40px !important;
+    height: 48px !important;
   }
 
   .cert-titulo {
-    font-size: 16px !important;
+    font-size: 19px !important;
   }
 
   .cert-subtitulo {
-    font-size: 10px !important;
+    font-size: 11px !important;
   }
 
   .cert-bajada {
-    font-size: 9px !important;
+    font-size: 10px !important;
   }
 
   .cert-encabezado-derecha {
-    gap: 4px !important;
+    gap: 6px !important;
   }
 
   .cert-foto-header {
-    width: 110px !important;
-    padding: 3px !important;
+    width: 140px !important;
+    padding: 4px !important;
   }
 
   .cert-foto-header img {
-    height: 64px !important;
+    height: 88px !important;
   }
 
   .cert-foto-header-vacia {
-    min-height: 78px !important;
+    min-height: 140px !important;
   }
 
   .cert-fecha {
-    font-size: 9px !important;
+    font-size: 10px !important;
   }
 
   .cert-verificado {
-    font-size: 8px !important;
+    font-size: 9px !important;
   }
 
   .cert-hr {
-    margin: 10px 0 !important;
+    margin: 0 !important;
   }
 
   .cert-datos {
-    gap: 6px !important;
-    margin-bottom: 10px !important;
+    gap: 10px !important;
+    margin-bottom: 0 !important;
   }
 
   .cert-data-box {
-    padding: 5px 8px !important;
-  }
-
-  .cert-data-box .label {
-    font-size: 8px !important;
-    margin-bottom: 1px !important;
-  }
-
-  .cert-data-box .val {
-    font-size: 11px !important;
-  }
-
-  .cert-data-box .cert-placa {
-    font-size: 14px !important;
-  }
-
-  .cert-diagnostico {
-    margin-bottom: 10px !important;
     padding: 8px 10px !important;
   }
 
+  .cert-data-box .label {
+    font-size: 9px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .cert-data-box .val {
+    font-size: 12px !important;
+  }
+
+  .cert-data-box .cert-placa {
+    font-size: 16px !important;
+  }
+
+  .cert-diagnostico {
+    margin-bottom: 0 !important;
+    padding: 12px 14px !important;
+  }
+
   .cert-diag-titulo {
-    font-size: 10px !important;
-    margin-bottom: 3px !important;
+    font-size: 12px !important;
+    margin-bottom: 4px !important;
   }
 
   .cert-diag-texto {
-    font-size: 11px !important;
-    line-height: 1.4 !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
   }
 
   .cert-diag-observaciones {
-    margin-top: 6px !important;
-    padding-top: 5px !important;
-    font-size: 10px !important;
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+    font-size: 11px !important;
   }
 
   .cert-checklist-bloque {
-    margin-bottom: 10px !important;
+    margin-bottom: 0 !important;
   }
 
   .cert-checklist-titulo {
-    font-size: 10px !important;
-    margin-bottom: 5px !important;
+    font-size: 11px !important;
+    margin-bottom: 6px !important;
   }
 
   /* 9 puntos en 5 columnas: dos filas en lugar de tres. */
   .cert-checklist {
     grid-template-columns: repeat(5, 1fr) !important;
-    gap: 4px !important;
-    font-size: 9px !important;
-  }
-
-  .cert-check-item {
-    padding: 3px 5px !important;
-    gap: 4px !important;
-    font-size: 9px !important;
-  }
-
-  .cert-firmas {
-    gap: 12px !important;
-    margin-top: 16px !important;
-    padding-top: 10px !important;
-  }
-
-  .signature-line {
-    margin-bottom: 4px !important;
-  }
-
-  .cert-firma-nombre {
+    gap: 8px !important;
     font-size: 10px !important;
   }
 
+  .cert-check-item {
+    padding: 6px 8px !important;
+    gap: 6px !important;
+    font-size: 10px !important;
+  }
+
+  .cert-firmas {
+    gap: 20px !important;
+    margin-top: 16px !important;
+    padding-top: 16px !important;
+  }
+
+  .signature-line {
+    margin-bottom: 6px !important;
+  }
+
+  .cert-firma-nombre {
+    font-size: 11px !important;
+  }
+
   .cert-firma-rol {
-    font-size: 8px !important;
+    font-size: 9px !important;
   }
 
   .cert-pie {
-    margin-top: 10px !important;
-    padding-top: 6px !important;
-    font-size: 8px !important;
+    margin-top: 0 !important;
+    padding-top: 10px !important;
+    font-size: 9px !important;
   }
 }
 
