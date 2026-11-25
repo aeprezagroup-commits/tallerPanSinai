@@ -1,8 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
-import { ToastProvider } from './components/ToastContext';
-import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './components/ToastProvider';
+import { ThemeProvider } from './context/ThemeProvider';
+import { useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import CambioPasswordObligatorio from './components/CambioPasswordObligatorio';

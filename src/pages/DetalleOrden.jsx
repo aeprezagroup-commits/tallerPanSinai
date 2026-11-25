@@ -33,6 +33,8 @@ import ModalPortal from '../components/ModalPortal';
 import IconoMascara from '../components/IconoMascara';
 import CameraModal from '../components/CameraModal';
 
+const ANIO_MAXIMO = new Date().getFullYear() + 1;
+
 const LADOS_FICHA = [
   { key: 'frontal', num: 1, label: 'Frontal', tag: 'Frente', vacio: 'Sin foto frontal' },
   { key: 'lateralIzquierdo', num: 2, label: 'Lateral Izq.', tag: 'Conductor', vacio: 'Sin foto lateral izq.' },
@@ -62,7 +64,6 @@ const docsDesdeLegacy = (f) => {
   return docs;
 };
 
-// Estados posibles de una actividad (tarea) dentro de una orden.
 const ESTADOS_ACTIVIDAD = [
   { val: 'pendiente', label: 'Pendiente' },
   { val: 'en_proceso', label: 'En proceso' },
@@ -110,7 +111,6 @@ export default function DetalleOrden() {
   const [ladoPendiente, setLadoPendiente] = useState(null);
   const baseInputRef = useRef(null);
   const [camaraLado, setCamaraLado] = useState('');
-  // Copia de la actividad al abrir el modal: detecta cambios reales.
   const [actividadBase, setActividadBase] = useState(null);
 
   const CLAVES_ACTIVIDAD = ['descripcion', 'area', 'mecanicoAsignado', 'tiempoEstimadoMinutos', 'estado', 'observaciones'];
@@ -157,7 +157,6 @@ export default function DetalleOrden() {
     setActividadBase(null);
   };
 
-  // Sale del modo de edición (botón superior o "Cancelar" inferior).
   const cancelarEdicion = async () => {
     if (sucioEdicionOrden) {
       const ok = await confirm({
@@ -242,14 +241,11 @@ export default function DetalleOrden() {
   }, [id, navigate, addToast]);
 
   useEffect(() => {
-    cargarOrden();
+    (() => { cargarOrden(); })();
   }, [cargarOrden]);
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    // Reglas de tipo de dato por campo: kilometraje sólo dígitos (la coma de
-    // miles es visual), VIN alfanumérico ISO 3779, marca sólo texto y
-    // modelo/motor alfanuméricos sin caracteres especiales.
     const filtrado =
       name === 'kilometraje' ? soloDigitos(value)
         : name === 'vin' ? filtrarVIN(value)
@@ -309,9 +305,8 @@ export default function DetalleOrden() {
 
     if (formEdit.anio) {
       const anioNum = parseInt(formEdit.anio, 10);
-      const anioMax = new Date().getFullYear() + 1;
-      if (isNaN(anioNum) || anioNum < 1970 || anioNum > anioMax) {
-        addToast(`El año debe ser un valor válido entre 1970 y ${anioMax}`, 'error');
+      if (isNaN(anioNum) || anioNum < 1970 || anioNum > ANIO_MAXIMO) {
+        addToast(`El año debe ser un valor válido entre 1970 y ${ANIO_MAXIMO}`, 'error');
         return;
       }
     }
@@ -590,8 +585,6 @@ export default function DetalleOrden() {
 
   if (!orden) return null;
 
-  // Sólo administración y encargado pueden modificar tareas, y sólo mientras
-  // la unidad siga en el taller (una orden entregada o cancelada queda cerrada).
   const ordenModificable = puedeModificar && !['entregado', 'cancelado'].includes(orden.estado);
 
   if (!puedeVerOrden(orden, currentUser)) {

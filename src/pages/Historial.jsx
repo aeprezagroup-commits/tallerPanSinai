@@ -54,8 +54,6 @@ export default function Historial() {
     };
   }, []);
 
-  // Auditoría S2-S3: indicador de unidad dada de baja o vendida en el Historial.
-  // La baja retira la placa del catálogo de flota, pero sus órdenes siguen aquí.
   const placasEnFlota = useMemo(() => {
     const flota = obtenerFlotaVehiculos();
     if (!flota || flota.length === 0) return null;
@@ -120,7 +118,6 @@ export default function Historial() {
     });
   };
 
-  // Costo real de la orden; si es cero no se muestra monto (no hay dato).
   const costoDe = (o) =>
     Number(o.costoTotal) || (Number(o.costoRepuestos) || 0) + (Number(o.costoManoObra) || 0);
 

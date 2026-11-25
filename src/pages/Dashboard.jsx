@@ -21,7 +21,8 @@ import {
   TbAlertCircle,
 } from '../icons';
 import { escucharOrdenes, formatoOT } from '../firebase/ordenesService';
-import StatusBadge, { ESTADOS_CONFIG } from '../components/StatusBadge';
+import StatusBadge from '../components/StatusBadge';
+import { ESTADOS_CONFIG } from '../constants/estadosConfig';
 import { obtenerPersonalVisible } from '../services/usuariosService';
 import { escucharGastos, montoConDescuento } from '../services/gastosService';
 import { DEPARTAMENTOS_EL_SALVADOR, obtenerFlotaVehiculos } from '../services/vehiculosService';
@@ -41,6 +42,8 @@ const APARTADOS = [
   { id: 'rep-personal', etiqueta: 'Personal' },
   { id: 'rep-taller', etiqueta: 'Taller' },
 ];
+
+const ANIO_ACTUAL = new Date().getFullYear();
 
 export default function Dashboard() {
   const [ordenes, setOrdenes] = useState([]);
@@ -314,7 +317,6 @@ export default function Dashboard() {
     };
   }, [ordenes, mecanicosPersonal]);
 
-  // Año lectivo: las tarjetas KPI se calculan sólo con las órdenes ingresadas en el año seleccionado.
   const anioDeOrden = (o) => {
     const f = o?.fechaIngreso;
     let fecha = null;
@@ -325,9 +327,8 @@ export default function Dashboard() {
 
   const aniosLectivos = useMemo(() => {
     const set = new Set(ordenes.map(anioDeOrden).filter(Boolean));
-    set.add(new Date().getFullYear());
+    set.add(ANIO_ACTUAL);
     return Array.from(set).sort((a, b) => b - a);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ordenes]);
 
   const statsAnio = useMemo(() => {
@@ -362,7 +363,6 @@ export default function Dashboard() {
       tiempoPromedioHoras: countConTiempo > 0 ? (sumaTiempoHoras / countConTiempo).toFixed(1) : '0.0',
       tasaFinalizacion: delAnio.length > 0 ? Math.round((finalizadosAnio / delAnio.length) * 100) : 0
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ordenes, anioLectivo]);
 
   const ordenesActivas = useMemo(() => {
@@ -575,7 +575,7 @@ export default function Dashboard() {
         <div className="kpi-color-card kpi-naranja">
           <div className="kpi-color-top">
             <span className="kpi-color-icon"><TbClock /></span>
-            <span className="kpi-color-tag">SLA</span>
+            <span className="kpi-color-tag">TIEMPO</span>
           </div>
           <div className="kpi-color-value">{statsAnio.tiempoPromedioHoras} h</div>
           <div className="kpi-color-label">Tiempo Promedio</div>

@@ -40,9 +40,6 @@ export default function Salida() {
   const [personaRetira, setPersonaRetira] = useState('');
   const [observacionesFinales, setObservacionesFinales] = useState('');
 
-  // Auditoría S2–S3: al cambiar de unidad seleccionada se vacía el campo
-  // Motorista, evitando que el nombre digitado para otra unidad se herede
-  // en el registro de entrega.
   const seleccionarUnidadSalida = (id) => {
     if (id && id !== ordenSeleccionadaId) setPersonaRetira('');
     setOrdenSeleccionadaId(id);
@@ -60,7 +57,6 @@ export default function Salida() {
   const navigate = useNavigate();
   const conductores = obtenerConductores();
 
-  // Aviso si hay datos escritos en "Datos de Cierre y Retiro" sin guardar.
   useDatosSinGuardar(Boolean(personaRetira.trim() || observacionesFinales.trim()), confirm);
 
   useEffect(() => {
@@ -77,15 +73,22 @@ export default function Salida() {
   const otrasEnTaller = ordenesVisibles.filter(o => o.estado !== 'finalizado' && o.estado !== 'listo_entrega' && o.estado !== 'entregado');
   const ordenActual = ordenesVisibles.find(o => o.id === ordenSeleccionadaId);
 
-  useEffect(() => {
-    let vivo = true;
-    const placa = ordenActual?.placa || '';
-    if (!placa) {
+  const claveFotos = ordenActual?.placa || '';
+  const [claveFotosPrevia, setClaveFotosPrevia] = useState(null);
+
+  if (claveFotosPrevia !== claveFotos) {
+    setClaveFotosPrevia(claveFotos);
+    if (claveFotos) {
+      setCargandoFotos(true);
+    } else {
       setFotosBase({});
-      return () => { vivo = false; };
     }
-    setCargandoFotos(true);
-    obtenerFotosBase(placa)
+  }
+
+  useEffect(() => {
+    if (!claveFotos) return undefined;
+    let vivo = true;
+    obtenerFotosBase(claveFotos)
       .then((reg) => { if (vivo) setFotosBase(reg || {}); })
       .catch((e) => {
         console.warn('No se pudieron leer las fotos de la base:', e);
@@ -93,7 +96,7 @@ export default function Salida() {
       })
       .finally(() => { if (vivo) setCargandoFotos(false); });
     return () => { vivo = false; };
-  }, [ordenActual?.placa]);
+  }, [claveFotos]);
 
   const pedirFotoLado = (lado, desdeCamara = false) => {
     ladoPendienteRef.current = lado;

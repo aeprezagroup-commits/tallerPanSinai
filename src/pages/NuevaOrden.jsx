@@ -14,7 +14,7 @@ import {
   TbTrash,
 } from '../icons';
 import { crearOrden, buscarPorPlaca, formatoOT } from '../firebase/ordenesService';
-import { ESTADOS_CONFIG } from '../components/StatusBadge';
+import { ESTADOS_CONFIG } from '../constants/estadosConfig';
 import { useToast } from '../components/ToastContext';
 import { buscarVehiculoCatalogo, obtenerConductores } from '../services/vehiculosService';
 import { AREAS_SELECT } from '../constants/areas';
@@ -46,9 +46,6 @@ function construirActividades(tareas, mecanico = '', areaDefault = 'General') {
   }));
 }
 
-// Estados en los que la unidad sigue con una orden abierta en el taller.
-// Mientras exista una orden así para la placa, no se permite dar de alta
-// un nuevo ingreso (evita duplicados por error).
 const ESTADOS_EN_TALLER = [
   'ingresado', 'pendiente_diagnostico', 'en_proceso', 'esperando_repuestos',
   'pendiente_autorizacion', 'pausado', 'finalizado', 'listo_entrega'
@@ -57,7 +54,6 @@ const ESTADOS_EN_TALLER = [
 const etiquetaEstadoOrden = (estado) =>
   ESTADOS_CONFIG[estado]?.label || String(estado || '').replace('_', ' ');
 
-// Tarjetas de la inspeccion perimetral 360° (ingreso de orden).
 const FOTOS_PERIMETRAL = [
   { key: 'frontal', num: 1, label: 'Frontal', tag: 'Frente', titulo: 'Foto Frontal', hint: 'Frente y parrilla', alt: 'Vista Frontal' },
   { key: 'lateralIzquierdo', num: 2, label: 'Lateral Izquierdo', tag: 'Conductor', titulo: 'Costado Izq.', hint: 'Lado del motorista', alt: 'Lateral Izquierdo' },
@@ -105,7 +101,6 @@ export default function NuevaOrden() {
   });
   const [fotosLadosNuevas, setFotosLadosNuevas] = useState({});
   const [camaraLado, setCamaraLado] = useState('');
-  // Menu "Agregar o actualizar foto" abierto por tarjeta (vacio = cerrado).
   const [menuFotoLado, setMenuFotoLado] = useState('');
 
   const [form, setForm] = useState({
@@ -134,8 +129,6 @@ export default function NuevaOrden() {
     form.kilometraje ||
     form.diagnosticoInicial ||
     form.tiempoEstimadoHoras ||
-    // Se excluyen los valores que el sistema llena solo (conductor habitual
-    // del vehículo y receptor automático) para no avisar sin motivo.
     (form.conductorEntrega && form.conductorEntrega !== (vehiculoDetectado?.conductorHabitual || '')) ||
     (form.mecanicoReceptor && form.mecanicoReceptor !== (currentUser?.nombre || '')) ||
     tareasMarcadas.size ||
@@ -154,22 +147,28 @@ export default function NuevaOrden() {
         trasera: base.trasera || ''
       });
       setFotosLadosNuevas({});
-      // Sin aviso: las 4 fotos se ven recién cargadas en las tarjetas.
-      if (base.frontal || base.lateralIzquierdo || base.lateralDerecho || base.trasera) {
-        console.info('Base fotográfica cargada (4 costados).');
-      }
     } catch (e) {
       console.warn('Error cargando base fotográfica:', e);
     }
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const p = params.get('placa');
-    if (p) {
-      setForm(prev => ({ ...prev, placa: normalizarPlaca(p) }));
-      cargarBaseFotos(p);
-      const v = buscarVehiculoCatalogo(p);
+  const placaURL = new URLSearchParams(location.search).get('placa') || '';
+  const claveAsistencia = modoAtencion === 'asistencia' && currentUser?.nombre
+    ? `${currentUser.nombre}|${esMecanico}`
+    : '';
+  const claveReceptor = currentUser?.nombre
+    ? `${currentUser.nombre}|${esMecanico ? 'm' : 'n'}`
+    : '';
+
+  const [placaURLPrevia, setPlacaURLPrevia] = useState(null);
+  const [asistenciaPrevia, setAsistenciaPrevia] = useState(null);
+  const [receptorPrevio, setReceptorPrevio] = useState(null);
+
+  if (placaURLPrevia !== placaURL) {
+    setPlacaURLPrevia(placaURL);
+    if (placaURL) {
+      setForm(prev => ({ ...prev, placa: normalizarPlaca(placaURL) }));
+      const v = buscarVehiculoCatalogo(placaURL);
       if (v) {
         setVehiculoDetectado(v);
         setForm(prev => ({
@@ -185,10 +184,11 @@ export default function NuevaOrden() {
         }));
       }
     }
-  }, [location.search, cargarBaseFotos]);
+  }
 
-  useEffect(() => {
-    if (modoAtencion === 'asistencia' && currentUser?.nombre) {
+  if (asistenciaPrevia !== claveAsistencia) {
+    setAsistenciaPrevia(claveAsistencia);
+    if (claveAsistencia) {
       setForm(prev => ({
         ...prev,
         mecanicoAsignado: esMecanico
@@ -198,25 +198,37 @@ export default function NuevaOrden() {
           ? (prev.mecanicoReceptor || currentUser.nombre)
           : (prev.mecanicoReceptor === currentUser.nombre ? '' : prev.mecanicoReceptor)
       }));
-      addToast(
-        esMecanico
-          ? `Asistencia en sitio: orden autoasignada a ${currentUser.nombre}`
-          : 'Asistencia en sitio: indique el técnico',
-        'info'
-      );
     }
-  }, [modoAtencion, currentUser?.nombre, esMecanico]);
+  }
+
+  if (receptorPrevio !== claveReceptor) {
+    setReceptorPrevio(claveReceptor);
+    if (claveReceptor) {
+      setForm(prev => {
+        if (esMecanico) {
+          if (prev.mecanicoReceptor === currentUser.nombre) return prev;
+          return { ...prev, mecanicoReceptor: currentUser.nombre };
+        }
+        return prev.mecanicoReceptor ? prev : { ...prev, mecanicoReceptor: currentUser.nombre };
+      });
+    }
+  }
 
   useEffect(() => {
-    if (!currentUser?.nombre) return;
-    setForm(prev => {
-      if (esMecanico) {
-        if (prev.mecanicoReceptor === currentUser.nombre) return prev;
-        return { ...prev, mecanicoReceptor: currentUser.nombre };
-      }
-      return prev.mecanicoReceptor ? prev : { ...prev, mecanicoReceptor: currentUser.nombre };
-    });
-  }, [currentUser?.nombre, esMecanico]);
+    if (!placaURL) return undefined;
+    (() => { cargarBaseFotos(placaURL); })();
+    return undefined;
+  }, [placaURL, cargarBaseFotos]);
+
+  useEffect(() => {
+    if (!claveAsistencia) return;
+    addToast(
+      esMecanico
+        ? `Asistencia en sitio: orden autoasignada a ${currentUser?.nombre}`
+        : 'Asistencia en sitio: indique el técnico',
+      'info'
+    );
+  }, [claveAsistencia, esMecanico, currentUser?.nombre, addToast]);
 
 
   const aplicarAutocompletado = async (placaABuscar) => {
@@ -277,16 +289,12 @@ export default function NuevaOrden() {
   const handleChange = (e) => {
     const { name } = e.target;
     let value = e.target.value;
-    // Reglas de tipo de dato: kilometraje sólo dígitos (la coma es visual),
-    // conductor sólo texto y tiempo estimado sólo números con punto decimal.
     if (name === 'kilometraje') value = soloDigitos(value);
     else if (name === 'conductorEntrega') value = filtrarTexto(value);
     else if (name === 'tiempoEstimadoHoras') value = filtrarCantidad(value);
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  // Catálogo cerrado para Receptor y Encargado: sólo nombres de mecánicos
-  // activos (más el valor actual si no está en la lista). Sin tipeo libre.
   const opcionesReceptor = [...new Set([...mecanicos, form.mecanicoReceptor].filter(Boolean))];
   const opcionesEncargado = [...new Set([...mecanicos, form.mecanicoAsignado].filter(Boolean))];
 
@@ -369,11 +377,6 @@ export default function NuevaOrden() {
     setTareasOmitidasMotivos(prev => ({ ...prev, [id]: texto }));
   };
 
-  // Elegir Mantenimiento o Falla agrega o quita bloques enteros (áreas de
-  // taller, pauta de km, listas de hasta 67 tareas) y eso cambia el alto del
-  // documento. Se anota la posición visible del bloque "Motivo de Ingreso" para
-  // recomponerla después del render: la vista no debe saltar ni el scroll
-  // moverse solo cuando el usuario apenas está eligiendo el tipo de servicio.
   const motivoTopAntesRef = useRef(null);
 
   const seleccionarMotivo = (motivo) => {
@@ -391,8 +394,6 @@ export default function NuevaOrden() {
     setTareasOmitidasMotivos({});
   };
 
-  // Recompone la posición visible del bloque "Motivo" justo antes del pintado,
-  // de modo que el cambio de alto del documento no arrastre la vista del usuario.
   useLayoutEffect(() => {
     const topAntes = motivoTopAntesRef.current;
     if (topAntes === null) return;
@@ -401,8 +402,6 @@ export default function NuevaOrden() {
     if (!el) return;
     const delta = el.getBoundingClientRect().top - topAntes;
     if (Math.abs(delta) < 1) return;
-    // Se fuerza desplazamiento instantáneo: con scroll-behavior: smooth la
-    // compensación se vería como un segundo salto.
     const html = document.documentElement;
     const scrollPrevio = html.style.scrollBehavior;
     html.style.scrollBehavior = 'auto';
@@ -410,11 +409,7 @@ export default function NuevaOrden() {
     html.style.scrollBehavior = scrollPrevio;
   }, [form.motivoIngreso]);
 
-  // Tras elegir el tipo de atención, la vista lleva a verificar el vehículo
-  // y registrar el kilometraje antes de seguir con la recepción.
   const seleccionarTipoAtencion = (modo) => {
-    // Concordancia con el resto del formulario: se decide el tipo de
-    // atención hasta registrar una placa válida en la flota.
     if (!vehiculoDetectado) return;
     setModoAtencion(modo);
     setTimeout(() => {
@@ -535,8 +530,6 @@ export default function NuevaOrden() {
       }
     }
 
-    // Revalidación al momento de guardar: la orden pudo abrirse en otra
-    // pestaña mientras se llenaba el formulario.
     try {
       const previasFrescas = await buscarPorPlaca(form.placa);
       const abiertaFresca = previasFrescas?.find(o => ESTADOS_EN_TALLER.includes(o.estado));
@@ -1068,7 +1061,7 @@ export default function NuevaOrden() {
                   enterKeyHint="done"
                 />
                 <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                  SLA operativo para cálculo de tiempos hombre
+                  Tiempo estimado para cálculo de tiempo por actividad
                 </span>
               </div>
 

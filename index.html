@@ -35,21 +35,16 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // El navegador puede restaurar una pestaña vieja desde su caché de
-      // retroceso (bfcache) y quedar en una versión anterior del sistema.
-      // Al detectar esa restauración se recarga la página una sola vez.
       window.addEventListener('pageshow', function (evento) {
         if (!evento.persisted) {
-          try { sessionStorage.removeItem('pan_sinai_recarga_cache'); } catch (e) { /* sin memoria */ }
+          try { sessionStorage.removeItem('pan_sinai_recarga_cache'); } catch (e) {}
           return;
         }
         try {
           if (sessionStorage.getItem('pan_sinai_recarga_cache') === '1') return;
-          // Con datos sin guardar no se recarga: se respeta lo escrito.
           if ((window.__formulariosSucios || 0) > 0) return;
           sessionStorage.setItem('pan_sinai_recarga_cache', '1');
-        } catch (e) { /* sin memoria: se recarga igual */ }
-        // Recarga automática: GuardiaSalida no pide confirmación nativa.
+        } catch (e) {}
         window.__recargaVersion = true;
         window.location.reload();
       });

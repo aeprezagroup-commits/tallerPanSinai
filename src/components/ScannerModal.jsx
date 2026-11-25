@@ -19,7 +19,17 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
   const sucio = isOpen && Boolean(placaManual.trim());
   useDatosSinGuardar(sucio, confirm);
 
-  // Cierre manual del modal: avisa si se escribió una placa sin usar.
+  const [abiertoPrevia, setAbiertoPrevia] = useState(isOpen);
+
+  if (isOpen !== abiertoPrevia) {
+    setAbiertoPrevia(isOpen);
+    if (isOpen) {
+      setMostrarQR(false);
+      setError('');
+      setPlacaManual('');
+    }
+  }
+
   const cerrar = async () => {
     if (sucio) {
       const ok = await confirm({
@@ -52,7 +62,6 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
   }, [stopCamera, onScanSuccess, onClose]);
 
   const startCamera = useCallback(async () => {
-    setError('');
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('La cámara no está disponible en este dispositivo o navegador.');
@@ -94,9 +103,6 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
 
   useEffect(() => {
     if (isOpen) {
-      setMostrarQR(false);
-      setError('');
-      setPlacaManual('');
       const t = setTimeout(() => manualInputRef.current?.focus(), 150);
       return () => clearTimeout(t);
     }
@@ -106,7 +112,7 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
 
   useEffect(() => {
     if (mostrarQR) {
-      startCamera();
+      (() => { startCamera(); })();
     } else {
       stopCamera();
     }
@@ -193,7 +199,7 @@ export default function ScannerModal({ isOpen, onClose, onScanSuccess }) {
                 type="button"
                 className={`btn ${mostrarQR ? 'btn-secondary' : 'btn-outline'}`}
                 style={{ width: '100%', gap: 8, padding: '10px 16px', justifyContent: 'center' }}
-                onClick={() => setMostrarQR(!mostrarQR)}
+                onClick={() => { setError(''); setMostrarQR(!mostrarQR); }}
               >
                 <TbBarcode />
                 {mostrarQR ? 'Ocultar Escáner QR' : '2. Escanear QR si está disponible'}

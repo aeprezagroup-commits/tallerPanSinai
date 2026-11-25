@@ -265,8 +265,6 @@ img {
     will-change: auto;
   }
 
-  /* Celulares: el blur (costoso de pintar) no se declara siquiera y el
-     fondo sólido da la misma legibilidad. Animación más corta. */
   .sidebar {
     background: var(--color-bg-card);
     transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
@@ -299,7 +297,6 @@ img {
   will-change: transform;
 }
 
-/* El efecto cristal es sólo de escritorio: en móvil ya está anulado arriba. */
 @media (min-width: 768px) {
   .sidebar {
     backdrop-filter: blur(20px);
@@ -977,8 +974,6 @@ img {
   color: var(--color-text-primary);
   transition: all var(--transition-fast);
   width: 100%;
-  /* En filas flex el campo es quien encoge (los botones no), evitando
-     que la fila desborde su contenedor en espacios angostos */
   min-width: 0;
 }
 
@@ -1210,9 +1205,6 @@ input[type='password'],
   min-height: 34px;
   position: relative;
   overflow: hidden;
-  /* Nunca encoger por debajo de su texto dentro de filas flex:
-     el `overflow: hidden` anula el min-width automático y el
-     contenido se recortaba (ej. botón "AGREGAR" junto a un input) */
   flex-shrink: 0;
 }
 
@@ -1293,7 +1285,6 @@ input[type='password'],
   min-height: 34px;
 }
 
-/* Botones de estado de la OT (Iniciar / Pausar / Listo). */
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -1882,13 +1873,6 @@ input[type='password'],
   gap: 6px;
 }
 
-/* ---------------------------------------------------------------
-   Tabla de actividades tecnicas de la OT (DetalleOrden).
-   - En celular el texto largo (descripcion y observaciones) se ajusta
-     dentro de su celda en vez de desbordarse sobre el boton de editar.
-   - La tabla mantiene un ancho minimo y el contenedor hace scroll
-     horizontal, para que las 8 columnas sigan siendo legibles.
------------------------------------------------------------------ */
 .table.tabla-actividades {
   min-width: 760px;
 }
@@ -1906,24 +1890,14 @@ input[type='password'],
   max-width: 210px;
 }
 
-/* La celda de acciones ya trae nowrap en línea; aquí se protege
-   el boton para que nunca se parta en dos lineas. */
 .table.tabla-actividades .btn {
   white-space: nowrap;
 }
 
-/* Aviso de desplazamiento horizontal de la tabla: se muestra sólo en
-   celular (ver media query 640px), donde la tabla se corta y hay que
-   deslizar para ver el resto de las columnas. */
 .tabla-scroll-hint {
   display: none;
 }
 
-/* ---------------------------------------------------------------
-   Tablas en laptops (hasta 1500px): se compactan para que todas las
-   columnas quepan en pantalla sin recortarse. El scroll horizontal
-   queda sólo como último recurso en pantallas muy angostas.
------------------------------------------------------------------ */
 @media (max-width: 1500px) {
   .table th {
     padding: 10px 10px;
@@ -1948,16 +1922,12 @@ input[type='password'],
     font-size: 10.5px;
   }
 
-  /* Chips de estado (ESPERANDO REPUESTOS, PENDIENTE DE PAGO…):
-     envuelven a dos líneas en vez de ensanchar la columna */
   .table .status-badge {
     padding: 3px 7px;
     font-size: 10px;
     white-space: normal;
   }
 
-  /* La celda de acciones (botones) envuelve a dos líneas para no
-     ensanchar la tabla en pantallas de laptop */
   .table td > div:has(> .btn) {
     flex-wrap: wrap;
   }
@@ -2347,7 +2317,6 @@ input[type='password'],
 
 .toast-container {
   position: fixed;
-  /* Debajo de la barra superior (52px): no la tapa. */
   top: 64px;
   right: 20px;
   z-index: 1000000;
@@ -2561,9 +2530,6 @@ input[type='password'],
   }
 }
 
-/* Celular: los avisos bajan para no tapar el encabezado ni el formulario.
-   Cuando la página tiene barra de acciones fija (Guardar/Cancelar), el
-   aviso sube por encima para no esconder los botones. */
 @media (max-width: 640px) {
   .toast-container {
     top: auto;
@@ -2585,8 +2551,6 @@ input[type='password'],
     padding: 9px 10px 11px;
   }
 
-  /* En celular el título ocupa espacio que tapa el formulario: queda sólo
-     el icono con el mensaje (el color del icono indica el tipo). */
   .toast-title {
     display: none;
   }
@@ -2604,8 +2568,6 @@ input[type='password'],
   box-shadow: var(--shadow-lg);
 }
 
-/* Aviso de versión nueva: se muestra cuando la pestaña no puede
-   recargarse sola (datos sin guardar o modal abierto). */
 .aviso-actualizacion {
   position: fixed;
   left: 50%;
@@ -2719,7 +2681,6 @@ input[type='password'],
 
 .confirm-modal-actions {
   display: flex;
-  /* En ventanas angostas los botones pasan a su propia línea en vez de recortarse */
   flex-wrap: wrap;
   gap: 12px;
   width: 100%;
@@ -2727,8 +2688,6 @@ input[type='password'],
 }
 
 .confirm-modal-actions button {
-  /* Crecen para llenar el espacio, pueden encoger y envolver su texto;
-     en pantallas angostas pasan a su propia línea en vez de recortarse */
   flex: 1 1 140px;
   min-width: 0;
   white-space: normal;
@@ -3036,11 +2995,6 @@ input[type='password'],
   animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Nueva Orden: al marcar áreas o cambiar Mantenimiento/Falla crece o encoge
-   lista de tareas dentro de la tarjeta. El scroll anchoring nativo del
-   navegador compensaba eso moviendo el scroll de la página y de la tarjeta
-   (overflow: hidden sigue siendo contenedor de scroll), lo que se veía como
-   un salto. Se desactiva sólo en esta página para que la vista quede fija. */
 .pagina-nueva-orden,
 .pagina-nueva-orden .card {
   overflow-anchor: none;
@@ -3200,7 +3154,6 @@ h3,
     height: auto;
   }
 
-  /* Header de modales (ej. Acta de Taller): evita recortar el boton Imprimir */
   .modal-header {
     flex-wrap: wrap;
     row-gap: 10px;
@@ -3825,8 +3778,6 @@ h3,
   min-height: 52px;
 }
 
-/* Sólo escritorio: en móvil el blur se recalcula en cada scroll y es
-   costoso en celulares antiguos. */
 @media (min-width: 768px) {
   .enterprise-topbar {
     backdrop-filter: blur(14px);
@@ -4613,10 +4564,6 @@ h3,
   gap: 16px;
 }
 
-/* Columna izquierda (logo + titulos): crece y se comprime para que la
-   columna derecha (foto frontal + fecha) quepa en la misma linea.
-   Sin esto, el encabezado se partia en dos lineas y la foto caia
-   debajo del logo. */
 .cert-header > :first-child {
   flex: 1 1 320px;
   min-width: 0;
@@ -4664,8 +4611,6 @@ h3,
   color: var(--color-text-primary);
 }
 
-/* Foto frontal del vehiculo en el encabezado del Acta de Taller
-   (a la derecha, sobre la fecha). */
 .cert-foto-header {
   width: 168px;
   padding: 4px;
@@ -4707,7 +4652,6 @@ h3,
   font-size: 10px;
 }
 
-/* Segunda copia del acta: oculta en pantalla, se imprime (taller + cliente). */
 .cert-sheet-copia {
   display: none;
 }
@@ -4740,10 +4684,6 @@ h3,
   width: 140px;
 }
 
-/* ---------------------------------------------------------------
-   Acta de Taller: bloques en clases (antes estilos inline) para que
-   @media print pueda compactarlos y cada hoja quepa en 1 página.
-   --------------------------------------------------------------- */
 .cert-hoja {
   padding: 32px 40px;
   background: var(--color-bg-card);
@@ -4913,8 +4853,6 @@ h3,
 }
 
 @media print {
-  /* Hoja vertical (portrait) por defecto en todas las impresiones del
-     sistema: el Acta de Taller se genera para papel en vertical. */
   @page {
     size: portrait;
     margin: 10mm;
@@ -4924,9 +4862,6 @@ h3,
     visibility: hidden;
   }
 
-  /* Con el acta abierta, el resto de la aplicación no se imprime.
-     Ocultarlo sólo con visibility dejaría su espacio ocupado y el acta
-     empezaría en una página posterior; por eso se anula con display. */
   body.acta-abierta #root {
     display: none !important;
   }
@@ -4935,7 +4870,6 @@ h3,
     overflow: visible !important;
   }
 
-  /* Degradado decorativo fijo del fondo: no va en papel. */
   body::before {
     display: none !important;
   }
@@ -5000,8 +4934,6 @@ h3,
     display: none !important;
   }
 
-  /* El contenedor del modal pasa a flujo normal: con position:fixed y
-     height:100vh la impresión recortaba el acta a una sola pantalla. */
   .modal-overlay.cert-modal-parent {
     position: static !important;
     inset: auto !important;
@@ -5042,11 +4974,6 @@ h3,
     max-height: none !important;
   }
 
-  /* Cada hoja (copia y duplicado) se imprime completa: nunca se parte
-     a la mitad entre dos páginas. La hoja es un flex column que llena
-     la página útil (Letter − 10mm ≈ 980px): los bloques se reparten
-     con space-between y el pie queda al fondo, sin media hoja en
-     blanco. 966px por hoja: 2 hojas = 1932 ≤ 1960 = 2 páginas. */
   .cert-sheet {
     background: white !important;
     color: black !important;
@@ -5061,7 +4988,6 @@ h3,
     box-shadow: none !important;
   }
 
-  /* 2 copias del acta al imprimir: taller y cliente. */
   .cert-sheet-copia {
     display: flex !important;
     page-break-before: always;
@@ -5075,13 +5001,6 @@ h3,
     color: black !important;
   }
 
-  /* -------------------------------------------------------
-     Distribución de la hoja impresa: Letter vertical con
-     @page margin 10mm deja ≈ 980px útiles de alto. Los
-     márgenes entre bloques se anulan (el espacio lo reparte
-     space-between) y los tamaños quedan casi de pantalla con
-     holgura para diagnósticos largos: el acta llena la página.
-     ------------------------------------------------------- */
   .cert-header {
     gap: 12px !important;
   }
@@ -5187,7 +5106,6 @@ h3,
     margin-bottom: 6px !important;
   }
 
-  /* 9 puntos en 5 columnas: dos filas en lugar de tres. */
   .cert-checklist {
     grid-template-columns: repeat(5, 1fr) !important;
     gap: 8px !important;
@@ -5360,7 +5278,6 @@ h3,
   font-size: 11.5px;
 }
 
-/* "Agregar o actualizar foto" / "Quitar": siempre visibles bajo la tarjeta */
 .side-photo-actions .side-photo-option {
   min-height: 40px;
 }
@@ -5599,9 +5516,6 @@ h3,
     padding: 8px 14px;
   }
 
-  /* Acciones de la OT: en celular se estiran para tocarlas con el dedo
-     sin apuntar (antes llevaban tamano fijo en linea y quedaban diminutas).
-     La especificidad duplicada gana a las reglas compactas de tabla. */
   .acciones-ot {
     width: 100%;
   }
@@ -5673,9 +5587,6 @@ h3,
     white-space: nowrap;
   }
 
-  /* Tabla de actividades: en celular se compacta para que los encabezados
-     se envuelvan (no queden cortados al borde) y quepan más columnas a la
-     vez. El padding va con !important porque viene en línea desde el JSX. */
   .table.tabla-actividades {
     min-width: 560px;
   }
@@ -5692,7 +5603,6 @@ h3,
     font-size: 12px;
   }
 
-  /* Aviso de desplazamiento: indica que la tabla sigue a la derecha. */
   .tabla-scroll-hint {
     display: block;
     margin: -4px 0 8px;
@@ -6051,12 +5961,7 @@ h3,
   text-transform: uppercase;
 }
 
-/* ==========================================================================
-   Lote C - Auditoria S2-S3 (UI/UX)
-   ========================================================================== */
 
-/* Personal: el boton Activar de un usuario inactivo debe distinguirse de los
-   botones deshabilitados (Reiniciar/Editar/Eliminar) que si estan atenuados. */
 .btn-card-activar {
   background: #16a34a;
   border: 1px solid #16a34a;
@@ -6083,7 +5988,6 @@ h3,
   color: #ffffff;
 }
 
-/* Historial: indicador de unidad dada de baja o vendida (fuera del catalogo). */
 .badge-baja {
   background: rgba(100, 116, 139, 0.14);
   color: #64748b;
@@ -6096,7 +6000,6 @@ h3,
   border-color: rgba(148, 163, 184, 0.35);
 }
 
-/* Acta de Taller: logo real de la empresa (parte superior izquierda). */
 .cert-logo-empresa {
   background: #ffffff;
   border-radius: 10px;
@@ -6114,8 +6017,6 @@ h3,
   object-fit: contain;
 }
 
-/* Ordenes de Trabajo: barra de busqueda fija durante el desplazamiento
-   (mismo patron que .reportes-nav). */
 .filters-bar-sticky {
   position: sticky;
   top: 52px;
@@ -6125,7 +6026,6 @@ h3,
   margin-bottom: 14px;
 }
 
-/* Impresion de la Ficha del vehiculo. */
 @media print {
   .ficha-print-area,
   .ficha-print-area * {
@@ -6144,8 +6044,6 @@ h3,
 
 @media (max-width: 640px) {
 
-  /* En pantallas pequenas la barra de filtros no debe quedarse fija:
-     ocupa casi toda la pantalla y estorba el desplazamiento. */
   .filters-bar-sticky {
     position: static;
   }
@@ -6158,7 +6056,6 @@ h3,
     height: 84px;
   }
 
-  /* Modal Asignacion: botones Cancelar/Guardar apilados y centrados. */
   .modal-form-acciones {
     justify-content: center !important;
   }
@@ -6168,7 +6065,6 @@ h3,
     justify-content: center;
   }
 
-  /* Gastos: espaciado mas compacto de los campos en pantallas pequenas. */
   .gastos-modal-body {
     padding: 14px !important;
   }

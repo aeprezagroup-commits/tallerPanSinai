@@ -17,10 +17,6 @@ const formatFecha = (timestamp) => {
   });
 };
 
-// Contenido del acta. Se renderiza dos veces: la copia visible en pantalla
-// y una segunda oculta que solo aparece al imprimir (2 copias: taller y cliente).
-// Los estilos van en clases (.cert-*) para que @media print pueda compactar
-// cada hoja y quepa completa en una sola página.
 function HojaActa({ orden, cert, fotoFrontal, conRef }) {
   const observaciones = orden.observacionesFinales || orden.recomendaciones || 'Sin comentarios técnicos';
 
@@ -186,20 +182,22 @@ export default function InspectionCertificateModal({ isOpen, onClose, orden }) {
   const printAreaRef = useRef(null);
   const [fotoFrontal, setFotoFrontal] = useState('');
 
-  // Mientras el acta está abierta se marca el body para que, al imprimir,
-  // sólo salga el acta (el resto de la app se oculta con display).
+  const claveFoto = isOpen && orden?.placa ? orden.placa : '';
+  const [claveFotoPrevia, setClaveFotoPrevia] = useState(claveFoto);
+
+  if (claveFotoPrevia !== claveFoto) {
+    setClaveFotoPrevia(claveFoto);
+    if (!claveFoto) setFotoFrontal('');
+  }
+
   useEffect(() => {
     if (!isOpen) return undefined;
     document.body.classList.add('acta-abierta');
     return () => document.body.classList.remove('acta-abierta');
   }, [isOpen]);
 
-  // Foto frontal del vehículo para el acta (base de fotos de la flota).
   useEffect(() => {
-    if (!isOpen || !orden?.placa) {
-      setFotoFrontal('');
-      return undefined;
-    }
+    if (!isOpen || !orden?.placa) return undefined;
     let vivo = true;
     obtenerFotosBase(orden.placa)
       .then((reg) => { if (vivo) setFotoFrontal(reg?.frontal || ''); })

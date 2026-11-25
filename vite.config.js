@@ -5,8 +5,6 @@ import { execSync } from 'node:child_process'
 
 const paquete = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
-// Huella de la build: commit corto, con sufijo "-dirty" si hay cambios
-// sin commitear. Si git no está disponible, se deja "s/d" sin tumbar el build.
 function obtenerGit() {
   try {
     const sha = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
@@ -21,7 +19,6 @@ function obtenerGit() {
   }
 }
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   define: {

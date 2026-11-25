@@ -1,26 +1,3 @@
-// ============================================
-// RESPALDO DE FOTOS → GITHUB
-// Refleja las fotos que viven en Firestore dentro de un
-// repositorio de Git (fotos/...), decodificándolas a archivos
-// reales (.webp/.jpg/.png) y borrando lo que ya no existe.
-//
-// Así el repo queda sincronizado: si un vehículo se da de baja y
-// sus fotos se eliminan, también desaparecen aquí.
-//
-// ORIGEN 'firestore' (por defecto):
-//   Lee Firestore por REST. Con FIREBASE_AUTH_EMAIL y
-//   FIREBASE_AUTH_PASSWORD (cuenta de respaldo) inicia sesión y
-//   manda el token: así funciona con las reglas de la Fase 2,
-//   donde leer exige sesión abierta. Sin esas variables usa sólo
-//   la API key, que sirve mientras las reglas estén abiertas.
-//
-// ORIGEN 'storage':
-//   Refleja el bucket de Firebase Storage (para cuando el proyecto
-//   tenga el plan Blaze). Requiere FIREBASE_STORAGE_SA_JSON.
-//
-// Uso local:  node scripts/respaldo-github.mjs
-// Uso en CI:  corre desde .github/workflows/respaldo-fotos.yml
-// ============================================
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -38,12 +15,6 @@ const LADOS = ['frontal', 'lateralIzquierdo', 'lateralDerecho', 'trasera'];
 const COLECCION_BASE = 'vehiculos_fotos_base';
 const COLECCION_ORDENES = 'ordenes_trabajo';
 
-// ---------------------------------------------
-// 1. Firestore REST (con sesión de respaldo)
-// ---------------------------------------------
-// Las reglas de la Fase 2 exigen sesión abierta para leer. La cuenta
-// de respaldo llega desde FIREBASE_AUTH_EMAIL / FIREBASE_AUTH_PASSWORD
-// (secretos del repositorio en CI) y su token se pide una sola vez.
 let tokenRespaldo = null;
 async function obtenerTokenRespaldo() {
   if (tokenRespaldo) return tokenRespaldo;
@@ -122,13 +93,12 @@ async function listarDocumentos(coleccion) {
   return documentos;
 }
 
-/** Convierte un valor de foto (DataURL o URL) en un archivo o en un pendiente. */
 function aArchivo(valor) {
   if (typeof valor !== 'string' || !valor) return null;
 
   if (valor.startsWith('data:')) {
     const corte = valor.indexOf(',');
-    const cabecera = valor.slice(5, corte); // image/webp;base64
+    const cabecera = valor.slice(5, corte);
     const mime = cabecera.split(';')[0] || 'image/webp';
     const ext =
       mime === 'image/jpeg' ? 'jpg' :
@@ -143,14 +113,14 @@ function aArchivo(valor) {
   }
 
   if (valor.startsWith('http')) {
-    return { url: valor }; // URL legada de Storage: se registra pero no se descarga
+    return { url: valor };
   }
   return null;
 }
 
 async function recolectarFirestore() {
-  const archivos = new Map(); // rutaRelativa -> Buffer
-  const pendientes = [];      // URLs que no se pudieron descargar
+  const archivos = new Map();
+  const pendientes = [];
   const stats = { vehiculos: 0, ordenes: 0, fotos: 0, bytes: 0 };
 
   const agregar = (rutaRel, archivo) => {
@@ -160,7 +130,6 @@ async function recolectarFirestore() {
     stats.bytes += archivo.datos.length;
   };
 
-  // --- Base fotográfica (4 costados por placa) ---
   const vehiculos = await listarDocumentos(COLECCION_BASE);
   stats.vehiculos = vehiculos.length;
   for (const { id, campos } of vehiculos) {
@@ -172,7 +141,6 @@ async function recolectarFirestore() {
     }
   }
 
-  // --- Fotos dentro de cada orden ---
   const ordenes = await listarDocumentos(COLECCION_ORDENES);
   stats.ordenes = ordenes.length;
   for (const { id, campos } of ordenes) {
@@ -198,9 +166,6 @@ async function recolectarFirestore() {
   return { archivos, pendientes, stats };
 }
 
-// ---------------------------------------------
-// 2. Firebase Storage (para cuando haya Blaze)
-// ---------------------------------------------
 async function recolectarStorage() {
   let Storage;
   try {
@@ -233,7 +198,7 @@ async function recolectarStorage() {
 
   for (const archivo of archivosBucket) {
     const peso = Number(archivo.metadata.size || 0);
-    if (peso > 100 * 1024 * 1024) continue; // límite de GitHub
+    if (peso > 100 * 1024 * 1024) continue;
     try {
       const [datos] = await archivo.download();
       archivos.set(archivo.name, datos);
@@ -250,10 +215,7 @@ async function recolectarStorage() {
   };
 }
 
-// ---------------------------------------------
-// 3. Espejo en disco + manifiesto
-// ---------------------------------------------
-async function escribirEspejo(archivos, stats, pendientes) {
+async function escribirEspejo(archivos, stats) {
   await fs.rm(DESTINO, { recursive: true, force: true });
   await fs.mkdir(DESTINO, { recursive: true });
 
@@ -277,15 +239,12 @@ async function escribirEspejo(archivos, stats, pendientes) {
   return { total: archivos.size };
 }
 
-// ---------------------------------------------
-// Main
-// ---------------------------------------------
 console.log(`\n🔎 Respaldo desde ${ORIGEN} (proyecto ${PROYECTO})...\n`);
 
 const { archivos, pendientes, stats } =
   ORIGEN === 'storage' ? await recolectarStorage() : await recolectarFirestore();
 
-const { total } = await escribirEspejo(archivos, stats, pendientes);
+const { total } = await escribirEspejo(archivos, stats);
 
 const MB = (n) => `${(n / 1048576).toFixed(2)} MB`;
 console.log('──────────────────────────────────────────────');

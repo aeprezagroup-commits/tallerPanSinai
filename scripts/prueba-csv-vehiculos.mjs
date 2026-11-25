@@ -1,6 +1,3 @@
-// Prueba de la plantilla CSV de vehículos (round-trip generación → importación).
-// Extrae las funciones puras de src/services/vehiculosService.js y las ejecuta
-// con dependencias simuladas: NO toca Firestore ni localStorage.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -87,8 +84,6 @@ try {
 }
 
 console.log('\n3. Round-trip: plantilla + fila válida (comillas y comas dentro de campos)');
-// La plantilla usa ";" (Excel es-SV): las filas que se agregan van con el
-// mismo separador; las comas dentro de campos van entre comillas.
 const filaValida = 'P20376;Hino;500;HN998877;2021;Camión de Reparto;"Monge, David";1HGBH41JXMN109188;La Libertad;Ruta 03 - Santa Tecla / Antiguo Cuscatlán / Lourdes;"Mantención preventiva, cada 5,000 km"';
 const res = importarVehiculosCSV(plantilla + filaValida + '\n');
 ok(res.total === 1 && res.altas === 1 && res.actualizaciones === 0 && res.omitidos === 0,
@@ -105,11 +100,11 @@ ok(bitacoras.length === 1 && bitacoras[0].accion === 'importar', 'bitácora regi
 
 console.log('\n4. Validaciones equivalentes al formulario individual');
 const filasMalas = [
-  'AB123;Hino 500;X;HN1;2020;;;;;;;',                 // marca con números
-  'AB124;Hino;300!;HN1;2020;;;;;;',                  // modelo con carácter especial
-  'AB125;Hino;300;HN1;1899;;;;;;',                   // año inválido
-  'AB126;Hino;300;HN1;2020;;;1HGBH41JXMN10918I;;;',   // VIN con letra I
-  ';Hino;300;;;;;;;;',                               // sin placa
+  'AB123;Hino 500;X;HN1;2020;;;;;;;',
+  'AB124;Hino;300!;HN1;2020;;;;;;',
+  'AB125;Hino;300;HN1;1899;;;;;;',
+  'AB126;Hino;300;HN1;2020;;;1HGBH41JXMN10918I;;;',
+  ';Hino;300;;;;;;;;',
 ];
 try {
   importarVehiculosCSV(encabezado + '\n' + filasMalas.join('\n') + '\n');

@@ -18,8 +18,6 @@ const ETAPAS = [
   { id: 'finalizado', label: 'Listo p/ Entrega', desc: 'Listo para despacho o retirado' },
 ];
 
-// fechaIngreso llega como Timestamp de Firestore: new Date(objeto) genera
-// "Invalid Date". Se acepta también string o milisegundos.
 const aFechaTexto = (ts) => {
   if (!ts) return 'Hoy';
   const d = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
@@ -32,8 +30,6 @@ export default function VehicleStatus() {
   const [ordenes, setOrdenes] = useState([]);
   const { currentUser, isAdmin } = useAuth();
 
-  // El boton regresa al panel de trabajo, no al inicio, para no tener
-  // que salir del panel y volver a entrar.
   const rutaPanel = !currentUser ? '/inicio' : isAdmin ? '/admin' : '/ordenes';
 
   useEffect(() => {

@@ -16,6 +16,8 @@ import { useToast } from '../components/ToastContext';
 import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 import ModalPortal from '../components/ModalPortal';
 
+const HOY = new Date();
+
 const FORM_VACIO = {
   fecha: new Date().toISOString().slice(0, 10),
   tipo: 'proveedor',
@@ -98,8 +100,7 @@ export default function Gastos() {
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
 
-  const mesActual = new Date().toISOString().slice(0, 7);
-  const [filtroMes, setFiltroMes] = useState(mesActual);
+  const [filtroMes, setFiltroMes] = useState(() => new Date().toISOString().slice(0, 7));
   const [busqueda, setBusqueda] = useState('');
   const [filtroCentro, setFiltroCentro] = useState('Todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -109,7 +110,6 @@ export default function Gastos() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [form, setForm] = useState(FORM_VACIO);
-  // Copia de los valores originales al abrir el modal (nuevo o edición).
   const [formBase, setFormBase] = useState(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -217,9 +217,8 @@ export default function Gastos() {
 
   const mesesDisponibles = useMemo(() => {
     const set = new Set();
-    const hoy = new Date();
     for (let i = 0; i < 14; i++) {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      const d = new Date(HOY.getFullYear(), HOY.getMonth() - i, 1);
       const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       set.add(mStr);
     }
@@ -316,8 +315,6 @@ export default function Gastos() {
   const handleChange = (e) => {
     const { name } = e.target;
     let value = e.target.value;
-    // Cantidad: sólo números con un solo punto decimal (letras y símbolos
-    // nunca llegan al estado).
     if (name === 'cantidad') value = filtrarCantidad(value);
     setForm(prev => {
       const next = { ...prev, [name]: value };
@@ -503,7 +500,7 @@ export default function Gastos() {
 
   const limpiarFiltros = () => {
     setBusqueda('');
-    setFiltroMes(mesActual);
+    setFiltroMes(new Date().toISOString().slice(0, 7));
     setFiltroCentro('Todos');
     setFiltroEstado('todos');
     setFechaDesde('');

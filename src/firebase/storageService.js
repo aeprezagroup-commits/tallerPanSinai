@@ -2,7 +2,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject, listAll } from 'firebas
 import { storage, isFirebaseConfigured } from './config';
 import { comprimirImagen } from '../services/imageCompressionService';
 import {
-  MODO_ALMACEN_FOTOS, esModoStorage, perfilActivo, PRESUPUESTO_DOC_FOTOS,
+  esModoStorage, perfilActivo, PRESUPUESTO_DOC_FOTOS,
 } from './fotosConfig';
 
 function fileToDataUrl(file) {
@@ -62,7 +62,7 @@ function rutaDesdeURL(url) {
     const inicio = u.pathname.indexOf('/o/');
     if (inicio < 0) return '';
     return decodeURIComponent(u.pathname.slice(inicio + 3));
-  } catch (e) {
+  } catch {
     return '';
   }
 }

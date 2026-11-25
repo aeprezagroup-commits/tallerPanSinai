@@ -1,8 +1,7 @@
 import { db, auth, isFirebaseConfigured } from '../firebase/config';
 import { doc, setDoc, getDoc, increment } from 'firebase/firestore';
 
-const REFERENCIA = 'metricas/uso';
-const INTERVALO_VUELCO_MS = 60_000;   
+const INTERVALO_VUELCO_MS = 60_000;
 const UMBRAL_VUELCO = 50;             
 
 let buffer = {
@@ -30,8 +29,6 @@ function hayAlgo() {
 
 async function volcar() {
   if (!isFirebaseConfigured || !db || !hayAlgo()) return false;
-  // Sin cuenta real las reglas no dejan escribir: el contador se queda
-  // en el buffer y se vuelca apenas alguien inicie sesión.
   if (auth && (!auth.currentUser || auth.currentUser.isAnonymous)) return false;
   if (volcando) return false;
   volcando = true;

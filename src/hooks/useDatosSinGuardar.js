@@ -4,18 +4,6 @@ import { useNavigate } from 'react-router-dom';
 export const AVISO_DATOS_SIN_GUARDAR =
   'Hay datos sin guardar. Si sale, se perderá lo escrito. ¿Salir?';
 
-/**
- * Protege los formularios con datos sin guardar:
- * - antes de cerrar o recargar la pestaña (beforeunload)
- * - al hacer clic en enlaces internos (menú lateral, "Volver", etc.)
- * - permite confirmar también en los botones propios de la página usando
- *   el mismo mensaje AVISO_DATOS_SIN_GUARDAR con el confirm de useToast.
- *
- * @param {boolean} activo   true cuando el formulario tiene datos sin guardar.
- * @param {Function} confirmar confirm personalizado de useToast (opcional;
- *                             si no se pasa se usa window.confirm).
- * @param {string} mensaje   mensaje alternativo.
- */
 export default function useDatosSinGuardar(activo, confirmar, mensaje) {
   const navigate = useNavigate();
   const texto = mensaje || AVISO_DATOS_SIN_GUARDAR;
@@ -27,8 +15,6 @@ export default function useDatosSinGuardar(activo, confirmar, mensaje) {
   useEffect(() => {
     if (!activo) return undefined;
 
-    // Señal global para el actualizador de versión: no recargar la pestaña
-    // mientras haya un formulario con datos sin guardar.
     window.__formulariosSucios = (window.__formulariosSucios || 0) + 1;
 
     const avisarAlNavegador = (e) => {
@@ -52,7 +38,6 @@ export default function useDatosSinGuardar(activo, confirmar, mensaje) {
       if (destino.origin !== window.location.origin) return;
       if (destino.pathname + destino.search === window.location.pathname + window.location.search) return;
 
-      // Se cancela la navegación siempre y se pide confirmación antes de continuar.
       e.preventDefault();
       e.stopPropagation();
 

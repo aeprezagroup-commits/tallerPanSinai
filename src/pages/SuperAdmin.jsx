@@ -149,7 +149,9 @@ export default function SuperAdmin() {
     }
   }, []);
 
-  useEffect(() => { recargar(); }, [recargar]);
+  useEffect(() => {
+    (() => { recargar(); })();
+  }, [recargar]);
 
   const usuarios = obtenerPersonalVisible();
   const flota = obtenerFlotaVehiculos();
@@ -162,7 +164,6 @@ export default function SuperAdmin() {
   const modoInstalacion = !isSuperAdmin && !haySoporte;
   const passPendientes = obtenerUsuarios().filter((u) => u && u.password && !esHashBcrypt(u.password)).length;
 
-  // Aviso si la cuenta de soporte quedó a medias por escribir.
   useDatosSinGuardar(formSoporte && Boolean(nombreSoporte.trim() || passSoporte), confirm);
 
   const crearSoporte = async (e) => {

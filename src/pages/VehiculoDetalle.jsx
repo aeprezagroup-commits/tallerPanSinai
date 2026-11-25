@@ -72,8 +72,6 @@ const Campo = ({ id, label, children, error }) => (
   </div>
 );
 
-// Auditoría S2-S3: huella del archivo original para detectar imágenes duplicadas
-// dentro del mismo expediente (mismo archivo subido a otro costado de la unidad).
 const hashArchivo = async (archivo) => {
   const buffer = await archivo.arrayBuffer();
   if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
@@ -105,7 +103,6 @@ export default function VehiculoDetalle() {
   const [guardando, setGuardando] = useState(false);
 
   const [fotos, setFotos] = useState({});
-  const [cargandoFotos, setCargandoFotos] = useState(true);
   const [actualizandoLado, setActualizandoLado] = useState('');
   const fotoInputRef = useRef(null);
   const ladoPendienteRef = useRef('');
@@ -119,28 +116,29 @@ export default function VehiculoDetalle() {
     : false;
   useDatosSinGuardar(fichaEditada, confirm);
 
-  useEffect(() => {
+  const [placaVista, setPlacaVista] = useState(null);
+
+  if (placaVista !== placa) {
+    setPlacaVista(placa);
     const flota = obtenerFlotaVehiculos();
     const v = flota.find(
       x => normalizarPlaca(x.placa) === normalizarPlaca(placa)
     );
     if (!v) {
       setNoExiste(true);
-      return;
+    } else {
+      setVehiculo(v);
+      setForm({ ...FORM_VACIO, ...v, placa: v.placa });
+      setNoExiste(false);
     }
-    setVehiculo(v);
-    setForm({ ...FORM_VACIO, ...v, placa: v.placa });
-    setNoExiste(false);
-  }, [placa]);
+  }
 
   useEffect(() => {
     let vivo = true;
     (async () => {
-      setCargandoFotos(true);
       const b = await obtenerFotosBase(placa);
       if (vivo) {
         setFotos(b || {});
-        setCargandoFotos(false);
       }
     })();
     return () => { vivo = false; };
@@ -237,7 +235,6 @@ export default function VehiculoDetalle() {
 
     const etiqueta = LADOS_FICHA.find(l => l.key === lado)?.label || lado;
 
-    // Bloqueo de imágenes duplicadas dentro del mismo expediente (auditoría S2-S3).
     let hash = '';
     try {
       hash = await hashArchivo(archivo);
@@ -290,7 +287,6 @@ export default function VehiculoDetalle() {
     procesarFoto(ladoPendienteRef.current, archivo);
   };
 
-  // Auditoría S2-S3: control para eliminar o descartar fotografías ya subidas.
   const eliminarFotoLado = async (lado) => {
     const etiqueta = LADOS_FICHA.find(l => l.key === lado)?.label || lado;
     const ok = await confirm({

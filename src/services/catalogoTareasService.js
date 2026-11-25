@@ -11,13 +11,6 @@ export const MOTIVOS_INGRESO = [
   { id: 'falla', label: 'Fallas o daños', modo: 'reparacion' }
 ];
 
-// ============================================================
-// Listas OFICIALES de mantenimiento (documentos del cliente):
-//   - "MANTTO 5000 KM.docx" → 21 tareas
-//   - "Mantenimiento Preventivo 20,000 km.docx" → 29 actividades
-// Cada servicio carga exactamente SU lista, sin mezclarla con la
-// del otro. Los textos se transcriben tal cual del formulario.
-// ============================================================
 const TAREAS_5000 = [
   { clave: 'mtto5k-aceite', descripcion: 'Cambio de Aceite (Motor)', area: 'Motor', tiempoEstimadoMinutos: 30 },
   { clave: 'mtto5k-filtro-aceite', descripcion: 'Cambio de Filtro de Aceite (Motor)', area: 'Motor', tiempoEstimadoMinutos: 15 },

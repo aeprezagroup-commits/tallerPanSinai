@@ -1,27 +1,9 @@
-// ---------------------------------------------------------------
-// Exportación tabular compartida (auditoría S2–S3: "el documento
-// exportado en formato .xlsx carece de un orden y diseño tabular
-// adecuado").
-//
-//  • descargarXLSX genera un libro de Excel REAL (.xlsx) sin
-//    dependencias: un ZIP con entradas sin comprimir y el XML
-//    mínimo de hoja de cálculo (celdas numéricas y de texto).
-//    Excel, LibreOffice y Google Hojas lo abren directamente con
-//    columnas alineadas y encabezados en la primera fila.
-//  • descargarCSV genera un CSV RFC 4180 con BOM UTF-8 (los
-//    campos van entre comillas dobles, los acentos se leen bien
-//    en Excel y las comas internas no rompen las columnas).
-// ---------------------------------------------------------------
 
 import { formatearDinero } from './formato';
 
 const MIME_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const MIME_CSV = 'text/csv;charset=utf-8;';
 
-// Columna contable: su encabezado identifica dinero. Esas celdas numéricas
-// se escriben con estilo de 2 decimales (#,##0.00) en el .xlsx y con
-// formatearDinero en el .csv. Un encabezado de más sólo afecta a celdas
-// de texto, que no reciben formato numérico.
 function esColumnaDinero(encabezado) {
   const h = String(encabezado || '').trim();
   return h.includes('$') ||
@@ -40,7 +22,6 @@ function descargar(nombreArchivo, contenido, mime) {
   URL.revokeObjectURL(url);
 }
 
-// ------------------------- CSV (RFC 4180) ----------------------
 
 export function escaparCampoCSV(v) {
   return `"${String(v ?? '').replace(/"/g, '""')}"`;
@@ -60,7 +41,6 @@ export function descargarCSV(nombreArchivo, encabezados, filas) {
   descargar(nombre, contenidoCSV(encabezados, filas), MIME_CSV);
 }
 
-// --------------------------- XLSX --------------------------------
 
 function escaparXML(s) {
   return String(s ?? '')
@@ -71,7 +51,6 @@ function escaparXML(s) {
     .replace(/'/g, '&apos;');
 }
 
-// 0 → A, 25 → Z, 26 → AA …
 function nombreColumna(indice) {
   let i = indice + 1;
   let s = '';
@@ -84,7 +63,6 @@ function nombreColumna(indice) {
 }
 
 function hojaXML(encabezados, filas) {
-  // s="1" → estilo numérico con2 decimales (ver xl/styles.xml).
   const estilos = encabezados.map(h => (esColumnaDinero(h) ? ' s="1"' : ''));
   const celda = (ref, v, estilo = '') => {
     if (typeof v === 'number' && Number.isFinite(v)) {
@@ -103,7 +81,6 @@ function hojaXML(encabezados, filas) {
     `<sheetData>${filasXML.join('')}</sheetData></worksheet>`;
 }
 
-// ------------------------- ZIP (store) --------------------------
 
 const TABLA_CRC = (() => {
   const t = new Uint32Array(256);
@@ -132,8 +109,6 @@ function unir(partes) {
   return out;
 }
 
-// ZIP con método store (sin comprimir): suficiente para el XML
-// ligero de un reporte y válido para cualquier lector de .xlsx.
 function construirZIP(archivos) {
   const encoder = new TextEncoder();
   const ahora = new Date();
@@ -152,9 +127,9 @@ function construirZIP(archivos) {
     const local = new Uint8Array(30 + nombreBytes.length);
     const lv = new DataView(local.buffer);
     lv.setUint32(0, 0x04034b50, true);
-    lv.setUint16(4, 20, true);      // versión requerida
-    lv.setUint16(6, 0, true);       // flags
-    lv.setUint16(8, 0, true);       // método: store
+    lv.setUint16(4, 20, true);
+    lv.setUint16(6, 0, true);
+    lv.setUint16(8, 0, true);
     lv.setUint16(10, hora, true);
     lv.setUint16(12, fecha, true);
     lv.setUint32(14, crc, true);
@@ -168,22 +143,22 @@ function construirZIP(archivos) {
     const central = new Uint8Array(46 + nombreBytes.length);
     const cv = new DataView(central.buffer);
     cv.setUint32(0, 0x02014b50, true);
-    cv.setUint16(4, 20, true);      // versión que creó
-    cv.setUint16(6, 20, true);      // versión requerida
-    cv.setUint16(8, 0, true);       // flags
-    cv.setUint16(10, 0, true);      // método
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0, true);
+    cv.setUint16(10, 0, true);
     cv.setUint16(12, hora, true);
     cv.setUint16(14, fecha, true);
     cv.setUint32(16, crc, true);
     cv.setUint32(20, bytes.length, true);
     cv.setUint32(24, bytes.length, true);
     cv.setUint16(28, nombreBytes.length, true);
-    cv.setUint16(30, 0, true);      // extra
-    cv.setUint16(32, 0, true);      // comentario
-    cv.setUint16(34, 0, true);      // disco
-    cv.setUint16(36, 0, true);      // attrs internos
-    cv.setUint32(38, 0, true);      // attrs externos
-    cv.setUint32(42, offset, true); // offset del local
+    cv.setUint16(30, 0, true);
+    cv.setUint16(32, 0, true);
+    cv.setUint16(34, 0, true);
+    cv.setUint16(36, 0, true);
+    cv.setUint32(38, 0, true);
+    cv.setUint32(42, offset, true);
     central.set(nombreBytes, 46);
     centrales.push(central);
 
@@ -198,12 +173,11 @@ function construirZIP(archivos) {
   ev.setUint16(10, archivos.length, true);
   ev.setUint32(12, tamCentral, true);
   ev.setUint32(16, offset, true);
-  ev.setUint16(20, 0, true);        // longitud del comentario
+  ev.setUint16(20, 0, true);
 
   return unir([...locales, ...centrales, eocd]);
 }
 
-// Paquete .xlsx mínimo y válido (6 partes OPC).
 export function construirXLSX(encabezados, filas, hoja = 'Reporte') {
   const encoder = new TextEncoder();
   const nombreHoja = String(hoja).replace(/[[\]:*?/\\]/g, '').slice(0, 31).trim() || 'Reporte';
@@ -233,8 +207,6 @@ export function construirXLSX(encabezados, filas, hoja = 'Reporte') {
     '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
     '</Relationships>';
 
-  // Estilos de celda: s=0 → General; s=1 → número contable con2 decimales
-  // (numFmtId4 = "#,##0.00": separador de miles y dos decimales).
   const estilos = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
     '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>' +

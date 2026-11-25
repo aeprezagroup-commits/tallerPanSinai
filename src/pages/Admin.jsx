@@ -68,8 +68,6 @@ export default function Admin({ seccion = 'personal' }) {
   };
   const [nuevoUsuario, setNuevoUsuario] = useState(FORM_USUARIO_VACIO);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
-  // Copia de los valores originales al abrir la edición: sirve para detectar
-  // cambios reales y avisar si se intenta salir sin guardar.
   const [usuarioBase, setUsuarioBase] = useState(null);
 
   const [verFormUsuario, setVerFormUsuario] = useState(false);
@@ -96,7 +94,6 @@ export default function Admin({ seccion = 'personal' }) {
     Object.keys(FORM_USUARIO_VACIO).some(
       k => JSON.stringify(nuevoUsuario[k]) !== JSON.stringify(FORM_USUARIO_VACIO[k])
     );
-  // Edición de un usuario existente: se compara contra los valores originales.
   const sucioEdicionUsuario =
     verFormUsuario &&
     Boolean(usuarioEditando) &&
@@ -125,7 +122,6 @@ export default function Admin({ seccion = 'personal' }) {
     confirm
   );
 
-  // Cierra la ventana de asignación pidiendo confirmación si hubo cambios.
   const cerrarAsignacion = async () => {
     if (sucioAsignacion) {
       const ok = await confirm({
@@ -157,8 +153,15 @@ export default function Admin({ seccion = 'personal' }) {
   };
 
   useEffect(() => {
-    if (!esPersonal) cargarEstadoFotos();
-  }, [seccion]);
+    if (esPersonal) return undefined;
+    let vivo = true;
+    mapaEstadoFotos()
+      .then((mapa) => { if (vivo) setFotosEstado(mapa || {}); })
+      .catch((err) => {
+        console.warn('No se pudo cargar el estado fotográfico:', err);
+      });
+    return () => { vivo = false; };
+  }, [seccion, esPersonal]);
 
   useEffect(() => {
     const handleUsersUpdate = () => setUsuarios(obtenerPersonalVisible());
@@ -302,8 +305,6 @@ export default function Admin({ seccion = 'personal' }) {
 
   const handleToggleEstado = async (u) => {
     const activar = u.activo === false;
-    // Nadie puede inactivarse a sí mismo: si no, el usuario se bloquea su
-    // propia cuenta y ya no puede volver a entrar (le pasó al tester).
     if (!activar && u.id === currentUser?.id) {
       addToast('No puedes inactivar tu propia cuenta.', 'error');
       return;
@@ -553,7 +554,6 @@ export default function Admin({ seccion = 'personal' }) {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        // UTF-8 con respaldo Windows-1252: Excel en español puede exportar en ANSI.
         const texto = decodificarCSVBuffer(event.target.result);
         const res = importarVehiculosCSV(texto);
         if (res.omitidos > 0) {
@@ -580,8 +580,6 @@ export default function Admin({ seccion = 'personal' }) {
   );
 
   const qUsuario = busquedaUsuario.trim().toLowerCase();
-  // Búsqueda por teléfono: se comparan sólo dígitos para que "7245" encuentre
-  // tanto "72458810" como "+503 7245-8810" guardado con formato.
   const qUsuarioTel = qUsuario.replace(/\D/g, '');
   const usuariosFiltrados = usuarios.filter(u =>
     !qUsuario ||

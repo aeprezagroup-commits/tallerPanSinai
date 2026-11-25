@@ -23,7 +23,7 @@ function canvasABlob(canvas, formato, quality) {
   return new Promise((resolve) => {
     try {
       canvas.toBlob((blob) => resolve(blob), formato, quality);
-    } catch (e) {
+    } catch {
       resolve(null);
     }
   });

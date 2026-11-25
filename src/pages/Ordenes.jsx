@@ -37,18 +37,15 @@ export default function Ordenes() {
   const [ordenCertificado, setOrdenCertificado] = useState(null);
   const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'tabla');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
-  // Cuántas órdenes están desplegadas; el resto se pide con el botón
-  // "Cargar más órdenes" (la lista del administrador es muy larga).
   const [visibles, setVisibles] = useState(ORDENES_POR_PAGINA);
-  // Las entregadas y canceladas quedan detrás de "Ver órdenes antiguas":
-  // al entrar se ve primero lo activo del taller y no una sábana.
   const [mostrarAntiguas, setMostrarAntiguas] = useState(false);
+  const [filtrosPrevios, setFiltrosPrevios] = useState(null);
 
-  useEffect(() => {
+  if (filtrosPrevios !== `${busqueda}|${filtroEstado}|${filtroArea}|${filtroMecanico}|${fechaDesde}|${fechaHasta}`) {
+    setFiltrosPrevios(`${busqueda}|${filtroEstado}|${filtroArea}|${filtroMecanico}|${fechaDesde}|${fechaHasta}`);
     setVisibles(ORDENES_POR_PAGINA);
-    // Si el filtro pedido es "Despachado / Entregado" sí se listan ya.
     setMostrarAntiguas(filtroEstado === 'entregado');
-  }, [busqueda, filtroEstado, filtroArea, filtroMecanico, fechaDesde, fechaHasta]);
+  }
 
   useEffect(() => {
     const unsubscribe = escucharOrdenes((data) => {
@@ -94,17 +91,12 @@ export default function Ordenes() {
 
       return matchBusqueda && matchEstado && matchArea && matchMecanico && matchDesde && matchHasta;
     });
-    // Orden por estado del flujo del taller y, dentro de cada estado,
-    // de la más nueva a la más vieja.
     return ordenarOrdenes(filtradas);
   }, [ordenes, currentUser, isMecanico, busqueda, filtroEstado, filtroArea, filtroMecanico, fechaDesde, fechaHasta]);
 
-  // Activas primero: entregadas y canceladas quedan detrás del botón
-  // "Ver órdenes antiguas" para que la lista no sea una sábana.
   const esOrdenAntigua = (o) => o.estado === 'entregado' || o.estado === 'cancelado';
   const activas = ordenesFiltradas.filter((o) => !esOrdenAntigua(o));
   const antiguas = ordenesFiltradas.filter(esOrdenAntigua);
-  // Al pedir el filtro "Despachado / Entregado" se listan las antiguas ya.
   const listadoBase = mostrarAntiguas || filtroEstado === 'entregado' ? ordenesFiltradas : activas;
   const ordenesMostradas = listadoBase.slice(0, visibles);
   const pendientesCargar = listadoBase.length - ordenesMostradas.length;

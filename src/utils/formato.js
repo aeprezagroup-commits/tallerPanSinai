@@ -1,5 +1,3 @@
-// Formatos estándar del sistema: dinero siempre con signo $ y dos decimales,
-// miles siempre separados por coma (convención es-SV / en-US: 1,234.56).
 
 export function formatearDinero(n) {
   const valor = Number(n);
@@ -7,8 +5,6 @@ export function formatearDinero(n) {
   return `$${valor.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-// Nombre propio para saludos: primera letra de cada palabra en mayúscula
-// ("raquel pérez" → "Raquel Pérez").
 export function aTitulo(texto) {
   return String(texto || '')
     .toLowerCase()
@@ -21,7 +17,6 @@ export function formatearMiles(n) {
   return valor.toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
 
-// Valor para mostrar en inputs de kilometraje: conserva vacío y agrupa miles.
 export function formatoKmEntrada(v) {
   if (v === '' || v === null || v === undefined) return '';
   const digitos = String(v).replace(/[^\d]/g, '');
@@ -29,18 +24,10 @@ export function formatoKmEntrada(v) {
   return formatearMiles(digitos);
 }
 
-// Entrada de kilometraje: sólo dígitos (la coma no viaja al estado).
 export function soloDigitos(v) {
   return String(v ?? '').replace(/[^\d]/g, '');
 }
 
-// ---------------------------------------------------------------
-// VIN / Número de chasis — norma ISO 3779:
-//   • exactamente 17 caracteres
-//   • letras (A–Z) y números (0–9), sin caracteres especiales
-//   • sin las letras I, O ni Q (se confunden con1,0 y O)
-// El campo es opcional: vacío = sin VIN registrado.
-// ---------------------------------------------------------------
 export function filtrarVIN(v) {
   return String(v ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 17);
 }
@@ -60,27 +47,14 @@ export function validarVIN(v) {
   return null;
 }
 
-// ---------------------------------------------------------------
-// Campos de texto (nombres, marcas): sólo letras con tildes/ñ,
-// espacios y los signos . ' - (p. ej. "Mercedes-Benz").
-// ---------------------------------------------------------------
 export function filtrarTexto(v) {
   return String(v ?? '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, '');
 }
 
-// ---------------------------------------------------------------
-// Campos alfanuméricos (modelos, números de motor): letras con
-// tildes/ñ, números y los símbolos comunes - . / (p. ej. "Hilux
-// D-4D 4x4", "4HK1-903125"). Sin caracteres especiales.
-// ---------------------------------------------------------------
 export function filtrarAlfanumerico(v) {
   return String(v ?? '').replace(/[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s.'/-]/g, '');
 }
 
-// ---------------------------------------------------------------
-// Cantidad numérica (gastos): sólo números con un solo punto
-// decimal. Las letras y símbolos nunca llegan al estado.
-// ---------------------------------------------------------------
 export function filtrarCantidad(v) {
   const limpio = String(v ?? '').replace(/[^\d.]/g, '');
   const i = limpio.indexOf('.');
@@ -88,8 +62,6 @@ export function filtrarCantidad(v) {
   return limpio.slice(0, i + 1) + limpio.slice(i + 1).replace(/\./g, '');
 }
 
-// Teléfono de El Salvador:8 dígitos (o11 con503) → +503 XXXX-XXXX.
-// Lo que no sea un número local estándar se muestra como se guardó.
 export function formatearTelefono(tel) {
   const crudo = String(tel ?? '').trim();
   if (!crudo) return '';

@@ -57,8 +57,6 @@ export default function PanelCatalogos({ soloRutas = false }) {
   const [sucio, setSucio] = useState({ rutas: false, areas: false, tareas: false });
   const [guardando, setGuardando] = useState(false);
 
-  // El administrador común sólo administra rutas; áreas y tareas quedan
-  // reservadas a la consola de soporte.
   const pestanas = soloRutas ? PESTANAS.filter(p => p.id === 'rutas') : PESTANAS;
   const pestanaActiva = pestanas.some(p => p.id === pestana) ? pestana : 'rutas';
 
@@ -93,14 +91,10 @@ export default function PanelCatalogos({ soloRutas = false }) {
 
   useEffect(() => suscribirCatalogos((estado) => {
     setInfo(estado);
-    // Si hay ediciones sin guardar en cualquier pestaña, no se reescribe
-    // el borrador local: sólo se actualiza la información del catálogo.
     const haySucio = Object.values(sucioRef.current).some(Boolean);
     if (!haySucio) reiniciar();
   }), [reiniciar]);
 
-  // Reinicia sólo la pestaña que acaba de guardarse (las demás conservan
-  // sus ediciones sin guardar).
   const reiniciarPestana = (id) => {
     if (id === 'rutas') setRutas(obtenerEditorRutas());
     else if (id === 'areas') setAreas(copiaAreas());
@@ -114,8 +108,6 @@ export default function PanelCatalogos({ soloRutas = false }) {
     setRutas(r => {
       const vieja = r.predeterminadas[i];
       const predeterminadas = r.predeterminadas.map((x, j) => (j === i ? valor : x));
-      // El renombre se propaga a los departamentos que la usaban, para que
-      // la ruta no pierda sus asignaciones al guardar.
       const porDepartamento = Object.fromEntries(
         Object.entries(r.porDepartamento).map(([d, lista]) => [
           d,
@@ -282,7 +274,6 @@ export default function PanelCatalogos({ soloRutas = false }) {
   const [nuevaTarea, setNuevaTarea] = useState('');
   const [areaNuevaTarea, setAreaNuevaTarea] = useState('Motor');
 
-  // Aviso si hay catálogos editados o texto escrito sin agregar/guardar.
   useDatosSinGuardar(
     Boolean(
       sucio.rutas || sucio.areas || sucio.tareas ||
@@ -334,8 +325,6 @@ export default function PanelCatalogos({ soloRutas = false }) {
           addToast('Debe quedar al menos una ruta en el catálogo', 'warning');
           return;
         }
-        // Se conservan también los departamentos sin rutas: si se omiten,
-        // el sistema los rellena con todas las rutas del catálogo.
         const porDepartamento = Object.fromEntries(
           Object.entries(rutas.porDepartamento)
             .map(([d, lista]) => [d, (Array.isArray(lista) ? lista : []).filter(r => maestras.includes(r))]),

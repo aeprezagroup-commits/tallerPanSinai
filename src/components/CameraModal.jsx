@@ -3,11 +3,6 @@ import { TbX, TbAlertCircle } from '../icons';
 import ModalPortal from './ModalPortal';
 import IconoMascara from './IconoMascara';
 
-/**
- * Modal con la cámara en vivo del dispositivo (getUserMedia) para TOMAR la foto
- * en lugar de sólo subir un archivo. Devuelve un File JPEG a `onFoto` y cierra.
- * Si no hay cámara o se deniega el permiso, muestra un aviso para usar "Subir".
- */
 export default function CameraModal({ isOpen, onClose, onFoto, titulo = 'Tomar foto' }) {
   const [error, setError] = useState('');
   const videoRef = useRef(null);
@@ -21,8 +16,6 @@ export default function CameraModal({ isOpen, onClose, onFoto, titulo = 'Tomar f
     }
   }, []);
 
-  // El <video> se monta con retardo (ModalPortal), así que el stream se adjunta
-  // también cuando el nodo aparece, no sólo cuando el stream resuelve.
   const asignarVideo = useCallback(node => {
     videoRef.current = node;
     if (node && streamRef.current) {
@@ -31,12 +24,18 @@ export default function CameraModal({ isOpen, onClose, onFoto, titulo = 'Tomar f
     }
   }, []);
 
+  const [abiertoPrevia, setAbiertoPrevia] = useState(isOpen);
+
+  if (isOpen !== abiertoPrevia) {
+    setAbiertoPrevia(isOpen);
+    if (isOpen) setError('');
+  }
+
   useEffect(() => {
     if (!isOpen) {
       stopCamera();
       return undefined;
     }
-    setError('');
     let vivo = true;
     (async () => {
       try {

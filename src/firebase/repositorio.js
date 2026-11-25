@@ -145,7 +145,6 @@ export function crearRepositorio({
       }
 
       if (modificadoMientrasHidrata) {
-        console.info(`[${nombre}] hidratación: hubo escrituras locales simultáneas, se conservan`);
         return { origen: 'local-modificado', total: cache ? cache.length : local.length };
       }
 

@@ -16,9 +16,9 @@ import { VERSION_TEXT } from '../version';
 import CommandPalette from './CommandPalette';
 import Sidebar from './Sidebar';
 
-// memo evita que alternar el menú re-renderice la página abierta: sólo
-// cambian las clases del contenedor, no la ruta ni el contexto.
 const OutletMemo = memo(Outlet);
+
+const ANIO_ACTUAL = new Date().getFullYear();
 
 
 export default function Layout() {
@@ -237,7 +237,7 @@ export default function Layout() {
           color: 'var(--color-text-muted)',
           letterSpacing: 0.4
         }}>
-          Pan Sinaí &copy; {new Date().getFullYear()} • AE PREZA GROUP • {VERSION_TEXT}
+          Pan Sinaí &copy; {ANIO_ACTUAL} • AE PREZA GROUP • {VERSION_TEXT}
         </footer>
       </main>
 

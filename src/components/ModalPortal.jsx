@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export default function ModalPortal({ children }) {
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(() => typeof document !== 'undefined');
 
   useEffect(() => {
-    setMounted(true);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {

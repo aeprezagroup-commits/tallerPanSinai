@@ -71,9 +71,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
 
   const [ahora, setAhora] = useState(() => Date.now());
 
-  // Retroalimentacion visible (sobre todo en celular): mientras se guarda la
-  // accion, el boton tocado queda deshabilitado y muestra un indicador de
-  // carga, para que se note que el sistema esta trabajando.
   const [accionPendiente, setAccionPendiente] = useState('');
 
   const ejecutarBoton = async (clave, fn) => {
@@ -88,7 +85,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
 
   const { addToast, confirm } = useToast();
 
-  // Copia de la actividad al abrir el modal: detecta cambios reales.
   const [actividadBase, setActividadBase] = useState(null);
 
   const sucioPausa = modalPausa.abierto && Boolean(
@@ -102,7 +98,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     );
   useDatosSinGuardar(sucioPausa || sucioActividadNueva, confirm);
 
-  // Cierre de "Nueva Actividad" pidiendo confirmación si hay cambios.
   const cerrarActividadNueva = async () => {
     if (sucioActividadNueva) {
       const ok = await confirm({
@@ -221,7 +216,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
     setModalPausa({ abierto: false, orden: null, actividadId: null, motivo: 'esperando_repuestos', observacion: '', guardando: false });
   };
 
-  // Cierre directo (sin confirmar) para cuando el guardado ya fue exitoso.
   const cerrarModalPausaSinAviso = () => {
     setModalPausa({ abierto: false, orden: null, actividadId: null, motivo: 'esperando_repuestos', observacion: '', guardando: false });
   };
@@ -599,9 +593,6 @@ export default function OrdenOperativa({ orden, todasLasOrdenes = [], mecanicos 
                   : hayOtraEnCurso
                     ? 'Ya existe una actividad en curso en esta orden. Finalícela o páusela para iniciar otra'
                     : 'Iniciar cronometraje de esta tarea';
-              // Auditoría S2–S3: el botón Listo replica el bloqueo secuencial
-              // de Iniciar — no se marca una labor como lista antes de
-              // finalizar la actividad previa.
               const listoBloqueado = !previaFinalizada || !puedeCambiarEstados;
               const motivoListo = !puedeCambiarEstados
                 ? AVISO_ESTADOS

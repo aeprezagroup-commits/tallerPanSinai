@@ -19,15 +19,16 @@ export default function Taller() {
   const [estadoFiltro, setEstadoFiltro] = useState('activos');
   const [vista, setVista] = useState('fila');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
-  // Cuántas órdenes están desplegadas; el resto se pide con el botón
-  // "Cargar órdenes antiguas" (el administrador maneja una lista larga).
   const [visibles, setVisibles] = useState(ORDENES_POR_PAGINA);
 
   const { isMecanico, currentUser } = useAuth();
 
-  useEffect(() => {
+  const [filtrosPrevios, setFiltrosPrevios] = useState(null);
+
+  if (filtrosPrevios !== `${mecanicoFiltro}|${estadoFiltro}`) {
+    setFiltrosPrevios(`${mecanicoFiltro}|${estadoFiltro}`);
     setVisibles(ORDENES_POR_PAGINA);
-  }, [mecanicoFiltro, estadoFiltro]);
+  }
 
   const toggleOrden = (id) => setOrdenAbierta((prev) => (prev === id ? null : id));
 
@@ -59,8 +60,6 @@ export default function Taller() {
     return true;
   });
 
-  // Orden por estado del flujo del taller (ingresado → … → entregado)
-  // y, dentro de cada estado, de la más nueva a la más vieja.
   const ordenesFiltradas = ordenarOrdenes(filtradas);
 
   const ordenesMostradas = ordenesFiltradas.slice(0, visibles);

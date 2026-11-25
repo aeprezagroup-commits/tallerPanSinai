@@ -114,9 +114,6 @@ export function aplicarRutas(predeterminadas, porDepartamento) {
 
   if (porDepartamento && typeof porDepartamento === 'object') {
     Object.keys(RUTAS_POR_DEPARTAMENTO).forEach(k => delete RUTAS_POR_DEPARTAMENTO[k]);
-    // Base: todos los departamentos empiezan sin rutas; sólo se llenan los
-    // que vengan en el documento guardado. Así, un departamento ausente (o
-    // vaciado) no cae al respaldo con todas las rutas.
     DEPARTAMENTOS_EL_SALVADOR.forEach(d => { RUTAS_POR_DEPARTAMENTO[d] = []; });
     Object.entries(porDepartamento).forEach(([depto, rutas]) => {
       const limpias = (Array.isArray(rutas) ? rutas : [])
@@ -280,9 +277,6 @@ export function buscarVehiculoCatalogo(query) {
   return flota.find(v => v.placa.replace(/[^A-Z0-9]/g, '').toUpperCase().includes(qClean)) || null;
 }
 
-// Valida y normaliza un vehículo del catálogo. La comparten el formulario
-// individual y la carga masiva CSV, para que ambas apliquen las mismas
-// reglas (auditoría S2–S3).
 function sanitizarVehiculoCatalogo(vehiculo) {
   if (!vehiculo) {
     throw new Error('No se proporcionaron datos para el vehículo.');
@@ -303,8 +297,6 @@ function sanitizarVehiculoCatalogo(vehiculo) {
     throw new Error('El modelo del vehículo es obligatorio.');
   }
 
-  // Tipo de dato estricto (auditoría S2–S3): marca sólo texto; modelo y
-  // número de motor alfanuméricos sin caracteres especiales.
   if (/[0-9]/.test(marcaNorm)) {
     throw new Error('La marca del vehículo no debe contener números.');
   }
@@ -347,7 +339,6 @@ function sanitizarVehiculoCatalogo(vehiculo) {
     departamento: departamentoNorm,
     ruta: (vehiculo.ruta || '').trim(),
     observaciones: (vehiculo.observaciones || '').trim(),
-    // Centro de costo derivado del departamento (igual que en el formulario).
     centroCosto: (vehiculo.centroCosto || '').trim()
       || centroCostoPorDepartamento(departamentoNorm)
   };
@@ -421,11 +412,6 @@ export function eliminarVehiculoCatalogo(placa, motivo = '') {
   });
 }
 
-// ---------------------------------------------------------------
-// CSV de flota: plantilla descargable e importación. El parser es
-// RFC 4180 (comillas, comas y saltos de línea dentro de campos) y
-// las columnas se reconocen por nombre, no por posición.
-// ---------------------------------------------------------------
 const COLUMNAS_CSV = [
   ['placa', ['PLACA']],
   ['marca', ['MARCA']],
@@ -440,12 +426,8 @@ const COLUMNAS_CSV = [
   ['observaciones', ['OBSERVACIONES']],
 ];
 
-// Placa de la fila de ejemplo: se reconoce y no se importa.
 const PLACA_EJEMPLO = 'EJEMPLO';
 
-// Excel en español guarda el CSV con ";" y Excel en inglés o Google Sheets
-// con ",". El separador se detecta en la línea de encabezados para que la
-// misma plantilla funcione en cualquier caso.
 function detectarSeparador(texto) {
   let linea = '';
   let entreComillas = false;
@@ -496,7 +478,6 @@ function parsearCSV(texto) {
     filas.push(fila);
   }
 
-  // Filas sin ningún dato (p. ej. la última línea en blanco).
   return filas.filter(f => f.some(c => String(c).trim() !== ''));
 }
 
@@ -509,9 +490,6 @@ function encabezadoNormalizado(valor) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-// Separador de la plantilla descargada: ";" es el que Excel en español usa
-// al guardar CSV, así la plantilla se abre en columnas listas para llenar.
-// (El importador detecta ";" o "," automáticamente en cualquier caso.)
 const SEPARADOR_PLANTILLA = ';';
 
 export function generarPlantillaCSV() {
@@ -519,8 +497,6 @@ export function generarPlantillaCSV() {
     'PLACA', 'MARCA', 'MODELO', 'NUMERO_MOTOR', 'ANIO', 'TIPO_UNIDAD',
     'CONDUCTOR_HABITUAL', 'VIN', 'DEPARTAMENTO', 'RUTA', 'OBSERVACIONES',
   ].join(SEPARADOR_PLANTILLA);
-  // Filas de ejemplo: la importación las omite (placas que empiezan con
-  // EJEMPLO). Una completa y otra sólo con lo obligatorio.
   const ejemploCompleto = [
     PLACA_EJEMPLO, 'Hino', '300', 'HN012345', '2022', 'Camión de Reparto',
     'Juan Pérez', '1HGBH41JXMN109188', 'La Libertad',
@@ -533,10 +509,6 @@ export function generarPlantillaCSV() {
   return `${encabezados}\n${ejemploCompleto}\n${ejemploMinimo}\n`;
 }
 
-// Los archivos se guardan como UTF-8, pero Excel en español puede exportar
-// en ANSI (Windows-1252). Se intenta UTF-8 estricto y, si hay bytes
-// inválidos, se vuelve a decodificar como Windows-1252 para no corromper
-// los acentos de marca, ruta u observaciones.
 export function decodificarCSVBuffer(buffer) {
   try {
     return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
@@ -577,7 +549,6 @@ export function importarVehiculosCSV(textoCSV) {
     );
 
     const placa = normalizarPlaca(leer('placa'));
-    // Fila de ejemplo de la plantilla: se salta sin contarla como omitida.
     if (placa.startsWith(PLACA_EJEMPLO)) continue;
 
     const candidato = {
@@ -623,7 +594,6 @@ export function importarVehiculosCSV(textoCSV) {
   const persistibles = vehiculosImportados.map((v) => {
     const previo = mapa.get(v.placa);
     if (!previo) altas++;
-    // Se conservan campos extra del registro previo (fotos, QR, etc.).
     const registro = { ...previo, ...v };
     mapa.set(v.placa, registro);
     return registro;

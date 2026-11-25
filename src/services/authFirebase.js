@@ -86,12 +86,6 @@ export async function abrirSesionFirebase(usuario, password) {
   });
 }
 
-// Cuando Personal reinicia la contraseña de un usuario, la local cambia pero
-// la de Firebase Auth no (el cliente no puede sincronizar la de otro usuario).
-// Las reglas sólo exigen una cuenta real —no un uid en particular—, así que
-// ante ese desajuste se abre sesión con una identidad de respaldo equivalente;
-// el uid nuevo se guarda en el documento del usuario y la contraseña propia
-// vuelve a quedar sincronizada al forzar el cambio.
 async function abrirSesionRespaldo(email, clave) {
   const [base, dominio = 'pansinai.com'] = String(email).split('@');
   for (let n = 2; n <= 5; n++) {
@@ -122,20 +116,13 @@ async function abrirSesionRespaldo(email, clave) {
   return { uid: null, email, origen: 'sin-migrar', error: 'auth/email-already-in-use' };
 }
 
-// Sesión anónima: sirve para LEER antes del login (pantalla de login y la
-// página pública /vehiculo). No permite escribir: las reglas de Firestore
-// exigen una cuenta real para eso.
 export function asegurarSesionAnonima() {
   if (!isFirebaseConfigured || !auth) return Promise.resolve(false);
   if (auth.currentUser) return Promise.resolve(true);
   return enCola(async () => {
-    // Espera a que Firebase restaure la sesión persistida antes de decidir.
-    // Sin esta espera, un usuario real que abría la app en otra pestaña o
-    // contexto era reemplazado por una sesión anónima y se perdía el login.
     try {
       await auth.authStateReady();
     } catch {
-      // SDK sin authStateReady: se conserva el comportamiento anterior.
     }
     if (auth.currentUser) return true;
     try {

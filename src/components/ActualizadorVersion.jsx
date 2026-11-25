@@ -1,22 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
-/**
- * Mantiene la pestaña sincronizada con la versión publicada.
- *
- * El navegador congela las pestañas en segundo plano (caché de retroceso) y
- * al volver restaura la página vieja sin consultar al servidor, por eso las
- * PC y celulares "se quedaban" en una versión anterior hasta recargar a mano.
- *
- * Este componente revisa si cambió el build publicado y:
- *  - si la pestaña vuelve después de un rato y no hay datos sin guardar,
- *    recarga sola y conserva la posición de scroll;
- *  - si hay datos sin guardar o un modal abierto, muestra un aviso para que
- *    quien esté trabajando decida cuándo actualizar.
- */
 
-const INTERVALO_REVISION = 5 * 60 * 1000;   // revisión periódica
-const ESPERA_ENTRE_CHEQUEOS = 60 * 1000;    // mínimo entre peticiones
-const AUSENCIA_MINIMA = 2 * 60 * 1000;      // ausencia para recargar al volver
+const INTERVALO_REVISION = 5 * 60 * 1000;
+const ESPERA_ENTRE_CHEQUEOS = 60 * 1000;
+const AUSENCIA_MINIMA = 2 * 60 * 1000;
 const CLAVE_POSICION = 'pan_sinai_posicion';
 
 function buildActual() {
@@ -30,7 +17,6 @@ async function buildPublicado() {
     if (!respuesta.ok) return null;
     const html = await respuesta.text();
     const coincidencia = html.match(/assets\/index-[\w-]+\.js/);
-    // Se devuelve con la barra inicial para comparar contra el src real.
     return coincidencia ? `/${coincidencia[0]}` : null;
   } catch {
     return null;
@@ -52,9 +38,7 @@ function recargarConservandoPosicion() {
       JSON.stringify({ ruta: window.location.pathname, y: window.scrollY }),
     );
   } catch {
-    /* sin memoria disponible: se recarga en el inicio de la página */
   }
-  // Recarga automática: GuardiaSalida no pide confirmación nativa.
   window.__recargaVersion = true;
   window.location.reload();
 }
@@ -63,11 +47,11 @@ export default function ActualizadorVersion() {
   const [hayNueva, setHayNueva] = useState(false);
   const [comprobando, setComprobando] = useState(false);
   const ultimoChequeo = useRef(0);
-  const ausenteDesde = useRef(Date.now());
+  const ausenteDesde = useRef(0);
   const enCurso = useRef(false);
 
   useEffect(() => {
-    // Restaura la posición de scroll si esta carga vino de una recarga automática.
+    ausenteDesde.current = Date.now();
     try {
       const guardada = JSON.parse(sessionStorage.getItem(CLAVE_POSICION) || 'null');
       sessionStorage.removeItem(CLAVE_POSICION);
@@ -75,7 +59,6 @@ export default function ActualizadorVersion() {
         requestAnimationFrame(() => window.scrollTo(0, guardada.y));
       }
     } catch {
-      /* ignorar */
     }
 
     const revisar = async ({ forzar = false, alVolver = false, simular = false } = {}) => {
@@ -140,7 +123,6 @@ export default function ActualizadorVersion() {
     window.addEventListener('blur', alPerderFoco);
     window.addEventListener('focus', alVolverDeAusencia);
 
-    // Diagnóstico desde la consola: __chequearActualizacion({ simular: true })
     window.__chequearActualizacion = revisar;
 
     return () => {
