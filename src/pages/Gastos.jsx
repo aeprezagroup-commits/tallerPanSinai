@@ -1,6 +1,4 @@
 import BotonVolver from '../components/BotonVolver';
-import { formatearDinero, filtrarCantidad } from '../utils/formato';
-import { descargarXLSX } from '../utils/exportaciones';
 import { useState, useEffect, useMemo } from 'react';
 import {
   TbPlus, TbDownload, TbSearch, TbFilter, TbTrash, TbPencil,
@@ -13,10 +11,7 @@ import {
 import { obtenerFlotaVehiculos, centroCostoPorDepartamento, opcionesCatalogo } from '../services/vehiculosService';
 import { escucharOrdenes, formatoOT } from '../firebase/ordenesService';
 import { useToast } from '../components/ToastContext';
-import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 import ModalPortal from '../components/ModalPortal';
-
-const HOY = new Date();
 
 const FORM_VACIO = {
   fecha: new Date().toISOString().slice(0, 10),
@@ -37,7 +32,7 @@ const FORM_VACIO = {
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
   'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-const fmtMoney = (n) => formatearDinero(n);
+const fmtMoney = (n) => `$${(Number(n) || 0).toFixed(2)}`;
 
 const normPlaca = (p) => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
@@ -72,8 +67,6 @@ const docRef = (g) => {
 
 const esAlmacenG = (g) => g?.tipo === 'almacen' || (!g?.dte && !g?.ccf && !!g?.vale);
 
-const montoTexto = (g) => (esAlmacenG(g) && !(Number(g.monto) > 0)) ? '—' : fmtMoney(montoConDescuento(g));
-
 function calcularOtsDelMes(ordenes, unidad, mes) {
   const k = normPlaca(unidad);
   if (!k) return [];
@@ -101,6 +94,7 @@ export default function Gastos() {
   const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
 
   const [filtroMes, setFiltroMes] = useState(() => new Date().toISOString().slice(0, 7));
+  const [fechaBase] = useState(() => new Date());
   const [busqueda, setBusqueda] = useState('');
   const [filtroCentro, setFiltroCentro] = useState('Todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -110,7 +104,6 @@ export default function Gastos() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [form, setForm] = useState(FORM_VACIO);
-  const [formBase, setFormBase] = useState(null);
   const [guardando, setGuardando] = useState(false);
 
   const [flota, setFlota] = useState(() => {
@@ -172,7 +165,7 @@ export default function Gastos() {
           fuente: 'Flota Pan Sinaí'
         });
       });
-    } catch {  }
+    } catch { }
     return map;
   }, [ordenes, flota]);
 
@@ -218,7 +211,7 @@ export default function Gastos() {
   const mesesDisponibles = useMemo(() => {
     const set = new Set();
     for (let i = 0; i < 14; i++) {
-      const d = new Date(HOY.getFullYear(), HOY.getMonth() - i, 1);
+      const d = new Date(fechaBase.getFullYear(), fechaBase.getMonth() - i, 1);
       const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       set.add(mStr);
     }
@@ -228,7 +221,7 @@ export default function Gastos() {
       }
     });
     return Array.from(set).sort().reverse();
-  }, [gastos]);
+  }, [gastos, fechaBase]);
 
   const gastosFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -256,9 +249,7 @@ export default function Gastos() {
 
   const abrirNuevo = () => {
     setEditandoId(null);
-    const base = { ...FORM_VACIO, fecha: new Date().toISOString().slice(0, 10) };
-    setForm(base);
-    setFormBase({ ...base });
+    setForm({ ...FORM_VACIO, fecha: new Date().toISOString().slice(0, 10) });
     setModalAbierto(true);
   };
 
@@ -267,7 +258,7 @@ export default function Gastos() {
     const mes = (g.fecha || FORM_VACIO.fecha).slice(0, 7);
     const otsValidas = calcularOtsDelMes(ordenes, g.unidad, mes);
     const ordenId = (g.ordenId && otsValidas.some(o => o.id === g.ordenId)) ? g.ordenId : '';
-    const base = {
+    setForm({
       fecha: g.fecha || FORM_VACIO.fecha,
       tipo: esAlmacenG(g) ? 'almacen' : 'proveedor',
       dte: g.dte ?? g.ccf ?? '',
@@ -281,41 +272,18 @@ export default function Gastos() {
       estado: g.estado || 'por_pagar',
       unidad: g.unidad || '',
       ordenId
-    };
-    setForm(base);
-    setFormBase({ ...base });
+    });
     setModalAbierto(true);
   };
 
-  const sucioGasto = Boolean(
-    modalAbierto &&
-    formBase &&
-    Object.keys(formBase).some(
-      k => JSON.stringify(form[k] ?? '') !== JSON.stringify(formBase[k] ?? '')
-    )
-  );
-  useDatosSinGuardar(sucioGasto, confirm);
-
-  const cerrarModal = async () => {
+  const cerrarModal = () => {
     if (guardando) return;
-    if (sucioGasto) {
-      const ok = await confirm({
-        title: '¿Cerrar el gasto?',
-        message: AVISO_DATOS_SIN_GUARDAR,
-        confirmText: 'Sí, salir',
-        cancelText: 'Seguir aquí',
-      });
-      if (!ok) return;
-    }
     setModalAbierto(false);
     setEditandoId(null);
-    setFormBase(null);
   };
 
   const handleChange = (e) => {
-    const { name } = e.target;
-    let value = e.target.value;
-    if (name === 'cantidad') value = filtrarCantidad(value);
+    const { name, value } = e.target;
     setForm(prev => {
       const next = { ...prev, [name]: value };
       if (name === 'unidad') {
@@ -334,17 +302,12 @@ export default function Gastos() {
   };
 
   const cambiarTipo = (tipo) => {
-    setForm(prev => {
-      const cambioDeTipo = prev.tipo !== tipo;
-      const limpiarMonto = tipo === 'almacen' && cambioDeTipo;
-      return {
-        ...prev,
-        tipo,
-        descuento: tipo === 'almacen' ? '' : prev.descuento,
-        ...(limpiarMonto ? { monto: '' } : {}),
-        ...(tipo === 'almacen' ? { dte: '', proveedor: '', centroCosto: prev.centroCosto || 'TALLER' } : { vale: '' })
-      };
-    });
+    setForm(prev => ({
+      ...prev,
+      tipo,
+      descuento: tipo === 'almacen' ? '' : prev.descuento,
+      ...(tipo === 'almacen' ? { dte: '', proveedor: '', centroCosto: prev.centroCosto || 'TALLER' } : { vale: '' })
+    }));
   };
 
   const handleGuardar = async (e) => {
@@ -383,48 +346,40 @@ export default function Gastos() {
     if (form.cantidad !== '' && form.cantidad !== null && form.cantidad !== undefined) {
       const cantNum = Number(form.cantidad);
       if (isNaN(cantNum) || cantNum <= 0) {
-        addToast('La cantidad debe ser mayor a 0', 'error');
+        addToast('La cantidad debe ser un valor numérico positivo mayor a 0', 'error');
         return;
       }
     }
 
     const montoNum = parseFloat(form.monto);
-    if (!esAlmacen && (isNaN(montoNum) || montoNum <= 0)) {
-      addToast('El monto debe ser mayor a $0.00', 'error');
+    if (isNaN(montoNum) || montoNum <= 0) {
+      addToast('El monto del gasto debe ser una cifra positiva mayor a $0.00', 'error');
       return;
     }
 
     const descNum = esAlmacen ? 0 : (parseFloat(form.descuento) || 0);
     if (!esAlmacen && (descNum < 0 || descNum >= montoNum)) {
-      addToast('El descuento no puede superar el monto del gasto', 'error');
+      addToast('El descuento no puede ser negativo ni igualar/superar el monto total del gasto', 'error');
       return;
     }
 
     const unidadLimpia = form.unidad.trim().toUpperCase();
     if (unidadLimpia && unidadLimpia.length < 3) {
-      addToast('La placa debe tener al menos 3 caracteres', 'error');
+      addToast('La placa de la unidad debe tener al menos 3 caracteres alfanuméricos', 'error');
       return;
     }
 
     if (!unidadLimpia && !form.centroCosto.trim()) {
-      addToast('Indique la placa o el centro de costo del gasto', 'error');
+      addToast('Indica la placa de la unidad o el centro de costo asignado al gasto', 'error');
       return;
     }
 
     const docPrevio = esAlmacen ? form.vale.trim() : form.dte.trim();
-    const detalle = form.gastos.trim() || 'concepto sin detalle';
-    const cantTxt = form.cantidad !== '' && form.cantidad !== null && form.cantidad !== undefined
-      ? ` (${form.cantidad} repuestos)` : '';
-    const mensajeAlmacen = editandoId
-      ? `Se actualizará el vale ${docPrevio || '(sin número)'} por ${detalle}${cantTxt}. El monto lo controla el almacén.`
-      : `Se registrará el vale ${docPrevio || '(sin número)'} por ${detalle}${cantTxt}. El costo lo controla el almacén.`;
     const confirmadoGasto = await confirm({
       title: editandoId ? '¿Guardar cambios del gasto?' : '¿Registrar un gasto nuevo?',
-      message: esAlmacen
-        ? mensajeAlmacen
-        : editandoId
-          ? `Se actualizará el gasto ${docPrevio || '(sin documento)'} por ${fmtMoney(montoNum)}.`
-          : `Se registrará un gasto de ${fmtMoney(montoNum)} por ${detalle}.`,
+      message: editandoId
+        ? `Se actualizará el gasto ${docPrevio || '(sin documento)'} por ${fmtMoney(montoNum)}.`
+        : `Se registrará un gasto de ${fmtMoney(montoNum)} por ${form.gastos.trim() || 'concepto sin detalle'}${esAlmacen ? ' (vale de almacén: sin descuento)' : ''}.`,
       confirmText: editandoId ? 'Sí, guardar cambios' : 'Sí, registrar gasto',
       cancelText: 'Cancelar',
       danger: false
@@ -444,7 +399,7 @@ export default function Gastos() {
         proveedor: esAlmacen ? '' : form.proveedor.trim(),
         gastos: form.gastos.trim(),
         cantidad: form.cantidad === '' ? '' : (Number(form.cantidad) || form.cantidad),
-        monto: Number.isFinite(montoNum) ? montoNum : 0,
+        monto: montoNum,
         descuento: descNum,
         centroCosto: form.centroCosto.trim() || 'TALLER',
         estado: esAlmacen ? 'almacen' : form.estado,
@@ -471,26 +426,21 @@ export default function Gastos() {
 
   const handleEliminar = async (g) => {
     const doc = docRef(g);
-    const valor = montoTexto(g);
+    const emisor = esAlmacenG(g) ? 'Vale Almacén' : (g.proveedor || 'Proveedor');
+    const valor = fmtMoney(montoConDescuento(g));
 
-    const motivo = await confirm({
+    const confirmado = await confirm({
       title: '¿Eliminar registro de gasto?',
-      message: `Se eliminará el gasto ${doc}${valor === '—' ? '' : ` (${valor})`}. No se puede deshacer.`,
+      message: `¿Estás seguro de eliminar el gasto ${doc} (${emisor}) por valor de ${valor}? Esta acción no se puede deshacer.`,
       confirmText: 'Sí, eliminar gasto',
       cancelText: 'Cancelar',
-      danger: true,
-      input: {
-        label: 'Justificación de la eliminación *',
-        placeholder: 'Motivo (ej. registro duplicado, captura errónea)...',
-        minLength: 10,
-        rows: 3
-      }
+      danger: true
     });
 
-    if (!motivo) return;
+    if (!confirmado) return;
 
     try {
-      await eliminarGasto(g.id, motivo);
+      await eliminarGasto(g.id);
       addToast(`Gasto ${doc} eliminado correctamente`, 'info');
     } catch (err) {
       console.error(err);
@@ -500,34 +450,42 @@ export default function Gastos() {
 
   const limpiarFiltros = () => {
     setBusqueda('');
-    setFiltroMes(new Date().toISOString().slice(0, 7));
+    setFiltroMes(mesActual);
     setFiltroCentro('Todos');
     setFiltroEstado('todos');
     setFechaDesde('');
     setFechaHasta('');
   };
 
-  const exportarExcel = () => {
+  const exportarCSV = () => {
     if (gastosFiltrados.length === 0) { addToast('No hay gastos para exportar', 'error'); return; }
     const encabezados = [
       'FECHA', 'CCF', 'PROVEEDOR', 'GASTOS', 'CANTIDAD',
       'DESCUENTO', 'MONTO CON DESCUENTO', 'CENTRO DE COSTO', 'ESTADO', 'UNIDAD', 'OT'
     ];
+    const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const filas = gastosFiltrados.map(g => [
       fmtFecha(g.fecha),
       docRef(g),
       esAlmacenG(g) ? 'BODEGA/ALMACÉN' : (g.proveedor || ''),
       g.gastos || '',
-      g.cantidad === '' || g.cantidad == null ? '' : Number(g.cantidad) || 0,
-      Number(g.descuento) || 0,
-      esAlmacenG(g) && !(Number(g.monto) > 0) ? '' : Number(montoConDescuento(g)) || 0,
+      g.cantidad ?? '',
+      fmtMoney(g.descuento),
+      fmtMoney(montoConDescuento(g)),
       g.centroCosto || '',
-      g.estado === 'pagado' ? 'Pagado' : 'Pendiente de pago',
+      g.estado === 'pagado' ? 'TRUE' : 'FALSE',
       g.unidad || '',
       g.ot || ''
-    ]);
-    descargarXLSX(`gastos_vehiculo_${new Date().toISOString().slice(0, 10)}`, encabezados, filas, 'Gastos');
-    addToast(`Reporte en Excel exportado (${gastosFiltrados.length} registros)`, 'success');
+    ].map(escapar).join(','));
+    const csv = '﻿' + [encabezados.join(','), ...filas].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gastos_vehiculo_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addToast(`CSV exportado (${gastosFiltrados.length} registros)`, 'success');
   };
 
   const vehDePlaca = (placa) => catalogo.get(normPlaca(placa));
@@ -550,8 +508,8 @@ export default function Gastos() {
           <p>Control de facturas, créditos fiscales y vales de almacén por unidad.</p>
         </div>
         <div className="btn-group">
-          <button type="button" className="btn btn-secondary" onClick={exportarExcel}>
-            <TbDownload /> Exportar Excel
+          <button type="button" className="btn btn-secondary" onClick={exportarCSV}>
+            <TbDownload /> Exportar CSV
           </button>
           <button type="button" className="btn btn-primary" onClick={abrirNuevo}>
             <TbPlus /> Registrar Gasto
@@ -597,7 +555,6 @@ export default function Gastos() {
         <div className="form-group" style={{ flex: '1 1 150px', minWidth: 140, marginBottom: 0 }}>
           <label className="form-label">Estado</label>
           <select className="form-select" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-            <option value="todos">Todos</option>
             <option value="todos">Todos los estados</option>
             <option value="por_pagar">Pendiente de pago</option>
             <option value="pagado">Pagado</option>
@@ -684,16 +641,16 @@ export default function Gastos() {
                   <tr key={g.id}>
                     <td style={{ whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{fmtFecha(g.fecha)}</td>
                     <td style={{ whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{docRef(g)}</td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <strong>{almac ? 'Bodega / Almacén' : (g.proveedor || '—')}</strong>
                       <div style={{ marginTop: 3 }}>
                         <span className="badge badge-info" style={{ fontSize: 9, padding: '2px 6px' }}>{almac ? 'ALMACÉN' : 'PROVEEDOR'}</span>
                       </div>
                     </td>
-                    <td style={{ minWidth: 150, fontSize: 12.5 }}>{g.gastos || '—'}</td>
+                    <td style={{ minWidth: 220, fontSize: 12.5 }}>{g.gastos || '—'}</td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{g.cantidad !== '' && g.cantidad != null ? g.cantidad : '—'}</td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#ef4444' }}>{g.descuento ? `-${fmtMoney(g.descuento)}` : '—'}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#22c55e', whiteSpace: 'nowrap' }}>{montoTexto(g)}</td>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#22c55e', whiteSpace: 'nowrap' }}>{fmtMoney(montoConDescuento(g))}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       <span className="tech-tag">{g.centroCosto || '—'}</span>
                     </td>
@@ -702,10 +659,10 @@ export default function Gastos() {
                         className={`badge ${g.estado === 'pagado' ? 'badge-finalizado' : 'badge-pausado'}`}
                         style={{ fontSize: 10 }}
                       >
-                        {g.estado === 'pagado' ? 'Pagado' : 'Pendiente de pago'}
+                        {g.estado === 'pagado' ? 'TRUE' : 'FALSE'}
                       </span>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700 }}>{g.unidad || '—'}</span>
                       {veh && (veh.marca || veh.modelo) && (
                         <div style={{ fontSize: 10.5, color: 'var(--color-text-muted)' }}>{veh.marca} {veh.modelo}{veh.anio ? ` (${veh.anio})` : ''}</div>
@@ -755,11 +712,11 @@ export default function Gastos() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                    <span className={`badge ${g.estado === 'pagado' ? 'badge-finalizado' : 'badge-pausado'}`} style={{ fontSize: 10, whiteSpace: 'nowrap' }}>
-                      {g.estado === 'pagado' ? 'Pagado' : 'Pendiente de pago'}
+                    <span className={`badge ${g.estado === 'pagado' ? 'badge-finalizado' : 'badge-pausado'}`} style={{ fontSize: 10 }}>
+                      {g.estado === 'pagado' ? 'TRUE' : 'FALSE'}
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#22c55e', fontSize: 16 }}>
-                      {montoTexto(g)}
+                      {fmtMoney(montoConDescuento(g))}
                     </span>
                   </div>
                 </div>
@@ -803,226 +760,206 @@ export default function Gastos() {
                   <TbX />
                 </button>
               </div>
-              <div className="modal-body gastos-modal-body" style={{ padding: 20 }}>
+              <div className="modal-body" style={{ padding: 20 }}>
                 <form onSubmit={handleGuardar}>
-                <div className="form-group" style={{ gap: 4, marginBottom: 12 }}>
-                  <label className="form-label">Tipo de registro *</label>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button type="button" className={`btn btn-sm ${!esAlmacen ? 'btn-primary' : 'btn-secondary'}`} onClick={() => cambiarTipo('proveedor')}
-                      style={{ flex: '1 1 200px', justifyContent: 'center' }}>
-                      Factura de Proveedor (desglose con DTE)
-                    </button>
-                    <button type="button" className={`btn btn-sm ${esAlmacen ? 'btn-primary' : 'btn-secondary'}`} onClick={() => cambiarTipo('almacen')}
-                      style={{ flex: '1 1 200px', justifyContent: 'center' }}>
-                      Bodega / Almacén (solo vale, sin DTE)
-                    </button>
-                  </div>
-                </div>
-
-                <div className="gastos-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))', gap: 12 }}>
-                  <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                    <label className="form-label">Fecha *</label>
-                    <input type="date" name="fecha" value={form.fecha} onChange={handleChange} className="form-input" required />
-                  </div>
-                  {!esAlmacen ? (
-                    <>
-                      <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                        <label className="form-label">DTE / CCF *</label>
-                        <input name="dte" value={form.dte} onChange={handleChange} className="form-input" placeholder="Número de DTE / CCF" style={{ fontFamily: 'var(--font-mono)' }} />
-                      </div>
-                      <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                        <label className="form-label">Proveedor *</label>
-                        <input name="proveedor" value={form.proveedor} onChange={handleChange} className="form-input" placeholder="Razón social del proveedor" />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                      <label className="form-label">N° de Vale (Bodega) *</label>
-                      <input name="vale" value={form.vale} onChange={handleChange} className="form-input" placeholder="Número de vale de almacén" style={{ fontFamily: 'var(--font-mono)' }} />
+                  <div className="form-group" style={{ gap: 4, marginBottom: 12 }}>
+                    <label className="form-label">Tipo de registro *</label>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button type="button" className={`btn btn-sm ${!esAlmacen ? 'btn-primary' : 'btn-secondary'}`} onClick={() => cambiarTipo('proveedor')}
+                        style={{ flex: '1 1 200px', justifyContent: 'center' }}>
+                        Factura de Proveedor (desglose con DTE)
+                      </button>
+                      <button type="button" className={`btn btn-sm ${esAlmacen ? 'btn-primary' : 'btn-secondary'}`} onClick={() => cambiarTipo('almacen')}
+                        style={{ flex: '1 1 200px', justifyContent: 'center' }}>
+                        Bodega / Almacén (solo vale, sin DTE)
+                      </button>
                     </div>
-                  )}
-                  <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                    <label className="form-label">Unidad (busca la placa) *</label>
-                    <select name="unidad" value={form.unidad} onChange={handleChange} className="form-select"
-                      style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
-                      <option value="">— Seleccione la unidad —</option>
-                      {opcionesCatalogo(placasConocidas, form.unidad).map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
                   </div>
-                </div>
 
-                {vehiculoDetectado && (
-                  <div style={{
-                    marginTop: 12, padding: '10px 12px',
-                    borderRadius: 'var(--radius-md)', fontSize: 13,
-                    background: vehiculoDetectado.encontrado ? 'rgba(34,197,95,0.08)' : 'rgba(245,158,11,0.1)',
-                    border: `1px solid ${vehiculoDetectado.encontrado ? 'rgba(34,197,95,0.3)' : 'rgba(245,158,11,0.35)'}`,
-                    display: 'flex', gap: 10, alignItems: 'flex-start'
-                  }}>
-                    <TbTruck style={{ fontSize: 18, flexShrink: 0, color: vehiculoDetectado.encontrado ? '#22c55e' : '#f59e0b', marginTop: 2 }} />
-                    {vehiculoDetectado.encontrado ? (
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div>
-                          <strong>Vehículo encontrado:</strong>{' '}
-                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{vehiculoDetectado.placa}</span>
-                          {' — '}{vehiculoDetectado.marca} {vehiculoDetectado.modelo}{vehiculoDetectado.anio ? ` (${vehiculoDetectado.anio})` : ''}
-                          {vehiculoDetectado.fuente ? <span style={{ color: 'var(--color-text-muted)' }}> · {vehiculoDetectado.fuente}</span> : null}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))', gap: 12 }}>
+                    <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                      <label className="form-label">Fecha *</label>
+                      <input type="date" name="fecha" value={form.fecha} onChange={handleChange} className="form-input" required />
+                    </div>
+                    {!esAlmacen ? (
+                      <>
+                        <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                          <label className="form-label">DTE / CCF *</label>
+                          <input name="dte" value={form.dte} onChange={handleChange} className="form-input" placeholder="Número de DTE / CCF" style={{ fontFamily: 'var(--font-mono)' }} />
                         </div>
-                        <div className="gastos-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))', gap: '4px 14px', marginTop: 8 }}>
-                          <div style={{ fontSize: 12 }}>
-                            <span style={{ color: 'var(--color-text-muted)' }}>Ruta asignada: </span>
-                            <strong>{vehiculoDetectado.ruta || 'Sin ruta asignada'}</strong>
-                          </div>
-                          <div style={{ fontSize: 12 }}>
-                            <span style={{ color: 'var(--color-text-muted)' }}>Ubicación: </span>
-                            <strong>{vehiculoDetectado.departamento || '—'}</strong>
-                          </div>
-                          <div style={{ fontSize: 12 }}>
-                            <span style={{ color: 'var(--color-text-muted)' }}>Centro de costo: </span>
-                            <span className="tech-tag">
-                              {vehiculoDetectado.centroCosto || centroCostoPorDepartamento(vehiculoDetectado.departamento) || 'SIN DEFINIR'}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: 12 }}>
-                            <span style={{ color: 'var(--color-text-muted)' }}>Conductor: </span>
-                            <strong>{vehiculoDetectado.conductor || '—'}</strong>
-                          </div>
-                          {vehiculoDetectado.tipo && (
-                            <div style={{ fontSize: 12 }}>
-                              <span style={{ color: 'var(--color-text-muted)' }}>Tipo: </span>
-                              {vehiculoDetectado.tipo}
-                            </div>
-                          )}
+                        <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                          <label className="form-label">Proveedor *</label>
+                          <input name="proveedor" value={form.proveedor} onChange={handleChange} className="form-input" placeholder="Razón social del proveedor" />
                         </div>
-                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 7 }}>
-                          El centro de costo se precargó desde la ubicación actual de la unidad. Si la empresa la muda de ruta/departamento, actualízalo en Administración → Personal &amp; Flota CSV.
-                        </div>
-                      </div>
+                      </>
                     ) : (
-                      <span>
-                        <strong>Placa no encontrada</strong> en flota ni en órdenes existentes. Se registrará el gasto con la placa escrita igualmente.
-                      </span>
+                      <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                        <label className="form-label">N° de Vale (Bodega) *</label>
+                        <input name="vale" value={form.vale} onChange={handleChange} className="form-input" placeholder="Número de vale de almacén" style={{ fontFamily: 'var(--font-mono)' }} />
+                      </div>
                     )}
+                    <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                      <label className="form-label">Unidad (busca la placa) *</label>
+                      <select name="unidad" value={form.unidad} onChange={handleChange} className="form-select"
+                        style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+                        <option value="">— Seleccione la unidad —</option>
+                        {opcionesCatalogo(placasConocidas, form.unidad).map(p => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                )}
 
-                <div className="form-group" style={{ gap: 4, marginTop: 12, marginBottom: 0 }}>
-                  <label className="form-label">
-                    OT en las que se puede cargar el gasto {mesLabel ? `(${mesLabel})` : ''}
-                  </label>
-                  <select name="ordenId" value={form.ordenId} onChange={handleChange} className="form-select"
-                    disabled={!normPlaca(form.unidad)}>
-                    <option value="">
-                      {!normPlaca(form.unidad)
-                        ? '— Ingresa la placa primero —'
-                        : (otsDelMes.length > 0 ? '— Sin OT (gasto general) —' : '— Sin OT disponible en el mes —')}
-                    </option>
-                    {otsDelMes.map(o => (
-                      <option key={o.id} value={o.id}>
-                        {formatoOT(o)} · {o.placa} · {String(o.estado || '').replace(/_/g, ' ')} · ingreso {fmtFechaAuto(o.fechaIngreso)}
-                      </option>
-                    ))}
-                  </select>
-                  {normPlaca(form.unidad) && (
-                    <div style={{ fontSize: 11.5, color: otsDelMes.length > 0 ? 'var(--color-text-muted)' : '#f59e0b', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {otsDelMes.length > 0 ? (
-                        <><TbCircleCheck style={{ color: '#22c55e' }} /> {otsDelMes.length} OT vigente(s) en {mesLabel} para {form.unidad.toUpperCase()} · {otsPlacaTotal} OT(s) registradas en total</>
+                  {vehiculoDetectado && (
+                    <div style={{
+                      marginTop: 12, padding: '10px 12px',
+                      borderRadius: 'var(--radius-md)', fontSize: 13,
+                      background: vehiculoDetectado.encontrado ? 'rgba(34,197,95,0.08)' : 'rgba(245,158,11,0.1)',
+                      border: `1px solid ${vehiculoDetectado.encontrado ? 'rgba(34,197,95,0.3)' : 'rgba(245,158,11,0.35)'}`,
+                      display: 'flex', gap: 10, alignItems: 'flex-start'
+                    }}>
+                      <TbTruck style={{ fontSize: 18, flexShrink: 0, color: vehiculoDetectado.encontrado ? '#22c55e' : '#f59e0b', marginTop: 2 }} />
+                      {vehiculoDetectado.encontrado ? (
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div>
+                            <strong>Vehículo encontrado:</strong>{' '}
+                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{vehiculoDetectado.placa}</span>
+                            {' — '}{vehiculoDetectado.marca} {vehiculoDetectado.modelo}{vehiculoDetectado.anio ? ` (${vehiculoDetectado.anio})` : ''}
+                            {vehiculoDetectado.fuente ? <span style={{ color: 'var(--color-text-muted)' }}> · {vehiculoDetectado.fuente}</span> : null}
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))', gap: '4px 14px', marginTop: 8 }}>
+                            <div style={{ fontSize: 12 }}>
+                              <span style={{ color: 'var(--color-text-muted)' }}>Ruta asignada: </span>
+                              <strong>{vehiculoDetectado.ruta || 'Sin ruta asignada'}</strong>
+                            </div>
+                            <div style={{ fontSize: 12 }}>
+                              <span style={{ color: 'var(--color-text-muted)' }}>Ubicación: </span>
+                              <strong>{vehiculoDetectado.departamento || '—'}</strong>
+                            </div>
+                            <div style={{ fontSize: 12 }}>
+                              <span style={{ color: 'var(--color-text-muted)' }}>Centro de costo: </span>
+                              <span className="tech-tag">
+                                {vehiculoDetectado.centroCosto || centroCostoPorDepartamento(vehiculoDetectado.departamento) || 'SIN DEFINIR'}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 12 }}>
+                              <span style={{ color: 'var(--color-text-muted)' }}>Conductor: </span>
+                              <strong>{vehiculoDetectado.conductor || '—'}</strong>
+                            </div>
+                            {vehiculoDetectado.tipo && (
+                              <div style={{ fontSize: 12 }}>
+                                <span style={{ color: 'var(--color-text-muted)' }}>Tipo: </span>
+                                {vehiculoDetectado.tipo}
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 7 }}>
+                            El centro de costo se precargó desde la ubicación actual de la unidad. Si la empresa la muda de ruta/departamento, actualízalo en Administración → Personal &amp; Flota CSV.
+                          </div>
+                        </div>
                       ) : (
-                        <><TbAlertTriangle /> Ninguna OT vigente en {mesLabel} para {form.unidad.toUpperCase()} ({otsPlacaTotal} OT en otros meses)</>
+                        <span>
+                          <strong>Placa no encontrada</strong> en flota ni en órdenes existentes. Se registrará el gasto con la placa escrita igualmente.
+                        </span>
                       )}
                     </div>
                   )}
-                </div>
 
-                <div className="form-group" style={{ gap: 4, marginTop: 12, marginBottom: 0 }}>
-                  <label className="form-label">Gastos (repuestos / conceptos) *</label>
-                  <textarea name="gastos" value={form.gastos} onChange={handleChange} className="form-textarea" rows={2}
-                    placeholder={esAlmacen ? 'Detalle de repuestos o insumos despachados de bodega...' : 'Detalle de repuestos, lubricantes o servicios facturados...'} />
-                </div>
-
-                <div className="gastos-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 12, marginTop: 12 }}>
-                  <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                    <label className="form-label">{esAlmacen ? 'Cantidad de repuestos' : 'Cantidad'}</label>
-                    <input name="cantidad" value={form.cantidad} onChange={handleChange} className="form-input"
-                      placeholder={esAlmacen ? 'Total de repuestos' : 'Cantidad'} />
-                    {esAlmacen && (
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
-                        Ingrese aquí el total de los repuestos.
+                  <div className="form-group" style={{ gap: 4, marginTop: 12, marginBottom: 0 }}>
+                    <label className="form-label">
+                      OT en las que se puede cargar el gasto {mesLabel ? `(${mesLabel})` : ''}
+                    </label>
+                    <select name="ordenId" value={form.ordenId} onChange={handleChange} className="form-select"
+                      disabled={!normPlaca(form.unidad)}>
+                      <option value="">
+                        {!normPlaca(form.unidad)
+                          ? '— Ingresa la placa primero —'
+                          : (otsDelMes.length > 0 ? '— Sin OT (gasto general) —' : '— Sin OT disponible en el mes —')}
+                      </option>
+                      {otsDelMes.map(o => (
+                        <option key={o.id} value={o.id}>
+                          {formatoOT(o)} · {o.placa} · {String(o.estado || '').replace(/_/g, ' ')} · ingreso {fmtFechaAuto(o.fechaIngreso)}
+                        </option>
+                      ))}
+                    </select>
+                    {normPlaca(form.unidad) && (
+                      <div style={{ fontSize: 11.5, color: otsDelMes.length > 0 ? 'var(--color-text-muted)' : '#f59e0b', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {otsDelMes.length > 0 ? (
+                          <><TbCircleCheck style={{ color: '#22c55e' }} /> {otsDelMes.length} OT vigente(s) en {mesLabel} para {form.unidad.toUpperCase()} · {otsPlacaTotal} OT(s) registradas en total</>
+                        ) : (
+                          <><TbAlertTriangle /> Ninguna OT vigente en {mesLabel} para {form.unidad.toUpperCase()} ({otsPlacaTotal} OT en otros meses)</>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  {esAlmacen ? (
+                  <div className="form-group" style={{ gap: 4, marginTop: 12, marginBottom: 0 }}>
+                    <label className="form-label">Gastos (repuestos / conceptos) *</label>
+                    <textarea name="gastos" value={form.gastos} onChange={handleChange} className="form-textarea" rows={2}
+                      placeholder={esAlmacen ? 'Detalle de repuestos o insumos despachados de bodega...' : 'Detalle de repuestos, lubricantes o servicios facturados...'} />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 12, marginTop: 12 }}>
                     <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                      <label className="form-label">Monto ($)</label>
-                      <div style={{
-                        fontSize: 12, color: 'var(--color-text-muted)', background: 'var(--color-bg-input)',
-                        border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-sm)',
-                        padding: '11px 12px', minHeight: 40, display: 'flex', alignItems: 'center'
-                      }}>
-                        No se captura: el costo lo controla el sistema de almacén.
-                      </div>
+                      <label className="form-label">Cantidad</label>
+                      <input name="cantidad" value={form.cantidad} onChange={handleChange} className="form-input" placeholder="Cantidad" />
                     </div>
-                  ) : (
                     <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
                       <label className="form-label">Monto ($)</label>
                       <input name="monto" type="number" step="0.01" min="0" value={form.monto} onChange={handleChange} className="form-input" placeholder="0.00" style={{ fontFamily: 'var(--font-mono)' }} />
                     </div>
-                  )}
-                  {!esAlmacen && (
-                    <>
-                      <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                        <label className="form-label">Descuento ($)</label>
-                        <input name="descuento" type="number" step="0.01" min="0" value={form.descuento} onChange={handleChange} className="form-input" placeholder="0.00" style={{ fontFamily: 'var(--font-mono)' }} />
-                      </div>
-                      <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                        <label className="form-label">Monto con Descuento ($)</label>
-                        <input type="text" readOnly
-                          value={fmtMoney((parseFloat(form.monto) || 0) - (parseFloat(form.descuento) || 0))}
-                          className="form-input"
-                          style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#22c55e', background: 'rgba(34,197,95,0.06)', cursor: 'default' }} />
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="gastos-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 12, marginTop: 12 }}>
-                  <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                    <label className="form-label">Centro de Costo</label>
-                    <select name="centroCosto" value={form.centroCosto} onChange={handleChange} className="form-select">
-                      <option value="">— Seleccione el centro de costo —</option>
-                      {opcionesCatalogo(centrosExistentes, form.centroCosto).map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
+                    {!esAlmacen && (
+                      <>
+                        <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                          <label className="form-label">Descuento ($)</label>
+                          <input name="descuento" type="number" step="0.01" min="0" value={form.descuento} onChange={handleChange} className="form-input" placeholder="0.00" style={{ fontFamily: 'var(--font-mono)' }} />
+                        </div>
+                        <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                          <label className="form-label">Monto con Descuento ($)</label>
+                          <input type="text" readOnly
+                            value={fmtMoney((parseFloat(form.monto) || 0) - (parseFloat(form.descuento) || 0))}
+                            className="form-input"
+                            style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#22c55e', background: 'rgba(34,197,95,0.06)', cursor: 'default' }} />
+                        </div>
+                      </>
+                    )}
                   </div>
-                  {!esAlmacen && (
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 12, marginTop: 12 }}>
                     <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                      <label className="form-label">Estado de Pago</label>
-                      <select name="estado" value={form.estado} onChange={handleChange} className="form-select">
-                        <option value="por_pagar">Pendiente de pago</option>
-                        <option value="pagado">Pagado</option>
+                      <label className="form-label">Centro de Costo</label>
+                      <select name="centroCosto" value={form.centroCosto} onChange={handleChange} className="form-select">
+                        <option value="">— Seleccione el centro de costo —</option>
+                        {opcionesCatalogo(centrosExistentes, form.centroCosto).map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
                       </select>
                     </div>
-                  )}
-                </div>
+                    {!esAlmacen && (
+                      <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                        <label className="form-label">Estado de Pago</label>
+                        <select name="estado" value={form.estado} onChange={handleChange} className="form-select">
+                          <option value="por_pagar">Por pagar (FALSE)</option>
+                          <option value="pagado">Pagado (TRUE)</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-                  <button type="button" className="btn btn-secondary" onClick={cerrarModal} disabled={guardando}>
-                    Cancelar
-                  </button>
-                  <button type="submit" className="btn btn-primary" disabled={guardando}>
-                    {guardando ? 'Guardando...' : (editandoId ? 'Guardar Cambios' : 'Registrar Gasto')}
-                  </button>
-                </div>
-              </form>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+                    <button type="button" className="btn btn-secondary" onClick={cerrarModal} disabled={guardando}>
+                      Cancelar
+                    </button>
+                    <button type="submit" className="btn btn-primary" disabled={guardando}>
+                      {guardando ? 'Guardando...' : (editandoId ? 'Guardar Cambios' : 'Registrar Gasto')}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      </ModalPortal>
-    )}
+        </ModalPortal>
+      )}
     </div>
   );
 }

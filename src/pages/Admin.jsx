@@ -40,6 +40,20 @@ import ResumenErrores from '../components/ResumenErrores';
 import IconoMascara from '../components/IconoMascara';
 import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 
+const CARGOS_SISTEMA = [
+  'Mecánico General',
+  'Mecánico Diésel',
+  'Mecánico Gasolina',
+  'Electricista Automotriz',
+  'Técnico en Frenos y Suspensión',
+  'Jefe de Taller',
+  'Auxiliar de Mantenimiento',
+  'Motorista / Conductor',
+  'Administrador de Taller',
+  'Supervisor de Flota',
+  'Encargado de Bodega / Almacén'
+];
+
 export default function Admin({ seccion = 'personal' }) {
   const esPersonal = seccion !== 'vehiculos';
   const [usuarios, setUsuarios] = useState(obtenerPersonalVisible);
@@ -635,218 +649,221 @@ export default function Admin({ seccion = 'personal' }) {
       {esPersonal && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 16 }}>
           {(verFormUsuario || usuarioEditando) && (
-          <div className="card">
-            <div className="form-section-title" style={{ marginTop: 0 }}>
-              <IconoMascara className="icon" src="/iconos/personal-taller.png" size={16} />
-              {usuarioEditando ? 'Editar Personal / Zona de Operación' : 'Agregar Nuevo Mecánico / Usuario'}
-            </div>
-
-            <ResumenErrores errores={erroresUsuario} />
-
-            <form onSubmit={handleCrearUsuario} noValidate>
-              <div className="form-group" style={{ marginBottom: 9 }}>
-                <label className="form-label">
-                  Nombre Completo <span className="label-required">*</span>
-                </label>
-                <input
-                  type="text"
-                  className={`form-input ${erroresUsuario.nombre ? 'is-invalid' : ''}`}
-                  placeholder="Nombre y apellido"
-                  value={nuevoUsuario.nombre}
-                  onChange={e => {
-                    setNuevoUsuario({ ...nuevoUsuario, nombre: filtrarTexto(e.target.value) });
-                    if (erroresUsuario.nombre) setErroresUsuario({ ...erroresUsuario, nombre: null });
-                  }}
-                />
-                {erroresUsuario.nombre && (
-                  <span className="field-error"><TbAlertCircle size={13} /> {erroresUsuario.nombre}</span>
-                )}
+            <div className="card">
+              <div className="form-section-title" style={{ marginTop: 0 }}>
+                <IconoMascara className="icon" src="/iconos/personal-taller.png" size={16} />
+                {usuarioEditando ? 'Editar Personal / Zona de Operación' : 'Agregar Nuevo Mecánico / Usuario'}
               </div>
 
-              {usuarioEditando ? (
+              <ResumenErrores errores={erroresUsuario} />
+
+              <form onSubmit={handleCrearUsuario} noValidate>
                 <div className="form-group" style={{ marginBottom: 9 }}>
                   <label className="form-label">
-                    Contraseña de Acceso (Opcional)
+                    Nombre Completo <span className="label-required">*</span>
                   </label>
                   <input
-                    type="password"
-                    className={`form-input ${erroresUsuario.password ? 'is-invalid' : ''}`}
-                    placeholder="Dejar vacío para conservar la actual"
-                    value={nuevoUsuario.password}
+                    type="text"
+                    className={`form-input ${erroresUsuario.nombre ? 'is-invalid' : ''}`}
+                    placeholder="Nombre y apellido"
+                    value={nuevoUsuario.nombre}
                     onChange={e => {
-                      setNuevoUsuario({ ...nuevoUsuario, password: e.target.value });
-                      if (erroresUsuario.password) setErroresUsuario({ ...erroresUsuario, password: null });
+                      setNuevoUsuario({ ...nuevoUsuario, nombre: filtrarTexto(e.target.value) });
+                      if (erroresUsuario.nombre) setErroresUsuario({ ...erroresUsuario, nombre: null });
                     }}
-                    autoComplete="new-password"
                   />
-                  {erroresUsuario.password ? (
-                    <span className="field-error"><TbAlertCircle size={13} /> {erroresUsuario.password}</span>
-                  ) : (
-                    <small style={{ fontSize: 10.5, color: 'var(--color-text-muted)' }}>
-                      Dejar en blanco para mantener la contraseña actual.
-                    </small>
+                  {erroresUsuario.nombre && (
+                    <span className="field-error"><TbAlertCircle size={13} /> {erroresUsuario.nombre}</span>
                   )}
                 </div>
-              ) : (
-                <div style={{
-                  padding: '10px 12px',
-                  background: 'rgba(134,153,46,0.08)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-sm)',
-                  marginBottom: 12,
-                  fontSize: 12,
-                  color: 'var(--color-text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}>
-                  <TbLock style={{ color: 'var(--color-accent)', flexShrink: 0 }} size={16} />
-                  <span>
-                    Contraseña temporal: <strong style={{ fontFamily: 'var(--font-mono)' }}>{PASSWORD_GENERICA}</strong>. El usuario deberá crear la suya al ingresar.
+
+                {usuarioEditando ? (
+                  <div className="form-group" style={{ marginBottom: 9 }}>
+                    <label className="form-label">
+                      Contraseña de Acceso (Opcional)
+                    </label>
+                    <input
+                      type="password"
+                      className={`form-input ${erroresUsuario.password ? 'is-invalid' : ''}`}
+                      placeholder="Dejar vacío para conservar la actual"
+                      value={nuevoUsuario.password}
+                      onChange={e => {
+                        setNuevoUsuario({ ...nuevoUsuario, password: e.target.value });
+                        if (erroresUsuario.password) setErroresUsuario({ ...erroresUsuario, password: null });
+                      }}
+                      autoComplete="new-password"
+                    />
+                    {erroresUsuario.password ? (
+                      <span className="field-error"><TbAlertCircle size={13} /> {erroresUsuario.password}</span>
+                    ) : (
+                      <small style={{ fontSize: 10.5, color: 'var(--color-text-muted)' }}>
+                        Dejar en blanco para mantener la contraseña actual.
+                      </small>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '10px 12px',
+                    background: 'rgba(134,153,46,0.08)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-sm)',
+                    marginBottom: 12,
+                    fontSize: 12,
+                    color: 'var(--color-text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}>
+                    <TbLock style={{ color: 'var(--color-accent)', flexShrink: 0 }} size={16} />
+                    <span>
+                      Contraseña temporal: <strong style={{ fontFamily: 'var(--font-mono)' }}>{PASSWORD_GENERICA}</strong>. El usuario deberá crear la suya al ingresar.
+                    </span>
+                  </div>
+                )}
+
+                <div className="form-group" style={{ marginBottom: 9 }}>
+                  <label className="form-label">Rol en el Sistema *</label>
+                  <select
+                    className="form-select"
+                    value={nuevoUsuario.rol}
+                    onChange={e => setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })}
+                  >
+                    <option value="mecanico">Mecánico / Técnico</option>
+                    <option value="encargado">Encargado de Taller</option>
+                    <option value="admin">Administrador General</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 9 }}>
+                  <label className="form-label">Cargo o Especialidad</label>
+                  <select
+                    className="form-select"
+                    value={nuevoUsuario.cargo}
+                    onChange={e => setNuevoUsuario({ ...nuevoUsuario, cargo: e.target.value })}
+                  >
+                    <option value="">— Seleccione el cargo o especialidad —</option>
+                    {opcionesCatalogo(CARGOS_SISTEMA, nuevoUsuario.cargo).map(cg => (
+                      <option key={cg} value={cg}>{cg}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 9 }}>
+                  <label className="form-label">Masculino o Femenino</label>
+                  <select
+                    className="form-select"
+                    value={nuevoUsuario.sexo}
+                    onChange={e => setNuevoUsuario({ ...nuevoUsuario, sexo: e.target.value })}
+                  >
+                    <option value="">— Sin especificar —</option>
+                    <option value="mujer">Femenino</option>
+                    <option value="hombre">Masculino</option>
+                  </select>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    Define el saludo del sistema ("Bienvenida" / "Bienvenido").
                   </span>
                 </div>
-              )}
 
-              <div className="form-group" style={{ marginBottom: 9 }}>
-                <label className="form-label">Rol en el Sistema *</label>
-                <select
-                  className="form-select"
-                  value={nuevoUsuario.rol}
-                  onChange={e => setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })}
-                >
-                  <option value="mecanico">Mecánico / Técnico</option>
-                  <option value="encargado">Encargado de Taller</option>
-                  <option value="admin">Administrador General</option>
-                </select>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 9 }}>
-                <label className="form-label">Cargo o Especialidad</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Especialidad técnica o cargo"
-                  value={nuevoUsuario.cargo}
-                  onChange={e => setNuevoUsuario({ ...nuevoUsuario, cargo: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 9 }}>
-                <label className="form-label">Masculino o Femenino</label>
-                <select
-                  className="form-select"
-                  value={nuevoUsuario.sexo}
-                  onChange={e => setNuevoUsuario({ ...nuevoUsuario, sexo: e.target.value })}
-                >
-                  <option value="">— Sin especificar —</option>
-                  <option value="mujer">Femenino</option>
-                  <option value="hombre">Masculino</option>
-                </select>
-                <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                  Define el saludo del sistema ("Bienvenida" / "Bienvenido").
-                </span>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 9 }}>
-                <label className="form-label">Teléfono de Contacto</label>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  maxLength={15}
-                  className="form-input"
-                  placeholder="Solo dígitos (ej. 71234567)"
-                  value={nuevoUsuario.telefono}
-                  onChange={e => setNuevoUsuario({
-                    ...nuevoUsuario,
-                    telefono: e.target.value.replace(/\D/g, '').slice(0, 15)
-                  })}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 9 }}>
-                <label className="form-label">Zona: Departamento</label>
-                <select
-                  className="form-select"
-                  value={nuevoUsuario.departamento}
-                  onChange={e => setNuevoUsuario({ ...nuevoUsuario, departamento: e.target.value })}
-                >
-                  <option value="">— Sin departamento (no filtra por depto.) —</option>
-                  {DEPARTAMENTOS_EL_SALVADOR.map(d => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-                <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                  Filtra el alcance territorial asignado al usuario.
-                </span>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 14 }}>
-                <label className="form-label">
-                  Zona: Rutas de Distribución {nuevoUsuario.departamento && `(${nuevoUsuario.departamento})`}
-                </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {obtenerRutasPorDepartamento(nuevoUsuario.departamento).map(r => {
-                    const activa = (nuevoUsuario.rutas || []).includes(r);
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => toggleRuta(r)}
-                        style={{
-                          padding: '6px 10px',
-                          fontSize: 11.5,
-                          borderRadius: 'var(--radius-sm)',
-                          cursor: 'pointer',
-                          border: `1px solid ${activa ? 'var(--color-accent)' : 'var(--color-border)'}`,
-                          background: activa ? 'var(--color-accent-light)' : 'var(--color-bg-input)',
-                          color: activa ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-                          fontWeight: activa ? 700 : 500,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4
-                        }}
-                      >
-                        {activa && <TbCheck size={13} style={{ flexShrink: 0 }} />}
-                        {r}
-                      </button>
-                    );
-                  })}
+                <div className="form-group" style={{ marginBottom: 9 }}>
+                  <label className="form-label">Teléfono de Contacto</label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    maxLength={15}
+                    className="form-input"
+                    placeholder="Solo dígitos (ej. 71234567)"
+                    value={nuevoUsuario.telefono}
+                    onChange={e => setNuevoUsuario({
+                      ...nuevoUsuario,
+                      telefono: e.target.value.replace(/\D/g, '').slice(0, 15)
+                    })}
+                  />
                 </div>
-                <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                  {nuevoUsuario.departamento
-                    ? `Rutas de ${nuevoUsuario.departamento}.`
-                    : 'Seleccione un departamento para ver sus rutas.'}
-                </span>
-              </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                {usuarioEditando ? <TbCheck /> : <TbPlus />}
-                {usuarioEditando ? 'Guardar Cambios' : 'Registrar Personal'}
-              </button>
-              {usuarioEditando && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ width: '100%', marginTop: 8 }}
-                  onClick={async () => {
-                    if (sucioEdicionUsuario) {
-                      const ok = await confirm({
-                        title: '¿Cancelar la edición?',
-                        message: AVISO_DATOS_SIN_GUARDAR,
-                        confirmText: 'Sí, salir',
-                        cancelText: 'Seguir aquí',
-                      });
-                      if (!ok) return;
-                    }
-                    handleCancelarEdicion();
-                  }}
-                >
-                  <TbX /> Cancelar Edición
+                <div className="form-group" style={{ marginBottom: 9 }}>
+                  <label className="form-label">Zona: Departamento</label>
+                  <select
+                    className="form-select"
+                    value={nuevoUsuario.departamento}
+                    onChange={e => setNuevoUsuario({ ...nuevoUsuario, departamento: e.target.value })}
+                  >
+                    <option value="">— Sin departamento (no filtra por depto.) —</option>
+                    {DEPARTAMENTOS_EL_SALVADOR.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    Filtra el alcance territorial asignado al usuario.
+                  </span>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 14 }}>
+                  <label className="form-label">
+                    Zona: Rutas de Distribución {nuevoUsuario.departamento && `(${nuevoUsuario.departamento})`}
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {obtenerRutasPorDepartamento(nuevoUsuario.departamento).map(r => {
+                      const activa = (nuevoUsuario.rutas || []).includes(r);
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => toggleRuta(r)}
+                          style={{
+                            padding: '6px 10px',
+                            fontSize: 11.5,
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            border: `1px solid ${activa ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                            background: activa ? 'var(--color-accent-light)' : 'var(--color-bg-input)',
+                            color: activa ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                            fontWeight: activa ? 700 : 500,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}
+                        >
+                          {activa && <TbCheck size={13} style={{ flexShrink: 0 }} />}
+                          {r}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    {nuevoUsuario.departamento
+                      ? `Rutas de ${nuevoUsuario.departamento}.`
+                      : 'Seleccione un departamento para ver sus rutas.'}
+                  </span>
+                </div>
+
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                  {usuarioEditando ? <TbCheck /> : <TbPlus />}
+                  {usuarioEditando ? 'Guardar Cambios' : 'Registrar Personal'}
                 </button>
-              )}
-            </form>
-          </div>
+                {usuarioEditando && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ width: '100%', marginTop: 8 }}
+                    onClick={async () => {
+                      if (sucioEdicionUsuario) {
+                        const ok = await confirm({
+                          title: '¿Cancelar la edición?',
+                          message: AVISO_DATOS_SIN_GUARDAR,
+                          confirmText: 'Sí, salir',
+                          cancelText: 'Seguir aquí',
+                        });
+                        if (!ok) return;
+                      }
+                      handleCancelarEdicion();
+                    }}
+                  >
+                    <TbX /> Cancelar Edición
+                  </button>
+                )}
+              </form>
+            </div>
           )}
 
           <div className="card">
@@ -995,171 +1012,170 @@ export default function Admin({ seccion = 'personal' }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 16 }}>
             {verFormVehiculo && (
-            <div className="card">
-              <div className="form-section-title" style={{ marginTop: 0 }}>
-                <IconoMascara className="icon" src="/iconos/taller-reparacion.png" size={16} /> Registrar Vehículo en Flota
+              <div className="card">
+                <div className="form-section-title" style={{ marginTop: 0 }}>
+                  <IconoMascara className="icon" src="/iconos/taller-reparacion.png" size={16} /> Registrar Vehículo en Flota
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '0 0 12px' }}>
+                  Registro individual de nueva unidad en el inventario.
+                </p>
+
+                <ResumenErrores errores={erroresVehiculo} />
+
+                <form onSubmit={handleCrearVehiculo} noValidate>
+                  <div className="form-grid" style={{ gap: 10 }}>
+                    <div className="form-group">
+                      <label className="form-label">Placa <span className="label-required">*</span></label>
+                      <input
+                        type="text"
+                        className={`form-input ${erroresVehiculo.placa ? 'is-invalid' : ''}`}
+                        placeholder="Número de placa"
+                        style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}
+                        value={nuevoVehiculo.placa}
+                        onChange={e => {
+                          setNuevoVehiculo({ ...nuevoVehiculo, placa: normalizarPlaca(e.target.value) });
+                          if (erroresVehiculo.placa) setErroresVehiculo({ ...erroresVehiculo, placa: null });
+                        }}
+                      />
+                      {erroresVehiculo.placa && (
+                        <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.placa}</span>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Marca <span className="label-required">*</span></label>
+                      <input
+                        type="text"
+                        className={`form-input ${erroresVehiculo.marca ? 'is-invalid' : ''}`}
+                        placeholder="Marca del fabricante"
+                        value={nuevoVehiculo.marca}
+                        onChange={e => {
+                          setNuevoVehiculo({ ...nuevoVehiculo, marca: filtrarTexto(e.target.value) });
+                          if (erroresVehiculo.marca) setErroresVehiculo({ ...erroresVehiculo, marca: null });
+                        }}
+                      />
+                      {erroresVehiculo.marca && (
+                        <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.marca}</span>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Modelo <span className="label-required">*</span></label>
+                      <input
+                        type="text"
+                        className={`form-input ${erroresVehiculo.modelo ? 'is-invalid' : ''}`}
+                        placeholder="Modelo de la unidad"
+                        value={nuevoVehiculo.modelo}
+                        onChange={e => {
+                          setNuevoVehiculo({ ...nuevoVehiculo, modelo: filtrarAlfanumerico(e.target.value) });
+                          if (erroresVehiculo.modelo) setErroresVehiculo({ ...erroresVehiculo, modelo: null });
+                        }}
+                      />
+                      {erroresVehiculo.modelo && (
+                        <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.modelo}</span>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">No. Motor</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Número de motor"
+                        value={nuevoVehiculo.numMotor}
+                        onChange={e => setNuevoVehiculo({ ...nuevoVehiculo, numMotor: filtrarAlfanumerico(e.target.value) })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Número VIN</label>
+                      <input
+                        type="text"
+                        className={`form-input ${erroresVehiculo.vin ? 'is-invalid' : ''}`}
+                        maxLength={17}
+                        placeholder="Número de chasis / VIN (17 caracteres)"
+                        style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                        value={nuevoVehiculo.vin}
+                        onChange={e => {
+                          setNuevoVehiculo({ ...nuevoVehiculo, vin: filtrarVIN(e.target.value) });
+                          if (erroresVehiculo.vin) setErroresVehiculo({ ...erroresVehiculo, vin: null });
+                        }}
+                      />
+                      {erroresVehiculo.vin && (
+                        <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.vin}</span>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Año</label>
+                      <select
+                        className={`form-input ${erroresVehiculo.anio ? 'is-invalid' : ''}`}
+                        value={nuevoVehiculo.anio || ''}
+                        onChange={e => {
+                          setNuevoVehiculo({ ...nuevoVehiculo, anio: e.target.value });
+                          if (erroresVehiculo.anio) setErroresVehiculo({ ...erroresVehiculo, anio: null });
+                        }}
+                      >
+                        <option value="">— Seleccione el año —</option>
+                        {opcionesCatalogo(ANIOS_VEHICULO, nuevoVehiculo.anio).map(a => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
+                      </select>
+                      {erroresVehiculo.anio && (
+                        <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.anio}</span>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Conductor Habitual</label>
+                      <select
+                        className="form-select"
+                        value={nuevoVehiculo.conductorHabitual}
+                        onChange={e => setNuevoVehiculo({
+                          ...nuevoVehiculo,
+                          conductorHabitual: e.target.value
+                        })}
+                      >
+                        <option value="">— Seleccione el conductor habitual —</option>
+                        {opcionesCatalogo(obtenerConductores(), nuevoVehiculo.conductorHabitual).map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Departamento / Ubicación</label>
+                      <select
+                        className="form-input"
+                        value={nuevoVehiculo.departamento || ''}
+                        onChange={e => setNuevoVehiculo({ ...nuevoVehiculo, departamento: e.target.value })}
+                      >
+                        <option value="">— Seleccione el departamento —</option>
+                        {opcionesCatalogo(DEPARTAMENTOS_EL_SALVADOR, nuevoVehiculo.departamento).map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Ruta Asignada</label>
+                      <select
+                        className="form-input"
+                        value={nuevoVehiculo.ruta || ''}
+                        onChange={e => setNuevoVehiculo({ ...nuevoVehiculo, ruta: e.target.value })}
+                      >
+                        <option value="">— Seleccione la ruta —</option>
+                        {opcionesCatalogo(RUTAS_PREDETERMINADAS, nuevoVehiculo.ruta).map(r => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: 11.5, color: 'var(--color-text-muted)', marginTop: 8 }}>
+                    El centro de costo se calcula desde el departamento:{' '}
+                    <strong style={{ color: 'var(--color-accent)' }}>
+                      {centroCostoPorDepartamento(nuevoVehiculo.departamento) || '—'}
+                    </strong>
+                  </div>
+
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: 14 }}>
+                    <TbPlus /> Registrar Ingreso al Inventario
+                  </button>
+                </form>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '0 0 12px' }}>
-                Registro individual de nueva unidad en el inventario.
-              </p>
-
-              <ResumenErrores errores={erroresVehiculo} />
-
-              <form onSubmit={handleCrearVehiculo} noValidate>
-                <div className="form-grid" style={{ gap: 10 }}>
-                  <div className="form-group">
-                    <label className="form-label">Placa <span className="label-required">*</span></label>
-                    <input
-                      type="text"
-                      className={`form-input ${erroresVehiculo.placa ? 'is-invalid' : ''}`}
-                      placeholder="Número de placa"
-                      style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}
-                      value={nuevoVehiculo.placa}
-                      onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, placa: normalizarPlaca(e.target.value) });
-                        if (erroresVehiculo.placa) setErroresVehiculo({ ...erroresVehiculo, placa: null });
-                      }}
-                    />
-                    {erroresVehiculo.placa && (
-                      <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.placa}</span>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Marca <span className="label-required">*</span></label>
-                    <input
-                      type="text"
-                      className={`form-input ${erroresVehiculo.marca ? 'is-invalid' : ''}`}
-                      placeholder="Marca del fabricante"
-                      value={nuevoVehiculo.marca}
-                      onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, marca: filtrarTexto(e.target.value) });
-                        if (erroresVehiculo.marca) setErroresVehiculo({ ...erroresVehiculo, marca: null });
-                      }}
-                    />
-                    {erroresVehiculo.marca && (
-                      <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.marca}</span>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Modelo <span className="label-required">*</span></label>
-                    <input
-                      type="text"
-                      className={`form-input ${erroresVehiculo.modelo ? 'is-invalid' : ''}`}
-                      placeholder="Modelo de la unidad"
-                      value={nuevoVehiculo.modelo}
-                      onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, modelo: filtrarAlfanumerico(e.target.value) });
-                        if (erroresVehiculo.modelo) setErroresVehiculo({ ...erroresVehiculo, modelo: null });
-                      }}
-                    />
-                    {erroresVehiculo.modelo && (
-                      <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.modelo}</span>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">No. Motor</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Número de motor"
-                      value={nuevoVehiculo.numMotor}
-                      onChange={e => setNuevoVehiculo({ ...nuevoVehiculo, numMotor: filtrarAlfanumerico(e.target.value) })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Número VIN</label>
-                    <input
-                      type="text"
-                      className={`form-input ${erroresVehiculo.vin ? 'is-invalid' : ''}`}
-                      maxLength={17}
-                      placeholder="Número de chasis / VIN (17 caracteres)"
-                      style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontSize: 13 }}
-                      value={nuevoVehiculo.vin}
-                      onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, vin: filtrarVIN(e.target.value) });
-                        if (erroresVehiculo.vin) setErroresVehiculo({ ...erroresVehiculo, vin: null });
-                      }}
-                    />
-                    {erroresVehiculo.vin && (
-                      <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.vin}</span>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Año</label>
-                    <select
-                      className={`form-input ${erroresVehiculo.anio ? 'is-invalid' : ''}`}
-                      value={nuevoVehiculo.anio || ''}
-                      onChange={e => {
-                        setNuevoVehiculo({ ...nuevoVehiculo, anio: e.target.value });
-                        if (erroresVehiculo.anio) setErroresVehiculo({ ...erroresVehiculo, anio: null });
-                      }}
-                    >
-                      <option value="">— Seleccione el año —</option>
-                      {opcionesCatalogo(ANIOS_VEHICULO, nuevoVehiculo.anio).map(a => (
-                        <option key={a} value={a}>{a}</option>
-                      ))}
-                    </select>
-                    {erroresVehiculo.anio && (
-                      <span className="field-error"><TbAlertCircle size={13} /> {erroresVehiculo.anio}</span>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Conductor Habitual</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      list="lista-conductores-admin"
-                      placeholder="Seleccione o escriba el nombre del motorista"
-                      value={nuevoVehiculo.conductorHabitual}
-                      onChange={e => setNuevoVehiculo({
-                        ...nuevoVehiculo,
-                        conductorHabitual: e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, '')
-                      })}
-                    />
-                    <datalist id="lista-conductores-admin">
-                      {obtenerConductores().map(c => <option key={c} value={c} />)}
-                    </datalist>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Departamento / Ubicación</label>
-                    <select
-                      className="form-input"
-                      value={nuevoVehiculo.departamento || ''}
-                      onChange={e => setNuevoVehiculo({ ...nuevoVehiculo, departamento: e.target.value })}
-                    >
-                      <option value="">— Seleccione el departamento —</option>
-                      {opcionesCatalogo(DEPARTAMENTOS_EL_SALVADOR, nuevoVehiculo.departamento).map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Ruta Asignada</label>
-                    <select
-                      className="form-input"
-                      value={nuevoVehiculo.ruta || ''}
-                      onChange={e => setNuevoVehiculo({ ...nuevoVehiculo, ruta: e.target.value })}
-                    >
-                      <option value="">— Seleccione la ruta —</option>
-                      {opcionesCatalogo(RUTAS_PREDETERMINADAS, nuevoVehiculo.ruta).map(r => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ fontSize: 11.5, color: 'var(--color-text-muted)', marginTop: 8 }}>
-                  El centro de costo se calcula desde el departamento:{' '}
-                  <strong style={{ color: 'var(--color-accent)' }}>
-                    {centroCostoPorDepartamento(nuevoVehiculo.departamento) || '—'}
-                  </strong>
-                </div>
-
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: 14 }}>
-                  <TbPlus /> Registrar Ingreso al Inventario
-                </button>
-              </form>
-            </div>
             )}
 
             <div className="card">

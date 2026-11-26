@@ -22,7 +22,7 @@ import { useToast } from '../components/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { puedeVerOrden, puedeModificarOrden, ordenCompleta, puedeReactivarOrden, puedeCambiarEstadoActividad, apoyosDeOrden } from '../services/permisosService';
 import { obtenerMecanicosActivos } from '../services/usuariosService';
-import { DEPARTAMENTOS_EL_SALVADOR, RUTAS_PREDETERMINADAS } from '../services/vehiculosService';
+import { DEPARTAMENTOS_EL_SALVADOR, RUTAS_PREDETERMINADAS, ANIOS_VEHICULO, opcionesCatalogo, obtenerFlotaVehiculos } from '../services/vehiculosService';
 import { opcionesArea } from '../constants/areas';
 import { formatearDinero, formatearMiles, formatoKmEntrada, soloDigitos, filtrarVIN, validarVIN } from '../utils/formato';
 import StatusBadge from '../components/StatusBadge';
@@ -249,9 +249,10 @@ export default function DetalleOrden() {
     const filtrado =
       name === 'kilometraje' ? soloDigitos(value)
         : name === 'vin' ? filtrarVIN(value)
-          : name === 'marca' || name === 'conductorEntrega' ? filtrarTexto(value)
-            : name === 'modelo' || name === 'numMotor' ? filtrarAlfanumerico(value)
-              : value;
+          : name === 'placa' ? value.toUpperCase().replace(/[^A-Z0-9-]/g, '')
+            : name === 'marca' || name === 'conductorEntrega' ? filtrarTexto(value)
+              : name === 'modelo' || name === 'numMotor' ? filtrarAlfanumerico(value)
+                : value;
     setFormEdit(prev => ({ ...prev, [name]: filtrado }));
   };
 
@@ -785,7 +786,17 @@ export default function DetalleOrden() {
               </div>
               <div className="form-group">
                 <label className="form-label">Año</label>
-                <input name="anio" value={formEdit.anio || ''} onChange={handleEditChange} className="form-input" />
+                <select
+                  name="anio"
+                  value={formEdit.anio || ''}
+                  onChange={handleEditChange}
+                  className="form-select"
+                >
+                  <option value="">— Seleccione el año —</option>
+                  {opcionesCatalogo(ANIOS_VEHICULO, formEdit.anio).map(a => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Kilometraje (Km)</label>

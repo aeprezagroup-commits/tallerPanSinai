@@ -408,7 +408,7 @@ export default function Dashboard() {
     });
 
     const total = ordenes.length;
-    const circ = 2 * Math.PI * 74; 
+    const circ = 2 * Math.PI * 74;
     let acumulado = 0;
 
     const items = Object.keys(conteo)
@@ -507,11 +507,24 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <BotonVolver a="/admin" etiqueta="Volver al Panel" />
           <h1>Reportes</h1>
           <p>Costos, productividad y flota.</p>
+        </div>
+        <div className="dashboard-year-pill">
+          <label htmlFor="select-anio-lectivo">Año lectivo</label>
+          <select
+            id="select-anio-lectivo"
+            className="form-select"
+            value={anioLectivo}
+            onChange={(e) => setAnioLectivo(Number(e.target.value))}
+          >
+            {aniosLectivos.map(a => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -526,26 +539,6 @@ export default function Dashboard() {
           </a>
         ))}
       </nav>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-        <label htmlFor="select-anio-lectivo" style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--color-text-muted)' }}>
-          Año lectivo:
-        </label>
-        <select
-          id="select-anio-lectivo"
-          className="form-input"
-          style={{ width: 'auto', minWidth: 110, fontWeight: 800, paddingTop: 6, paddingBottom: 6 }}
-          value={anioLectivo}
-          onChange={(e) => setAnioLectivo(Number(e.target.value))}
-        >
-          {aniosLectivos.map(a => (
-            <option key={a} value={a}>{a}</option>
-          ))}
-        </select>
-        <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-          Tarjetas calculadas con las órdenes ingresadas en el año seleccionado.
-        </span>
-      </div>
 
       <div className="kpi-color-grid">
         <div className="kpi-color-card kpi-verde">
@@ -597,84 +590,104 @@ export default function Dashboard() {
         Año lectivo: período anual del <strong>1 de enero al 31 de diciembre</strong> del año seleccionado (<strong>{anioLectivo}</strong>).
       </div>
 
-      <div id="rep-estados" className="card" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <TbChartBar style={{ color: 'var(--color-accent)', fontSize: 20 }} />
-          <div>
-            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>Órdenes por Estado</h3>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>
-              Distribución actual de todas las órdenes de trabajo registradas
-            </p>
+      <div className="dashboard-top-split">
+        <div id="rep-estados" className="card" style={{ marginBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <TbChartBar style={{ color: 'var(--color-accent)', fontSize: 20 }} />
+            <div>
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>Órdenes por Estado</h3>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>
+                Distribución actual de todas las órdenes registradas
+              </p>
+            </div>
           </div>
-        </div>
 
-        {donut.total === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-            Aún no hay órdenes registradas para mostrar el gráfico.
-          </p>
-        ) : (
-          <div className="donut-wrap">
-            <div className="donut-figure">
-              <svg width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="Gráfico de donut: órdenes por estado">
-                <circle
-                  cx="100" cy="100" r="74"
-                  fill="none"
-                  stroke="var(--color-border)"
-                  strokeWidth="30"
-                />
-                {donut.items.map((s) => (
+          {donut.total === 0 ? (
+            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
+              Aún no hay órdenes registradas para mostrar el gráfico.
+            </p>
+          ) : (
+            <div className="donut-wrap">
+              <div className="donut-figure">
+                <svg width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="Gráfico de donut: órdenes por estado" style={{ filter: 'drop-shadow(0 6px 14px rgba(0, 0, 0, 0.16))' }}>
                   <circle
-                    key={s.key}
                     cx="100" cy="100" r="74"
                     fill="none"
-                    stroke={s.color}
-                    strokeWidth="30"
-                    strokeDasharray={`${s.dash} ${donut.circ - s.dash}`}
-                    strokeDashoffset={s.offset}
-                    transform="rotate(-90 100 100)"
+                    stroke="var(--color-border)"
+                    strokeWidth="28"
                   />
+                  {donut.items.map((s) => (
+                    <circle
+                      key={s.key}
+                      cx="100" cy="100" r="74"
+                      fill="none"
+                      stroke={s.color}
+                      strokeWidth="28"
+                      strokeDasharray={`${s.dash} ${donut.circ - s.dash}`}
+                      strokeDashoffset={s.offset}
+                      transform="rotate(-90 100 100)"
+                    />
+                  ))}
+                </svg>
+                <div className="donut-center">
+                  <div className="donut-total">{donut.total}</div>
+                  <div className="donut-caption">ÓRDENES</div>
+                </div>
+              </div>
+
+              <div className="donut-legend">
+                {donut.items.map((s) => (
+                  <div key={s.key} className="donut-legend-item">
+                    <span className="donut-legend-dot" style={{ background: s.color }} />
+                    <span className="donut-legend-label">{s.label}</span>
+                    <span className="donut-legend-count" style={{ color: s.color }}>{s.valor}</span>
+                    <span className="donut-legend-pct">{s.pct}%</span>
+                  </div>
                 ))}
-              </svg>
-              <div className="donut-center">
-                <div className="donut-total">{donut.total}</div>
-                <div className="donut-caption">ÓRDENES</div>
               </div>
             </div>
-
-            <div className="donut-legend">
-              {donut.items.map((s) => (
-                <div key={s.key} className="donut-legend-item">
-                  <span className="donut-legend-dot" style={{ background: s.color }} />
-                  <span className="donut-legend-label">{s.label}</span>
-                  <span className="donut-legend-count" style={{ color: s.color }}>{s.valor}</span>
-                  <span className="donut-legend-pct">{s.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div id="rep-exportaciones" className="card" style={{ marginBottom: 24 }}>
-        <div className="form-section-title" style={{ marginTop: 0 }}>
-          <IconoMascara className="icon" src="/iconos/taller-balances.png" size={16} /> Exportaciones (CSV / Excel)
+          )}
         </div>
-        <p style={{ fontSize: 12.5, color: 'var(--color-text-secondary)', margin: '0 0 14px' }}>
-          Exporta los datos a Excel (.xlsx) con diseño tabular.
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(230px, 100%), 1fr))', gap: 10 }}>
-          <button type="button" className="btn btn-secondary" onClick={() => exportarReporte('ordenes')} disabled={!ordenes.length}>
-            <TbStack2 /> Órdenes de Trabajo ({ordenes.length})
-          </button>
-          <button type="button" className="btn btn-secondary" onClick={() => exportarReporte('gastos')} disabled={!gastos.length}>
-            <TbReceipt /> Gastos de Flota ({gastos.length})
-          </button>
-          <button type="button" className="btn btn-secondary" onClick={() => exportarReporte('personal')}>
-            <TbUsers /> Personal ({obtenerPersonalVisible().length})
-          </button>
-          <button type="button" className="btn btn-secondary" onClick={() => exportarReporte('flota')}>
-            <TbTruck /> Vehículos / Flota ({obtenerFlotaVehiculos().length})
-          </button>
+
+        <div id="rep-exportaciones" className="card" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div className="form-section-title" style={{ marginTop: 0 }}>
+              <IconoMascara className="icon" src="/iconos/taller-balances.png" size={16} /> Exportaciones Ejecutivas (.xlsx)
+            </div>
+            <p style={{ fontSize: 12.5, color: 'var(--color-text-secondary)', margin: '0 0 14px' }}>
+              Descarga reportes tabulares listos para gerencia y auditoría.
+            </p>
+          </div>
+          <div className="export-grid">
+            <button type="button" className="export-action-card" onClick={() => exportarReporte('ordenes')} disabled={!ordenes.length}>
+              <span className="export-action-icon" style={{ background: 'rgba(134, 153, 46, 0.14)', color: 'var(--color-accent)' }}><TbStack2 /></span>
+              <span className="export-action-text">
+                <strong>Órdenes de Trabajo</strong>
+                <small>{ordenes.length} registros</small>
+              </span>
+            </button>
+            <button type="button" className="export-action-card" onClick={() => exportarReporte('gastos')} disabled={!gastos.length}>
+              <span className="export-action-icon" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22c55e' }}><TbReceipt /></span>
+              <span className="export-action-text">
+                <strong>Gastos de Flota</strong>
+                <small>{gastos.length} registros</small>
+              </span>
+            </button>
+            <button type="button" className="export-action-card" onClick={() => exportarReporte('personal')}>
+              <span className="export-action-icon" style={{ background: 'rgba(59, 130, 246, 0.14)', color: '#3b82f6' }}><TbUsers /></span>
+              <span className="export-action-text">
+                <strong>Personal Técnico</strong>
+                <small>{obtenerPersonalVisible().length} colaboradores</small>
+              </span>
+            </button>
+            <button type="button" className="export-action-card" onClick={() => exportarReporte('flota')}>
+              <span className="export-action-icon" style={{ background: 'rgba(237, 168, 60, 0.14)', color: 'var(--brand-gold-dark)' }}><TbTruck /></span>
+              <span className="export-action-text">
+                <strong>Vehículos / Flota</strong>
+                <small>{obtenerFlotaVehiculos().length} unidades</small>
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -778,24 +791,13 @@ export default function Dashboard() {
               const codigo = AREAS.find(a => a.nombre === area.area)?.codigo || 'GEN';
               const porcentaje = Math.round((area.unidades / stats.maxUnidadesArea) * 100);
               return (
-                <div key={area.area} style={{
-                  display: 'grid',
-                  gridTemplateColumns: '110px 1fr auto',
-                  alignItems: 'center',
-                  gap: 12
-                }}>
+                <div key={area.area} className="area-dist-row">
                   <div>
                     <span className="tech-tag" style={{ fontSize: 10 }}>{codigo}</span>
                     <div style={{ fontSize: 12, fontWeight: 700, marginTop: 3 }}>{area.area}</div>
                   </div>
 
-                  <div style={{
-                    width: '100%',
-                    height: 10,
-                    background: 'rgba(255,255,255,0.06)',
-                    borderRadius: 5,
-                    overflow: 'hidden'
-                  }}>
+                  <div className="area-dist-bar">
                     <div style={{
                       width: `${porcentaje}%`,
                       height: '100%',
@@ -805,7 +807,7 @@ export default function Dashboard() {
                     }} />
                   </div>
 
-                  <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12, whiteSpace: 'nowrap' }}>
+                  <div className="area-dist-meta">
                     <strong style={{ color: 'var(--color-accent)' }}>{area.unidades}</strong>
                     <span style={{ color: 'var(--color-text-muted)' }}> uds ({area.enProceso} en proceso)</span>
                     <div style={{ fontSize: 11, color: '#22c55e' }}>
@@ -1151,26 +1153,22 @@ export default function Dashboard() {
           {stats.rendimientoMecanicos.map(mec => (
             <div
               key={mec.id}
-              style={{
-                background: 'var(--color-bg-input)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-lg)',
-                padding: 16,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: 14
-              }}
+              className="mech-perf-card"
             >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                      {mec.nombre}
-                    </h4>
-                    <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                      {mec.cargo}
-                    </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    <div className="mech-perf-avatar">
+                      {(mec.nombre || '?').trim().charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                        {mec.nombre}
+                      </h4>
+                      <span style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
+                        {mec.cargo}
+                      </span>
+                    </div>
                   </div>
                   {mec.ordenActual ? (
                     <span className="tech-tag" style={{ background: 'rgba(134,153,46,0.15)', borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}>
@@ -1226,14 +1224,14 @@ export default function Dashboard() {
       </div>
 
       <div id="rep-taller" style={{ marginTop: 24, marginBottom: 40 }}>
-        <div className="card-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: 12 }}>
           <div>
-            <h3 className="card-title">Vehículos en Área de Reparación</h3>
-            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 2 }}>
+            <h3 className="card-title" style={{ margin: 0 }}>Vehículos en Área de Reparación</h3>
+            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '4px 0 0' }}>
               Unidades en taller por ruta y técnico
             </p>
           </div>
-          <Link to="/ordenes" className="btn btn-secondary btn-sm">
+          <Link to="/ordenes" className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }}>
             Ver Todas las Órdenes <TbArrowUpRight />
           </Link>
         </div>
@@ -1283,7 +1281,7 @@ export default function Dashboard() {
                       {orden.mecanicoAsignado ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <TbUser style={{ color: 'var(--color-accent)' }} />
-                          <span>{orden.mecanicoAsignado}</span>
+                          <span style={{ textTransform: 'uppercase' }}>{orden.mecanicoAsignado}</span>
                         </div>
                       ) : (
                         <span style={{ color: 'var(--color-text-muted)' }}>Sin asignar</span>

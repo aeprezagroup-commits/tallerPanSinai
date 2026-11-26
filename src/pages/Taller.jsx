@@ -1,6 +1,6 @@
 import { useState, useEffect, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { TbTools, TbMapPin, TbChevronRight, TbChevronDown, TbEye } from '../icons';
+import { TbTools, TbMapPin, TbChevronRight, TbChevronDown, TbEye, TbSearch, TbPrinter } from '../icons';
 import { escucharOrdenes, formatoOT } from '../firebase/ordenesService';
 import { useAuth } from '../context/AuthContext';
 import { obtenerMecanicosActivos } from '../services/usuariosService';
@@ -9,11 +9,14 @@ import StatusBadge from '../components/StatusBadge';
 import { formatearMiles } from '../utils/formato';
 import OrdenOperativa from '../components/OrdenOperativa';
 import BotonVolver from '../components/BotonVolver';
+import InspectionCertificateModal from '../components/InspectionCertificateModal';
 import { ordenarOrdenes, ORDENES_POR_PAGINA } from '../utils/ordenarOrdenes';
 
 export default function Taller() {
   const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState('');
+  const [ordenCertificado, setOrdenCertificado] = useState(null);
   const [mecanicos, setMecanicos] = useState(obtenerMecanicosActivos());
   const [mecanicoFiltro, setMecanicoFiltro] = useState('Todos');
   const [estadoFiltro, setEstadoFiltro] = useState('activos');
@@ -25,8 +28,8 @@ export default function Taller() {
 
   const [filtrosPrevios, setFiltrosPrevios] = useState(null);
 
-  if (filtrosPrevios !== `${mecanicoFiltro}|${estadoFiltro}`) {
-    setFiltrosPrevios(`${mecanicoFiltro}|${estadoFiltro}`);
+  if (filtrosPrevios !== `${busqueda}|${mecanicoFiltro}|${estadoFiltro}`) {
+    setFiltrosPrevios(`${busqueda}|${mecanicoFiltro}|${estadoFiltro}`);
     setVisibles(ORDENES_POR_PAGINA);
   }
 
@@ -50,6 +53,21 @@ export default function Taller() {
   const ordenesVisibles = visiblesParaTaller(ordenes, currentUser);
 
   const filtradas = ordenesVisibles.filter((o) => {
+    if (busqueda.trim()) {
+      const q = busqueda.trim().toLowerCase();
+      const qDigitos = busqueda.replace(/\D/g, '');
+      const match =
+        o.placa?.toLowerCase().includes(q) ||
+        o.marca?.toLowerCase().includes(q) ||
+        o.modelo?.toLowerCase().includes(q) ||
+        o.departamento?.toLowerCase().includes(q) ||
+        o.ruta?.toLowerCase().includes(q) ||
+        o.mecanicoAsignado?.toLowerCase().includes(q) ||
+        o.conductorEntrega?.toLowerCase().includes(q) ||
+        formatoOT(o).toLowerCase().includes(q) ||
+        (qDigitos && String(o.numeroOrden || '') === qDigitos);
+      if (!match) return false;
+    }
     if (estadoFiltro === 'activos' && o.estado === 'entregado') return false;
     if (estadoFiltro !== 'todos' && estadoFiltro !== 'activos' && o.estado !== estadoFiltro) return false;
     if (mecanicoFiltro !== 'Todos') {
@@ -77,12 +95,12 @@ export default function Taller() {
     <div className="animate-fade-in">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <BotonVolver a="/ordenes" etiqueta="Volver a Órdenes" />
+          <BotonVolver a="/inicio" etiqueta="Volver a Inicio" />
           <h1>Área de Reparación</h1>
           <p>Supervisión en vivo y tiempos por mecánico.</p>
         </div>
-        <div className="btn-group">
-          <div className="btn-group" style={{ marginRight: 12 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="btn-group">
             <button
               className={`btn btn-sm ${vista === 'fila' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setVista('fila')}
@@ -99,6 +117,19 @@ export default function Taller() {
           <Link to="/nueva-orden" className="btn btn-primary">
             + Ingreso de Unidad
           </Link>
+        </div>
+      </div>
+
+      <div className="filters-bar-sticky" style={{ marginBottom: 14 }}>
+        <div className="search-input-wrapper">
+          <TbSearch className="search-icon" />
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Buscar por placa, modelo, técnico o motorista..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
         </div>
       </div>
 
@@ -231,10 +262,18 @@ export default function Taller() {
                             onClick={() => toggleOrden(orden.id)}
                             title="Desplegar asignación, actividades y controles"
                           >
-                            {ordenAbierta === orden.id ? 'Cerrar' : 'Detalle'}
+                            {ordenAbierta === orden.id ? 'Cerrar' : 'Actividades'}
                           </button>
-                          <Link to={`/ordenes/${orden.id}`} className="btn btn-secondary btn-sm">
-                            <TbEye /> Ficha
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setOrdenCertificado(orden)}
+                            title="Ver e imprimir acta de taller de la unidad"
+                          >
+                            <TbPrinter /> Acta
+                          </button>
+                          <Link to={`/ordenes/${orden.id}`} className="btn btn-secondary btn-sm" title="Ver detalle de orden">
+                            <TbEye /> Detalle
                           </Link>
                         </div>
                       </td>
@@ -326,6 +365,14 @@ export default function Taller() {
             Cargar órdenes antiguas ({pendientesCargar})
           </button>
         </div>
+      )}
+
+      {ordenCertificado && (
+        <InspectionCertificateModal
+          isOpen={Boolean(ordenCertificado)}
+          onClose={() => setOrdenCertificado(null)}
+          orden={ordenCertificado}
+        />
       )}
     </div>
   );

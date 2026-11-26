@@ -1,8 +1,11 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { execSync } from 'node:child_process'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const paquete = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
 function obtenerGit() {
@@ -19,11 +22,24 @@ function obtenerGit() {
   }
 }
 
+const fechaBuild = new Date().toISOString()
+
+function generarVersionJson() {
+  return {
+    name: 'generar-version-json',
+    writeBundle() {
+      const destino = resolve(__dirname, 'dist', 'version.json')
+      mkdirSync(dirname(destino), { recursive: true })
+      writeFileSync(destino, JSON.stringify({ buildDate: fechaBuild }))
+    }
+  }
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), generarVersionJson()],
   define: {
     __APP_VERSION__: JSON.stringify(paquete.version),
-    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+    __BUILD_DATE__: JSON.stringify(fechaBuild),
     __GIT_SHA__: JSON.stringify(obtenerGit())
   },
   build: {

@@ -1,3 +1,4 @@
+import BotonVolver from '../components/BotonVolver';
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -137,6 +138,9 @@ export default function Ordenes() {
 
   return (
     <div className="animate-fade-in">
+      <div style={{ marginBottom: 12 }}>
+        <BotonVolver a="/admin" etiqueta="Volver al Panel" />
+      </div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1>{isMecanico ? 'Mis Órdenes de Trabajo' : 'Registro de Órdenes de Trabajo'}</h1>

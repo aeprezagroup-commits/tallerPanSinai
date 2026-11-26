@@ -1,23 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
+import { TbRefresh } from 'react-icons/tb';
 
-
-const INTERVALO_REVISION = 5 * 60 * 1000;
-const ESPERA_ENTRE_CHEQUEOS = 60 * 1000;
+const BUILD_LOCAL = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : '';
+const INTERVALO_REVISION = 3 * 60 * 1000;
+const ESPERA_ENTRE_CHEQUEOS = 45 * 1000;
 const AUSENCIA_MINIMA = 2 * 60 * 1000;
 const CLAVE_POSICION = 'pan_sinai_posicion';
 
-function buildActual() {
-  const etiqueta = document.querySelector('script[src^="/assets/index-"]');
-  return etiqueta ? etiqueta.getAttribute('src') : '';
-}
-
-async function buildPublicado() {
+async function obtenerBuildPublicado() {
   try {
-    const respuesta = await fetch(`/?revision=${Date.now()}`, { cache: 'no-store' });
-    if (!respuesta.ok) return null;
-    const html = await respuesta.text();
-    const coincidencia = html.match(/assets\/index-[\w-]+\.js/);
-    return coincidencia ? `/${coincidencia[0]}` : null;
+    const r = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) return null;
+    const datos = await r.json();
+    return datos.buildDate || null;
   } catch {
     return null;
   }
@@ -61,7 +56,7 @@ export default function ActualizadorVersion() {
     } catch {
     }
 
-    const revisar = async ({ forzar = false, alVolver = false, simular = false } = {}) => {
+    const revisar = async ({ forzar = false, alVolver = false } = {}) => {
       if (enCurso.current) return { ok: false };
       const ahora = Date.now();
       if (!forzar && ahora - ultimoChequeo.current < ESPERA_ENTRE_CHEQUEOS) return { ok: false };
@@ -70,11 +65,10 @@ export default function ActualizadorVersion() {
       enCurso.current = true;
       setComprobando(true);
       try {
-        const actual = buildActual();
-        const publicado = simular ? '/index-version-publicada.js' : await buildPublicado();
-        const nuevo = Boolean(publicado && actual && publicado !== actual);
+        const publicado = await obtenerBuildPublicado();
+        const nuevo = Boolean(publicado && BUILD_LOCAL && publicado !== BUILD_LOCAL);
 
-        if (!nuevo) return { ok: true, nuevo: false, actual, publicado };
+        if (!nuevo) return { ok: true, nuevo: false };
 
         if (alVolver && !hayDatosSinGuardar() && !hayModalAbierto()) {
           recargarConservandoPosicion();
@@ -114,7 +108,7 @@ export default function ActualizadorVersion() {
       if (document.visibilityState === 'visible') revisar({});
     }, INTERVALO_REVISION);
 
-    const primerChequeo = window.setTimeout(() => revisar({ forzar: true }), 15000);
+    const primerChequeo = window.setTimeout(() => revisar({ forzar: true }), 12000);
 
     const alPerderFoco = () => { ausenteDesde.current = Date.now(); };
 
@@ -140,22 +134,32 @@ export default function ActualizadorVersion() {
 
   return (
     <div className="aviso-actualizacion" role="status">
-      <span className="aviso-actualizacion-texto">Nueva versión disponible</span>
-      <button
-        type="button"
-        className="btn btn-primary btn-sm"
-        onClick={recargarConservandoPosicion}
-        disabled={comprobando}
-      >
-        {comprobando ? 'Verificando...' : 'Actualizar'}
-      </button>
-      <button
-        type="button"
-        className="btn btn-secondary btn-sm"
-        onClick={() => setHayNueva(false)}
-      >
-        Ahora no
-      </button>
+      <div className="aviso-actualizacion-icono">
+        <TbRefresh size={22} />
+      </div>
+      <div className="aviso-actualizacion-contenido">
+        <span className="aviso-actualizacion-titulo">Nueva versión disponible</span>
+        <span className="aviso-actualizacion-detalle">
+          Actualice para obtener las últimas mejoras
+        </span>
+      </div>
+      <div className="aviso-actualizacion-acciones">
+        <button
+          type="button"
+          className="aviso-actualizacion-btn aviso-btn-actualizar"
+          onClick={recargarConservandoPosicion}
+          disabled={comprobando}
+        >
+          {comprobando ? 'Verificando…' : 'Actualizar ahora'}
+        </button>
+        <button
+          type="button"
+          className="aviso-actualizacion-btn aviso-btn-cerrar"
+          onClick={() => setHayNueva(false)}
+        >
+          Después
+        </button>
+      </div>
     </div>
   );
 }

@@ -12,11 +12,12 @@ import {
   TbLock,
   TbAlertTriangle,
   TbTrash,
+  TbPlus,
 } from '../icons';
 import { crearOrden, buscarPorPlaca, formatoOT } from '../firebase/ordenesService';
 import { ESTADOS_CONFIG } from '../constants/estadosConfig';
 import { useToast } from '../components/ToastContext';
-import { buscarVehiculoCatalogo, obtenerConductores } from '../services/vehiculosService';
+import { buscarVehiculoCatalogo, obtenerConductores, opcionesCatalogo } from '../services/vehiculosService';
 import { AREAS_SELECT } from '../constants/areas';
 import {
   GRUPOS_MANTENIMIENTO,
@@ -30,7 +31,7 @@ import { obtenerFotosBase, guardarFotosBase, LADOS_VEHICULO } from '../services/
 import ScannerModal from '../components/ScannerModal';
 import IconoMascara from '../components/IconoMascara';
 import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
-import { formatearMiles, formatoKmEntrada, soloDigitos, filtrarTexto, filtrarCantidad } from '../utils/formato';
+import { formatearMiles, formatoKmEntrada, soloDigitos, filtrarCantidad } from '../utils/formato';
 import CameraModal from '../components/CameraModal';
 
 function construirActividades(tareas, mecanico = '', areaDefault = 'General') {
@@ -89,8 +90,10 @@ export default function NuevaOrden() {
   const [mecanicos] = useState(() => obtenerMecanicosActivos());
   const [conductores] = useState(() => obtenerConductores());
   const [fechaIngresoTexto] = useState(() => new Date().toLocaleString('es-SV'));
-  const [servicioMantenimiento, setServicioMantenimiento] = useState(''); 
+  const [servicioMantenimiento, setServicioMantenimiento] = useState('');
   const [tareasMarcadas, setTareasMarcadas] = useState(() => new Set());
+  const [tareasManuales, setTareasManuales] = useState([]);
+  const [nuevaActividad, setNuevaActividad] = useState('');
   const [tareasOmitidasMotivos, setTareasOmitidasMotivos] = useState({});
 
   const [fotosLados, setFotosLados] = useState({
@@ -115,8 +118,8 @@ export default function NuevaOrden() {
     ruta: 'Ruta 01 - San Salvador Centro & Escalerón',
     conductorEntrega: '',
     mecanicoReceptor: '',
-    diagnosticoInicial: '',   
-    motivoIngreso: '',        
+    diagnosticoInicial: '',
+    motivoIngreso: '',
     tipoTrabajo: 'Reparación',
     mecanicoAsignado: '',
     tiempoEstimadoHoras: ''
@@ -132,6 +135,8 @@ export default function NuevaOrden() {
     (form.conductorEntrega && form.conductorEntrega !== (vehiculoDetectado?.conductorHabitual || '')) ||
     (form.mecanicoReceptor && form.mecanicoReceptor !== (currentUser?.nombre || '')) ||
     tareasMarcadas.size ||
+    tareasManuales.length ||
+    Boolean(nuevaActividad.trim()) ||
     areasSeleccionadas.size ||
     Object.values(fotosLadosNuevas).some(Boolean)
   );
@@ -290,7 +295,6 @@ export default function NuevaOrden() {
     const { name } = e.target;
     let value = e.target.value;
     if (name === 'kilometraje') value = soloDigitos(value);
-    else if (name === 'conductorEntrega') value = filtrarTexto(value);
     else if (name === 'tiempoEstimadoHoras') value = filtrarCantidad(value);
     setForm(prev => ({ ...prev, [name]: value }));
   };
@@ -334,7 +338,8 @@ export default function NuevaOrden() {
   })();
 
   const tareasFinales = [
-    ...tareasCatalogo.filter(t => tareasMarcadas.has(t.id))
+    ...tareasCatalogo.filter(t => tareasMarcadas.has(t.id)),
+    ...tareasManuales
   ];
 
   const tareasOmitidasFinales = modoMantenimiento
@@ -375,6 +380,23 @@ export default function NuevaOrden() {
 
   const marcarMotivoOmitida = (id, texto) => {
     setTareasOmitidasMotivos(prev => ({ ...prev, [id]: texto }));
+  };
+
+  const agregarActividadManual = () => {
+    const desc = nuevaActividad.trim();
+    if (!desc) {
+      addToast('Escribe una descripción antes de agregar la actividad', 'warning');
+      return;
+    }
+    setTareasManuales(prev => [
+      ...prev,
+      { id: `manual-${Date.now()}-${prev.length}`, descripcion: desc, area: areaDefecto }
+    ]);
+    setNuevaActividad('');
+  };
+
+  const quitarActividadManual = (id) => {
+    setTareasManuales(prev => prev.filter(a => a.id !== id));
   };
 
   const motivoTopAntesRef = useRef(null);
@@ -894,7 +916,7 @@ export default function NuevaOrden() {
             {!form.placa.trim() && (
               <div className="form-group full-width">
                 <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
-                  
+
                 </span>
               </div>
             )}
@@ -972,21 +994,18 @@ export default function NuevaOrden() {
                 <label className="form-label">
                   Conductor que Entrega {modoAtencion === 'asistencia' ? '(opcional en asistencia en sitio)' : '*'}
                 </label>
-                <input
-                  type="text"
+                <select
                   name="conductorEntrega"
                   value={form.conductorEntrega}
                   onChange={handleChange}
-                  list="lista-conductores-orden"
-                  placeholder="Seleccione o escriba el nombre del motorista"
-                  className="form-input"
-                  autoComplete="name"
-                  enterKeyHint="next"
+                  className="form-select"
                   required={modoAtencion === 'taller'}
-                />
-                <datalist id="lista-conductores-orden">
-                  {conductores.map(c => <option key={c} value={c} />)}
-                </datalist>
+                >
+                  <option value="">— Seleccione el conductor que entrega —</option>
+                  {opcionesCatalogo(conductores, form.conductorEntrega).map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">
@@ -1317,6 +1336,67 @@ export default function NuevaOrden() {
                 </div>
               </div>
             )}
+
+            <div className="form-bloque" style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+                ¿Falta una actividad? Agréguela directamente (opcional):
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ flex: '1 1 220px', minWidth: 0 }}
+                  value={nuevaActividad}
+                  onChange={(e) => setNuevaActividad(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); agregarActividadManual(); } }}
+                  placeholder="Descripción de la actividad o reparación adicional..."
+                  enterKeyHint="done"
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={agregarActividadManual}
+                  title="Agregar esta actividad a la OT"
+                  style={{ minHeight: 42, padding: '8px 16px', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  <TbPlus /> Agregar
+                </button>
+              </div>
+              {tareasManuales.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+                  {tareasManuales.map((a) => (
+                    <div
+                      key={a.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        padding: '8px 12px',
+                        background: 'var(--color-bg-input)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: 13
+                      }}
+                    >
+                      <span style={{ flex: 1, minWidth: 0, wordBreak: 'break-word', fontWeight: 600 }}>
+                        {a.descripcion}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => quitarActividadManual(a.id)}
+                        title="Quitar actividad"
+                        aria-label="Quitar actividad"
+                        style={{ flexShrink: 0, padding: '6px 10px', color: '#ef4444' }}
+                      >
+                        <TbTrash size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="form-section-title" ref={seccionFotosRef}>
               <IconoMascara className="icon" src="/iconos/camara-fotografica.png" size={16} /> Inspección Perimetral 360° (Estado Actual de la Unidad)

@@ -11,7 +11,7 @@ import {
 } from '../icons';
 import { escucharOrdenes, cerrarOrden, marcarListoParaEntrega } from '../firebase/ordenesService';
 import { obtenerFotosBase, guardarFotosBase } from '../services/fotosVehiculoService';
-import { obtenerConductores } from '../services/vehiculosService';
+import { obtenerConductores, opcionesCatalogo } from '../services/vehiculosService';
 import { useToast } from '../components/ToastContext';
 import useDatosSinGuardar from '../hooks/useDatosSinGuardar';
 import { useAuth } from '../context/AuthContext';
@@ -430,23 +430,17 @@ export default function Salida() {
 
             <div className="form-group" style={{ marginBottom: 16 }}>
               <label className="form-label">Motorista / Conductor que Recibe el Vehículo *</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  autoComplete="name"
-                  list="lista-conductores-salida"
-                  placeholder="Seleccione o escriba el nombre del motorista"
-                  value={personaRetira}
-                  onChange={(e) => setPersonaRetira(
-                    e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, '')
-                  )}
-                  required
-                />
-                <datalist id="lista-conductores-salida">
-                  {conductores.map(c => <option key={c} value={c} />)}
-                </datalist>
-              </div>
+              <select
+                className="form-select"
+                value={personaRetira}
+                onChange={(e) => setPersonaRetira(e.target.value)}
+                required
+              >
+                <option value="">— Seleccione el motorista / conductor que recibe —</option>
+                {opcionesCatalogo(conductores, personaRetira).map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group" style={{ marginBottom: 16 }}>

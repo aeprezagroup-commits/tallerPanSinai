@@ -25,6 +25,7 @@ import {
 import { useToast } from '../components/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import IconoMascara from '../components/IconoMascara';
+import { reintentarLogo } from '../utils/logoSinai';
 import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
 import CameraModal from '../components/CameraModal';
 
@@ -108,6 +109,7 @@ export default function VehiculoDetalle() {
   const ladoPendienteRef = useRef('');
   const [zoomFrontal, setZoomFrontal] = useState(false);
   const [camaraLado, setCamaraLado] = useState('');
+  const [fechaImpresion] = useState(() => new Date().toLocaleDateString('es-SV'));
 
   const fichaEditada = editando && vehiculo
     ? Object.keys(FORM_VACIO).some(
@@ -243,9 +245,9 @@ export default function VehiculoDetalle() {
     }
     if (hash) {
       const previos = fotos.hashes || {};
-      const duplicada = Object.keys(previos).some(k => previos[k] && previos[k] === hash);
-      if (duplicada) {
-        addToast('Esta imagen ya está adjunta a la unidad.', 'error');
+      const duplicadaEnOtro = Object.keys(previos).some(k => k !== lado && previos[k] && previos[k] === hash);
+      if (duplicadaEnOtro) {
+        addToast('Esta imagen ya está adjunta en otro costado de la unidad.', 'error');
         if (fotoInputRef.current) fotoInputRef.current.value = '';
         ladoPendienteRef.current = '';
         return;
@@ -358,6 +360,32 @@ export default function VehiculoDetalle() {
 
   return (
     <div className="content-wrapper ficha-print-area">
+      <div className="ficha-print-header print-only">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <img
+            src="/logo-sinai.png"
+            alt="Logo Pan Sinaí"
+            onError={reintentarLogo}
+            style={{ width: 64, height: 64, objectFit: 'contain' }}
+          />
+          <div>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#000' }}>
+              PAN SINAÍ S.A. DE C.V.
+            </h2>
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-accent)', textTransform: 'uppercase' }}>
+              FICHA TÉCNICA VEHICULAR & INSPECCIÓN PERIMETRAL 360°
+            </div>
+            <div style={{ fontSize: 11, color: '#666' }}>
+              Control oficial de flota · Taller Central Pan Sinaí
+            </div>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right', fontFamily: 'monospace', fontSize: 11, color: '#444' }}>
+          <div><strong>PLACA: {vehiculo.placa}</strong></div>
+          <div>FECHA: {fechaImpresion}</div>
+        </div>
+      </div>
+
       <input
         ref={fotoInputRef}
         type="file"
@@ -497,7 +525,7 @@ export default function VehiculoDetalle() {
               </Campo>
               <Campo id="f-tipo" label="Tipo de unidad">
                 <input id="f-tipo" className="form-input" value={form.tipo}
-                  onChange={e => setCampo('tipo', e.target.value)} placeholder="Tipo de unidad" />
+                  onChange={e => setCampo('tipo', filtrarTexto(e.target.value))} placeholder="Tipo de unidad (solo texto)" />
               </Campo>
               <Campo id="f-anio" label="Año" error={errores.anio}>
                 <select id="f-anio" className="form-input" value={form.anio || ''}
@@ -538,7 +566,7 @@ export default function VehiculoDetalle() {
               </Campo>
               <Campo id="f-centro" label="Centro de costo">
                 <input id="f-centro" className="form-input" value={form.centroCosto}
-                  onChange={e => setCampo('centroCosto', e.target.value)} placeholder="Se deriva del departamento" />
+                  onChange={e => setCampo('centroCosto', e.target.value.replace(/[^A-Za-z0-9\s-]/g, '').toUpperCase())} placeholder="Se deriva del departamento" />
               </Campo>
             </div>
 
@@ -597,20 +625,17 @@ export default function VehiculoDetalle() {
               Conductor habitual
             </div>
             {editando ? (
-              <>
-                <input
-                  className="form-input"
-                  value={form.conductorHabitual}
-                  onChange={e => setCampo('conductorHabitual',
-                    e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, ''))}
-                  list="lista-conductores-ficha"
-                  placeholder="Seleccione o escriba el nombre del motorista"
-                  style={{ marginTop: 5, maxWidth: 340 }}
-                />
-                <datalist id="lista-conductores-ficha">
-                  {obtenerConductores().map(c => <option key={c} value={c} />)}
-                </datalist>
-              </>
+              <select
+                className="form-select"
+                value={form.conductorHabitual || ''}
+                onChange={e => setCampo('conductorHabitual', e.target.value)}
+                style={{ marginTop: 5, maxWidth: 340 }}
+              >
+                <option value="">— Seleccione el conductor habitual —</option>
+                {opcionesCatalogo(obtenerConductores(), form.conductorHabitual).map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             ) : (
               <div style={{
                 fontSize: 18, fontWeight: 800, letterSpacing: -0.3, marginTop: 2,
