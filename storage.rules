@@ -5,19 +5,21 @@ rules_version = '2';
 // Rige las fotos de órdenes (ingreso/salida) y la base
 // fotográfica de los vehículos (4 costados por placa).
 //
-// La app no usa Firebase Auth (roles por localStorage),
-// por lo que las reglas son abiertas como en Firestore,
-// pero se limitan a IMÁGENES de hasta 10 MB para evitar
-// subidas masivas al bucket.
+// Mismo criterio que firestore.rules: toda operación exige
+// sesión abierta en Firebase Auth. LEER puede cualquier
+// sesión (la anónima sostiene la página pública /vehiculo).
+// ESCRIBIR exige cuenta real de email y contraseña: la
+// sesión anónima no sube, no reemplaza ni borra nada.
+// Además, sólo se aceptan imágenes de hasta 10 MB.
 // ============================================
 service firebase.storage {
   match /b/{bucket}/o {
     match /{ruta=**} {
-      // Las fotos siempre se pueden leer (se muestran en la app)
-      allow read: if true;
+      allow read: if request.auth != null;
 
-      // Solo se permiten imágenes de hasta 10 MB
-      allow write: if request.resource.size < 10 * 1024 * 1024
+      allow write: if request.auth != null
+                   && request.auth.token.firebase.sign_in_provider != 'anonymous'
+                   && request.resource.size < 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }
   }

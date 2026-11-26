@@ -17,6 +17,7 @@ import {
   asegurarSesionAnonima,
   guardarUidUsuario,
   sincronizarPasswordFirebase,
+  emailDeSesion,
 } from '../services/authFirebase';
 import { AuthContext } from './AuthContext';
 
@@ -185,14 +186,16 @@ export function AuthProvider({ children }) {
       if (isFirebaseConfigured && !sesion.uid) {
         throw new Error(
           sesion.error === 'auth/weak-password'
-            ? 'La contraseña necesita 8 caracteres o más para abrir la sesión segura. Reiníciela desde Personal.'
+            ? 'La contraseña necesita 6 caracteres o más para abrir la sesión segura. Reiníciela desde Personal.'
             : 'No se pudo abrir la sesión segura. Contacte con soporte para restablecer la contraseña.'
         );
       }
 
       const usuarioActivo = sinPassword(sesion.uid ? { ...user, uid: sesion.uid } : user);
-      if (sesion.uid && sesion.uid !== user.uid) {
-        await guardarUidUsuario(user.id, sesion.uid);
+      const emailPrincipal = emailDeSesion(user);
+      const emailUsado = sesion.email && sesion.email !== emailPrincipal ? sesion.email : '';
+      if (sesion.uid && (sesion.uid !== user.uid || emailUsado !== (user.emailAuth || ''))) {
+        await guardarUidUsuario(user.id, sesion.uid, emailUsado);
       }
 
       setCurrentUser(usuarioActivo);
@@ -201,7 +204,7 @@ export function AuthProvider({ children }) {
         tipo: TIPOS_BITACORA.SESION,
         accion: 'login',
         detalle: `${user.nombre} inició sesión (${user.rol})`,
-        datos: { id: user.id, nombre: user.nombre, rol: user.rol, auth: sesion.origen },
+        datos: { id: user.id, nombre: user.nombre, rol: user.rol, auth: sesion.origen, emailAuth: sesion.email },
         quien: { usuario: user.nombre, rol: user.rol, id: user.id },
       });
       return usuarioActivo;

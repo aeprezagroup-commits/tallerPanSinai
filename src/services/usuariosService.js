@@ -160,12 +160,16 @@ export function obtenerPersonalVisible() {
   return obtenerUsuarios().filter((u) => !esSuperAdmin(u));
 }
 
-export function registrarUidFirebase(id, uid) {
+export function registrarUidFirebase(id, uid, emailAuth = '') {
   const usuarios = obtenerUsuarios();
   const index = usuarios.findIndex(u => u.id === id);
   if (index === -1) return null;
 
-  usuarios[index] = { ...usuarios[index], uid };
+  usuarios[index] = {
+    ...usuarios[index],
+    uid,
+    ...(emailAuth ? { emailAuth } : {}),
+  };
   guardarUsuarios(usuarios);
   return usuarios[index];
 }

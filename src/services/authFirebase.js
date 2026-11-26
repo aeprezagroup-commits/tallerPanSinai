@@ -30,15 +30,43 @@ export function emailDeSesion(usuario) {
   return `${base || 'usuario'}@pansinai.com`;
 }
 
-export async function guardarUidUsuario(usuarioId, uid) {
+export async function guardarUidUsuario(usuarioId, uid, emailAuth = '') {
   if (!db || !usuarioId || !uid) return false;
   try {
-    await updateDoc(doc(db, 'usuarios', String(usuarioId)), { uid: String(uid) });
-    registrarUidFirebase(String(usuarioId), String(uid));
+    const datos = { uid: String(uid) };
+    if (emailAuth) datos.emailAuth = String(emailAuth);
+    await updateDoc(doc(db, 'usuarios', String(usuarioId)), datos);
+    registrarUidFirebase(String(usuarioId), String(uid), emailAuth);
     return true;
   } catch (e) {
     console.warn('[auth] no se pudo guardar el uid:', e?.code || e?.message || e);
     return false;
+  }
+}
+
+async function intentarSignIn(email, clave) {
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, clave);
+    return { uid: cred.user.uid, email, origen: 'existente' };
+  } catch (e) {
+    const codigo = e?.code || '';
+    if (codigo === 'auth/user-not-found' || codigo === 'auth/invalid-credential') {
+      return null;
+    }
+    console.warn('[auth] no se pudo abrir sesión:', codigo || e?.message || e);
+    return { uid: null, email, origen: 'sin-migrar', error: codigo || String(e?.message) };
+  }
+}
+
+async function intentarCrear(email, clave) {
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, clave);
+    return { uid: cred.user.uid, email, origen: 'creada' };
+  } catch (e) {
+    const codigo = e?.code || '';
+    if (codigo === 'auth/email-already-in-use') return 'ocupada';
+    console.warn('[auth] no se pudo crear la cuenta:', codigo || e?.message || e);
+    return { uid: null, email, origen: 'sin-migrar', error: codigo || String(e?.message) };
   }
 }
 
@@ -49,6 +77,7 @@ export async function abrirSesionFirebase(usuario, password) {
 
   const email = emailDeSesion(usuario);
   const clave = String(password ?? '');
+  const emailVinculado = String(usuario?.emailAuth || '').trim().toLowerCase();
 
   if (clave.length < PASSWORD_MINIMA_AUTH) {
     console.warn(
@@ -60,29 +89,19 @@ export async function abrirSesionFirebase(usuario, password) {
   }
 
   return enCola(async () => {
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, clave);
-      return { uid: cred.user.uid, email, origen: 'existente' };
-    } catch (e) {
-      const codigo = e?.code || '';
-      const noExiste = codigo === 'auth/user-not-found' || codigo === 'auth/invalid-credential';
-      if (!noExiste) {
-        console.warn('[auth] no se pudo abrir sesión:', codigo || e?.message || e);
-        return { uid: null, email, origen: 'sin-migrar', error: codigo || String(e?.message) };
-      }
+    const candidatos = emailVinculado && emailVinculado !== email
+      ? [email, emailVinculado]
+      : [email];
+
+    for (const emailIntento of candidatos) {
+      const sesion = await intentarSignIn(emailIntento, clave);
+      if (sesion) return sesion;
+
+      const creada = await intentarCrear(emailIntento, clave);
+      if (creada !== 'ocupada') return creada;
     }
 
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, clave);
-      return { uid: cred.user.uid, email, origen: 'creada' };
-    } catch (e) {
-      const codigo = e?.code || '';
-      if (codigo === 'auth/email-already-in-use') {
-        return abrirSesionRespaldo(email, clave);
-      }
-      console.warn('[auth] no se pudo crear la cuenta:', codigo || e?.message || e);
-      return { uid: null, email, origen: 'sin-migrar', error: codigo || String(e?.message) };
-    }
+    return abrirSesionRespaldo(email, clave);
   });
 }
 
