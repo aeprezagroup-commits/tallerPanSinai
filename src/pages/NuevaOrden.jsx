@@ -994,18 +994,16 @@ export default function NuevaOrden() {
                 <label className="form-label">
                   Conductor que Entrega {modoAtencion === 'asistencia' ? '(opcional en asistencia en sitio)' : '*'}
                 </label>
-                <select
+                <input
+                  type="text"
                   name="conductorEntrega"
                   value={form.conductorEntrega}
                   onChange={handleChange}
-                  className="form-select"
+                  className="form-input"
+                  placeholder="Nombre completo del conductor..."
                   required={modoAtencion === 'taller'}
-                >
-                  <option value="">— Seleccione el conductor que entrega —</option>
-                  {opcionesCatalogo(conductores, form.conductorEntrega).map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  style={{ textTransform: 'uppercase' }}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">

@@ -904,10 +904,12 @@ export default function Gastos() {
                       <label className="form-label">Cantidad</label>
                       <input name="cantidad" value={form.cantidad} onChange={handleChange} className="form-input" placeholder="Cantidad" />
                     </div>
-                    <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
-                      <label className="form-label">Monto ($)</label>
-                      <input name="monto" type="number" step="0.01" min="0" value={form.monto} onChange={handleChange} className="form-input" placeholder="0.00" style={{ fontFamily: 'var(--font-mono)' }} />
-                    </div>
+                    {!esAlmacen && (
+                      <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>
+                        <label className="form-label">Monto ($)</label>
+                        <input name="monto" type="number" step="0.01" min="0" value={form.monto} onChange={handleChange} className="form-input" placeholder="0.00" style={{ fontFamily: 'var(--font-mono)' }} />
+                      </div>
+                    )}
                     {!esAlmacen && (
                       <>
                         <div className="form-group" style={{ gap: 4, marginBottom: 0 }}>

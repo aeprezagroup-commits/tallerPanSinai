@@ -430,17 +430,15 @@ export default function Salida() {
 
             <div className="form-group" style={{ marginBottom: 16 }}>
               <label className="form-label">Motorista / Conductor que Recibe el Vehículo *</label>
-              <select
-                className="form-select"
+              <input
+                type="text"
+                className="form-input"
                 value={personaRetira}
                 onChange={(e) => setPersonaRetira(e.target.value)}
+                placeholder="Nombre completo del motorista..."
                 required
-              >
-                <option value="">— Seleccione el motorista / conductor que recibe —</option>
-                {opcionesCatalogo(conductores, personaRetira).map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                style={{ textTransform: 'uppercase' }}
+              />
             </div>
 
             <div className="form-group" style={{ marginBottom: 16 }}>
