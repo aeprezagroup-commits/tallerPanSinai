@@ -10,6 +10,7 @@ import { formatearMiles } from '../utils/formato';
 import OrdenOperativa from '../components/OrdenOperativa';
 import BotonVolver from '../components/BotonVolver';
 import InspectionCertificateModal from '../components/InspectionCertificateModal';
+import useVistaGuardada from '../hooks/useVistaGuardada';
 import { ordenarOrdenes, ORDENES_POR_PAGINA } from '../utils/ordenarOrdenes';
 
 export default function Taller() {
@@ -20,7 +21,7 @@ export default function Taller() {
   const [mecanicos, setMecanicos] = useState(obtenerMecanicosActivos());
   const [mecanicoFiltro, setMecanicoFiltro] = useState('Todos');
   const [estadoFiltro, setEstadoFiltro] = useState('activos');
-  const [vista, setVista] = useState('fila');
+  const [vista, setVista] = useVistaGuardada('taller', 'fila');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
   const [visibles, setVisibles] = useState(ORDENES_POR_PAGINA);
 
@@ -324,6 +325,14 @@ export default function Taller() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                   <StatusBadge estado={orden.estado} />
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${ordenAbierta === orden.id ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => toggleOrden(orden.id)}
+                    title="Desplegar actividades y controles de la unidad"
+                  >
+                    {ordenAbierta === orden.id ? 'Cerrar' : 'Actividades'}
+                  </button>
                   {isMecanico && (
                     <span style={{
                       fontSize: 9,
@@ -343,11 +352,17 @@ export default function Taller() {
               </div>
 
               <div className="order-card-body" style={{ flex: 1 }}>
-                <OrdenOperativa
-                  orden={orden}
-                  todasLasOrdenes={ordenes}
-                  mecanicos={mecanicos}
-                />
+                {ordenAbierta === orden.id ? (
+                  <OrdenOperativa
+                    orden={orden}
+                    todasLasOrdenes={ordenes}
+                    mecanicos={mecanicos}
+                  />
+                ) : (
+                  <div style={{ fontSize: 12, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <TbChevronRight /> Toca “Actividades” para desplegar el detalle de esta unidad
+                  </div>
+                )}
               </div>
             </div>
           ))}

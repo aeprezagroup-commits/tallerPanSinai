@@ -9,6 +9,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import IconoMascara from '../components/IconoMascara';
+import useVistaGuardada from '../hooks/useVistaGuardada';
 
 const ETAPAS = [
   { id: 'ingresado', label: 'Recepción', desc: 'Ingreso al taller e inspección inicial' },
@@ -26,7 +27,7 @@ const aFechaTexto = (ts) => {
 
 export default function VehicleStatus() {
   const [query, setQuery] = useState('');
-  const [vistaUnidades, setVistaUnidades] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
+  const [vistaUnidades, setVistaUnidades] = useVistaGuardada('estado-unidades', () => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
   const [ordenes, setOrdenes] = useState([]);
   const { currentUser, isAdmin } = useAuth();
 

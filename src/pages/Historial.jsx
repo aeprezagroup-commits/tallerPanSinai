@@ -1,4 +1,5 @@
 import BotonVolver from '../components/BotonVolver';
+import useVistaGuardada from '../hooks/useVistaGuardada';
 import { useState, useEffect, useMemo } from 'react';
 import { normalizarPlaca } from '../utils/placas';
 import { Link } from 'react-router-dom';
@@ -37,7 +38,7 @@ export default function Historial() {
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
-  const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
+  const [vista, setVista] = useVistaGuardada('historial', () => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
 
   useEffect(() => {
     const unsubscribe = escucharOrdenes((data) => {

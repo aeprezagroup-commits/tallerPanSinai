@@ -17,7 +17,7 @@ import {
 import { crearOrden, buscarPorPlaca, formatoOT } from '../firebase/ordenesService';
 import { ESTADOS_CONFIG } from '../constants/estadosConfig';
 import { useToast } from '../components/ToastContext';
-import { buscarVehiculoCatalogo, obtenerConductores, opcionesCatalogo } from '../services/vehiculosService';
+import { buscarVehiculoCatalogo, obtenerConductores } from '../services/vehiculosService';
 import { AREAS_SELECT } from '../constants/areas';
 import {
   GRUPOS_MANTENIMIENTO,
@@ -31,7 +31,7 @@ import { obtenerFotosBase, guardarFotosBase, LADOS_VEHICULO } from '../services/
 import ScannerModal from '../components/ScannerModal';
 import IconoMascara from '../components/IconoMascara';
 import useDatosSinGuardar, { AVISO_DATOS_SIN_GUARDAR } from '../hooks/useDatosSinGuardar';
-import { formatearMiles, formatoKmEntrada, soloDigitos, filtrarCantidad } from '../utils/formato';
+import { formatearMiles, formatoKmEntrada, soloDigitos, filtrarCantidad, filtrarTexto } from '../utils/formato';
 import CameraModal from '../components/CameraModal';
 
 function construirActividades(tareas, mecanico = '', areaDefault = 'General') {
@@ -295,6 +295,7 @@ export default function NuevaOrden() {
     const { name } = e.target;
     let value = e.target.value;
     if (name === 'kilometraje') value = soloDigitos(value);
+    else if (name === 'conductorEntrega') value = filtrarTexto(value);
     else if (name === 'tiempoEstimadoHoras') value = filtrarCantidad(value);
     setForm(prev => ({ ...prev, [name]: value }));
   };
@@ -1001,9 +1002,13 @@ export default function NuevaOrden() {
                   onChange={handleChange}
                   className="form-input"
                   placeholder="Nombre completo del conductor..."
+                  list="lista-conductores-orden"
                   required={modoAtencion === 'taller'}
                   style={{ textTransform: 'uppercase' }}
                 />
+                <datalist id="lista-conductores-orden">
+                  {conductores.map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
               <div className="form-group">
                 <label className="form-label">

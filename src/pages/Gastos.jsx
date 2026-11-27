@@ -1,4 +1,5 @@
 import BotonVolver from '../components/BotonVolver';
+import useVistaGuardada from '../hooks/useVistaGuardada';
 import { useState, useEffect, useMemo } from 'react';
 import {
   TbPlus, TbDownload, TbSearch, TbFilter, TbTrash, TbPencil,
@@ -11,6 +12,7 @@ import {
 import { obtenerFlotaVehiculos, centroCostoPorDepartamento, opcionesCatalogo } from '../services/vehiculosService';
 import { escucharOrdenes, formatoOT } from '../firebase/ordenesService';
 import { useToast } from '../components/ToastContext';
+import { descargarCSV } from '../utils/exportaciones';
 import ModalPortal from '../components/ModalPortal';
 
 const FORM_VACIO = {
@@ -91,7 +93,7 @@ export default function Gastos() {
   const [gastos, setGastos] = useState([]);
   const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
+  const [vista, setVista] = useVistaGuardada('gastos', () => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'fila');
 
   const [filtroMes, setFiltroMes] = useState(() => new Date().toISOString().slice(0, 7));
   const [fechaBase] = useState(() => new Date());
@@ -352,7 +354,8 @@ export default function Gastos() {
     }
 
     const montoNum = parseFloat(form.monto);
-    if (isNaN(montoNum) || montoNum <= 0) {
+    const montoFinal = isNaN(montoNum) ? 0 : montoNum;
+    if (!esAlmacen && montoFinal <= 0) {
       addToast('El monto del gasto debe ser una cifra positiva mayor a $0.00', 'error');
       return;
     }
@@ -378,8 +381,10 @@ export default function Gastos() {
     const confirmadoGasto = await confirm({
       title: editandoId ? '¿Guardar cambios del gasto?' : '¿Registrar un gasto nuevo?',
       message: editandoId
-        ? `Se actualizará el gasto ${docPrevio || '(sin documento)'} por ${fmtMoney(montoNum)}.`
-        : `Se registrará un gasto de ${fmtMoney(montoNum)} por ${form.gastos.trim() || 'concepto sin detalle'}${esAlmacen ? ' (vale de almacén: sin descuento)' : ''}.`,
+        ? `Se actualizará el gasto ${docPrevio || '(sin documento)'} por ${fmtMoney(montoFinal)}.`
+        : esAlmacen && montoFinal <= 0
+          ? `Se registrará el vale de almacén "${form.vale.trim() || 'sin número'}" por ${form.gastos.trim() || 'concepto sin detalle'} (sin monto capturado: el costo lo controla bodega).`
+          : `Se registrará un gasto de ${fmtMoney(montoFinal)} por ${form.gastos.trim() || 'concepto sin detalle'}${esAlmacen ? ' (vale de almacén: sin descuento)' : ''}.`,
       confirmText: editandoId ? 'Sí, guardar cambios' : 'Sí, registrar gasto',
       cancelText: 'Cancelar',
       danger: false
@@ -399,7 +404,7 @@ export default function Gastos() {
         proveedor: esAlmacen ? '' : form.proveedor.trim(),
         gastos: form.gastos.trim(),
         cantidad: form.cantidad === '' ? '' : (Number(form.cantidad) || form.cantidad),
-        monto: montoNum,
+        monto: montoFinal,
         descuento: descNum,
         centroCosto: form.centroCosto.trim() || 'TALLER',
         estado: esAlmacen ? 'almacen' : form.estado,
@@ -429,18 +434,24 @@ export default function Gastos() {
     const emisor = esAlmacenG(g) ? 'Vale Almacén' : (g.proveedor || 'Proveedor');
     const valor = fmtMoney(montoConDescuento(g));
 
-    const confirmado = await confirm({
+    const motivo = await confirm({
       title: '¿Eliminar registro de gasto?',
       message: `¿Estás seguro de eliminar el gasto ${doc} (${emisor}) por valor de ${valor}? Esta acción no se puede deshacer.`,
       confirmText: 'Sí, eliminar gasto',
       cancelText: 'Cancelar',
-      danger: true
+      danger: true,
+      input: {
+        label: 'Justificación de la eliminación *',
+        placeholder: 'Motivo de la eliminación (ej. registro duplicado, captura errónea)...',
+        minLength: 10,
+        rows: 3
+      }
     });
 
-    if (!confirmado) return;
+    if (!motivo) return;
 
     try {
-      await eliminarGasto(g.id);
+      await eliminarGasto(g.id, motivo);
       addToast(`Gasto ${doc} eliminado correctamente`, 'info');
     } catch (err) {
       console.error(err);
@@ -450,7 +461,7 @@ export default function Gastos() {
 
   const limpiarFiltros = () => {
     setBusqueda('');
-    setFiltroMes(mesActual);
+    setFiltroMes(new Date().toISOString().slice(0, 7));
     setFiltroCentro('Todos');
     setFiltroEstado('todos');
     setFechaDesde('');
@@ -463,7 +474,6 @@ export default function Gastos() {
       'FECHA', 'CCF', 'PROVEEDOR', 'GASTOS', 'CANTIDAD',
       'DESCUENTO', 'MONTO CON DESCUENTO', 'CENTRO DE COSTO', 'ESTADO', 'UNIDAD', 'OT'
     ];
-    const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const filas = gastosFiltrados.map(g => [
       fmtFecha(g.fecha),
       docRef(g),
@@ -476,15 +486,8 @@ export default function Gastos() {
       g.estado === 'pagado' ? 'TRUE' : 'FALSE',
       g.unidad || '',
       g.ot || ''
-    ].map(escapar).join(','));
-    const csv = '﻿' + [encabezados.join(','), ...filas].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `gastos_vehiculo_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    ]);
+    descargarCSV(`gastos_vehiculo_${new Date().toISOString().slice(0, 10)}`, encabezados, filas);
     addToast(`CSV exportado (${gastosFiltrados.length} registros)`, 'success');
   };
 

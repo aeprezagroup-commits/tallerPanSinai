@@ -10,10 +10,11 @@ import {
   TbAlertCircle,
 } from '../icons';
 import { escucharOrdenes, cerrarOrden, marcarListoParaEntrega } from '../firebase/ordenesService';
-import { obtenerFotosBase, guardarFotosBase } from '../services/fotosVehiculoService';
-import { obtenerConductores, opcionesCatalogo } from '../services/vehiculosService';
+import { guardarFotosBase, obtenerFotosBase } from '../services/fotosVehiculoService';
+import { obtenerConductores } from '../services/vehiculosService';
 import { useToast } from '../components/ToastContext';
 import useDatosSinGuardar from '../hooks/useDatosSinGuardar';
+import useVistaGuardada from '../hooks/useVistaGuardada';
 import { useAuth } from '../context/AuthContext';
 import { filtrarOrdenesPorUsuario, apoyosDeOrden } from '../services/permisosService';
 import StatusBadge from '../components/StatusBadge';
@@ -35,7 +36,7 @@ export default function Salida() {
   const [guardando, setGuardando] = useState(false);
   const [isCertOpen, setIsCertOpen] = useState(false);
   const [fechaSalidaTexto] = useState(() => new Date().toLocaleString('es-SV'));
-  const [vista, setVista] = useState('fila');
+  const [vista, setVista] = useVistaGuardada('salida', 'fila');
 
   const [personaRetira, setPersonaRetira] = useState('');
   const [observacionesFinales, setObservacionesFinales] = useState('');
@@ -434,11 +435,15 @@ export default function Salida() {
                 type="text"
                 className="form-input"
                 value={personaRetira}
-                onChange={(e) => setPersonaRetira(e.target.value)}
+                onChange={(e) => setPersonaRetira(e.target.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]/g, ''))}
                 placeholder="Nombre completo del motorista..."
+                list="lista-conductores-salida"
                 required
                 style={{ textTransform: 'uppercase' }}
               />
+              <datalist id="lista-conductores-salida">
+                {conductores.map(c => <option key={c} value={c} />)}
+              </datalist>
             </div>
 
             <div className="form-group" style={{ marginBottom: 16 }}>

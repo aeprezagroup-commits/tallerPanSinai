@@ -1121,20 +1121,22 @@ export default function Admin({ seccion = 'personal' }) {
                       )}
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Conductor Habitual</label>
-                      <select
-                        className="form-select"
+                      <label className="form-label">Conductor Habitual (motorista)</label>
+                      <input
+                        type="text"
+                        className="form-input"
                         value={nuevoVehiculo.conductorHabitual}
                         onChange={e => setNuevoVehiculo({
                           ...nuevoVehiculo,
-                          conductorHabitual: e.target.value
+                          conductorHabitual: filtrarTexto(e.target.value)
                         })}
-                      >
-                        <option value="">— Seleccione el conductor habitual —</option>
-                        {opcionesCatalogo(obtenerConductores(), nuevoVehiculo.conductorHabitual).map(c => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
+                        list="lista-conductores-admin"
+                        placeholder="Escriba el nombre del motorista"
+                        autoComplete="name"
+                      />
+                      <datalist id="lista-conductores-admin">
+                        {obtenerConductores().map(c => <option key={c} value={c} />)}
+                      </datalist>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Departamento / Ubicación</label>

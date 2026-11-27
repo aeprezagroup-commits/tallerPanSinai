@@ -1,4 +1,5 @@
 import BotonVolver from '../components/BotonVolver';
+import useVistaGuardada from '../hooks/useVistaGuardada';
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -36,7 +37,7 @@ export default function Ordenes() {
   const [fechaHasta, setFechaHasta] = useState('');
   const [mecanicos] = useState(() => obtenerMecanicosActivos());
   const [ordenCertificado, setOrdenCertificado] = useState(null);
-  const [vista, setVista] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'tabla');
+  const [vista, setVista] = useVistaGuardada('ordenes', () => (typeof window !== 'undefined' && window.innerWidth < 900) ? 'cards' : 'tabla');
   const [ordenAbierta, setOrdenAbierta] = useState(null);
   const [visibles, setVisibles] = useState(ORDENES_POR_PAGINA);
   const [mostrarAntiguas, setMostrarAntiguas] = useState(false);

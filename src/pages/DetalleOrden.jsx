@@ -22,7 +22,7 @@ import { useToast } from '../components/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { puedeVerOrden, puedeModificarOrden, ordenCompleta, puedeReactivarOrden, puedeCambiarEstadoActividad, apoyosDeOrden } from '../services/permisosService';
 import { obtenerMecanicosActivos } from '../services/usuariosService';
-import { DEPARTAMENTOS_EL_SALVADOR, RUTAS_PREDETERMINADAS, ANIOS_VEHICULO, opcionesCatalogo, obtenerFlotaVehiculos } from '../services/vehiculosService';
+import { DEPARTAMENTOS_EL_SALVADOR, RUTAS_PREDETERMINADAS, ANIOS_VEHICULO, opcionesCatalogo } from '../services/vehiculosService';
 import { opcionesArea } from '../constants/areas';
 import { formatearDinero, formatearMiles, formatoKmEntrada, soloDigitos, filtrarVIN, validarVIN } from '../utils/formato';
 import StatusBadge from '../components/StatusBadge';

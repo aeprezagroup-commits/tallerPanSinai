@@ -625,17 +625,21 @@ export default function VehiculoDetalle() {
               Conductor habitual
             </div>
             {editando ? (
-              <select
-                className="form-select"
-                value={form.conductorHabitual || ''}
-                onChange={e => setCampo('conductorHabitual', e.target.value)}
-                style={{ marginTop: 5, maxWidth: 340 }}
-              >
-                <option value="">— Seleccione el conductor habitual —</option>
-                {opcionesCatalogo(obtenerConductores(), form.conductorHabitual).map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={form.conductorHabitual || ''}
+                  onChange={e => setCampo('conductorHabitual', filtrarTexto(e.target.value))}
+                  list="lista-conductores-ficha"
+                  placeholder="Escriba el nombre del motorista"
+                  autoComplete="name"
+                  style={{ marginTop: 5, maxWidth: 340 }}
+                />
+                <datalist id="lista-conductores-ficha">
+                  {obtenerConductores().map(c => <option key={c} value={c} />)}
+                </datalist>
+              </>
             ) : (
               <div style={{
                 fontSize: 18, fontWeight: 800, letterSpacing: -0.3, marginTop: 2,
