@@ -156,7 +156,7 @@ export default function Ordenes() {
         </Link>
       </div>
 
-      <div className="filters-bar filters-bar-sticky">
+      <div className="filters-bar">
         <div className="search-input-wrapper">
           <TbSearch className="search-icon" />
           <input

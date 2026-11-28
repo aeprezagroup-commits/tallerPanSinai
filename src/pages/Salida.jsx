@@ -429,6 +429,17 @@ export default function Salida() {
               </div>
             )}
 
+            <fieldset
+              disabled={!ordenSeleccionadaId}
+              style={{
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                opacity: ordenSeleccionadaId ? 1 : 0.45,
+                pointerEvents: ordenSeleccionadaId ? 'auto' : 'none',
+                transition: 'opacity 0.25s ease'
+              }}
+            >
             <div className="form-group" style={{ marginBottom: 16 }}>
               <label className="form-label">Motorista / Conductor que Recibe el Vehículo *</label>
               <input
@@ -620,6 +631,7 @@ export default function Salida() {
                 </>
               )}
             </button>
+            </fieldset>
           </form>
         </div>
       </div>

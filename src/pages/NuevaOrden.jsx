@@ -1022,8 +1022,8 @@ export default function NuevaOrden() {
                   onChange={handleChange}
                   className="form-select"
                   required={modoAtencion === 'taller'}
-                  disabled={esMecanico}
-                  style={{ fontSize: 13, opacity: esMecanico ? 0.75 : 1, cursor: esMecanico ? 'not-allowed' : 'pointer' }}
+                  disabled={camposBloqueados || esMecanico}
+                  style={{ fontSize: 13, opacity: (camposBloqueados || esMecanico) ? 0.75 : 1, cursor: (camposBloqueados || esMecanico) ? 'not-allowed' : 'pointer' }}
                 >
                   <option value="">— Seleccione el receptor —</option>
                   {opcionesReceptor.map(m => (
@@ -1053,8 +1053,8 @@ export default function NuevaOrden() {
                   value={form.mecanicoAsignado || ''}
                   onChange={handleChange}
                   className="form-select"
-                  disabled={esMecanico && modoAtencion === 'asistencia'}
-                  style={{ fontSize: 13, opacity: (esMecanico && modoAtencion === 'asistencia') ? 0.75 : 1, cursor: (esMecanico && modoAtencion === 'asistencia') ? 'not-allowed' : 'pointer' }}
+                  disabled={camposBloqueados || (esMecanico && modoAtencion === 'asistencia')}
+                  style={{ fontSize: 13, opacity: (camposBloqueados || (esMecanico && modoAtencion === 'asistencia')) ? 0.75 : 1, cursor: (camposBloqueados || (esMecanico && modoAtencion === 'asistencia')) ? 'not-allowed' : 'pointer' }}
                 >
                   <option value="">— Sin asignación —</option>
                   {opcionesEncargado.map(m => (

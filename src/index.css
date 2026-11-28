@@ -2014,7 +2014,8 @@ input[type='password'],
   font-size: 16px;
 }
 
-.search-input-wrapper input {
+.search-input-wrapper input,
+.search-input-wrapper input.form-input {
   width: 100%;
   padding-left: 42px;
 }
